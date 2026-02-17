@@ -12,61 +12,47 @@ jobs:
     permissions:
       contents: write
 
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.11"
 
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
-
-    - name: Install project dependencies
+    - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install black isort flake8 mypy pylint pytest
+        pip install black ruff mypy pytest
 
-    # -------------------------
-    # AUTO FORMAT SECTION
-    # -------------------------
+    # --------------------
+    # AUTO FIX SECTION
+    # --------------------
 
-    - name: Run isort (auto-fix)
-      run: isort .
+    - name: Run Ruff (auto-fix)
+      run: ruff check . --fix
 
-    - name: Run Black (auto-fix)
+    - name: Run Black
       run: black .
 
-    - name: Commit formatting changes
+    - name: Commit changes if needed
       run: |
         if [[ -n $(git status --porcelain) ]]; then
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git add .
-          git commit -m "CI: auto-format with black & isort"
+          git commit -m "CI: auto-fix lint + formatting"
           git push
         fi
 
-    # -------------------------
-    # VALIDATION SECTION
-    # -------------------------
+    # --------------------
+    # VALIDATION
+    # --------------------
 
-    - name: Lint with Flake8
-      run: flake8 .
-
-    - name: Type check with mypy
+    - name: Type check
       run: mypy .
-
-    - name: Lint with Pylint
-      run: pylint $(git ls-files '*.py')
 
     - name: Run tests
       run: pytest
