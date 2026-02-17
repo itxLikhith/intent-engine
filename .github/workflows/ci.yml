@@ -10,7 +10,8 @@ jobs:
   # Job 1: Auto-fix Linting Issues
   auto-fix:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    # Only run on push (not PR) and skip if the commit was already an auto-fix
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[auto-fix]')
     permissions:
       contents: write
     steps:
@@ -50,7 +51,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -A
-          git commit -m "style: auto-fix linting issues [skip ci]" || exit 0
+          git commit -m "style: auto-fix linting issues [auto-fix]" || exit 0
           git push
 
   # Job 2: Lint and Format Check
