@@ -1,0 +1,404 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.spec
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+env/
+.ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+*.orig
+*.rej
+*#
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+.directory
+.Trashes
+*.nfs*
+
+# Logs
+*.log
+logs/
+*.out
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+.env.staging
+.env.backup
+*.env
+
+# Coverage reports
+.coverage
+htmlcov/
+.coverage.*
+.cov.config
+.coverage.xml
+
+# Model caches and ML
+model_cache/
+*/cache/
+.huggingface/
+.cache/
+transformers/
+sentence_transformers/
+torch/
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.model
+*.onnx
+*.pb
+*.pbtxt
+*.joblib
+*.pickle
+*.pkl
+*.h5
+*.weights
+*.dat
+*.npy
+*.npz
+
+# Testing
+.pytest_cache/
+.pytest/
+.coverage/
+.nox/
+.coverage.*
+
+# Distribution / packaging
+.python-version
+.tox/
+coverage.xml
+*.cover
+.py-build/
+*.zip
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# flake8
+.flake8
+
+# Black
+.black
+
+# isort
+.isort.pkl
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+.DS_Store?
+
+# Local configuration
+config/local_settings.py
+settings_local.py
+local_settings.py
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore
+*.dockerignore
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.stage.yml
+docker-compose.dev.yml
+
+# Docker specific - exclude light version
+Dockerfile.light
+
+# Documentation
+docs/_build/
+docs/build/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Secrets and credentials
+secrets/
+secret.key
+secret_token.rb
+config/secrets.yml
+config/credentials.yml.enc
+credentials.json
+*.pem
+*.key
+*.cer
+*.crt
+*.cert
+*.pub
+id_rsa
+id_rsa.pub
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+
+# macOS
+.AppleDouble/
+.LSOverride
+.DocumentRevisions-V100/
+.Spotlight-V100/
+.TemporaryItems/
+.Trashes/
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.com.apple.FinderInfo
+.apdisk
+
+# Windows
+[C-c]ache/
+[C-c]onfig/
+[D-d]ata/
+[L-l]ogs/
+[T-t]emp/
+[N-n]ode_modules/
+[D-d]ist/
+[B-b]uild/
+
+# PyCharm
+*.iml
+*.iws
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.coverage
+.idea/
+!.idea/
+.idea/*
+!.idea/shelf/
+!.idea/vcs.xml
+!.idea/modules.xml
+!.idea/workspace.xml
+!.idea/misc.xml
+!.idea/deployment.xml
+!.idea/uiDesigner.xml
+!.idea/inspectionProfiles/Project_Default.xml
+!.idea/inspectionProfiles/profiles_settings.xml
+!.idea/gradle.xml
+!.idea/kotlinc.xml
+!.idea/compiler.xml
+!.idea/jarRepositories.xml
+!.idea/modules.xml
+!.idea/naveditor.xml
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+.svn/
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.history
+*.code-workspace
+
+# Atom
+.atom/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+.externals/
+.nb-gradle/
+
+# Code::Blocks
+*.depend
+*.layout
+*.cbp
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+*.moc.cpp
+*.qm
+*.prl
+
+# CLion
+cmake-build-*/
+
+# RubyMine
+.idea/scopes/scope_settings.xml
+.idea/RubyMine.xml
+
+# WebStorm
+.idea/jsLibraryMappings.xml
+.idea/watcherTasks.xml
+
+# PhpStorm
+.idea/php.xml
+
+# Android Studio
+*.keystore
+*.jks
+
+# Gradle
+.gradle/
+build/
+
+# Rust/Cargo (if needed in future)
+target/
+Cargo.lock
+
+# Go (if needed in future)
+*.o
+*.a
+*.so
+*.exe
+*.dll
+*.dylib
+*.test
+*.profdata
+*.gcda
+*.gcno
+*.gcov
+*.gcov.html
+*.profraw
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Scala
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.log
+
+# Temporary/Generated Files
+stress_test_results_*.json
+api_logs.txt
+$null
+nul
+
+# Test files (keep in repo but exclude generated)
+test_*.py
+!test_*.py
+
+# Documentation backups
+*_SUMMARY.md
+*_STATUS.md
+*_QUICKSTART.md
+*.md.bak
+
+# Local scripts
+start.bat
+start.sh
+
+# Init scripts (generated)
+init-scripts/
+
+# Monitoring (local only)
+monitoring/
+
+# Bridge (local only)
+bridge/
+
+# pgAdmin (local only)
+pgadmin/

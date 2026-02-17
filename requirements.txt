@@ -1,0 +1,25 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+pydantic==2.5.0
+pydantic-settings==2.1.0
+psycopg2-binary==2.9.9  # For PostgreSQL support
+asyncpg==0.29.0  # Async PostgreSQL driver
+aiosqlite==0.19.0  # Async SQLite driver
+sentence-transformers==2.2.2
+transformers==4.35.2
+torch==2.1.1
+numpy==1.24.3
+python-dotenv==1.0.0
+prometheus-client==0.19.0
+apscheduler==3.10.4
+python-multipart==0.0.6
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+aiofiles==23.2.1
+requests==2.31.0
+websockets==11.0.3
+httpx==0.25.2
+redis==5.0.1  # For Redis caching support
+slowapi==0.1.9  # For rate limiting
+limits==3.6.0  # Rate limiting utilities
