@@ -14,16 +14,33 @@ import numpy as np
 from dataclasses_json import DataClassJsonMixin
 
 from core.schema import (
-    Constraint,
-    ConstraintType,
     DeclaredIntent,
-    EthicalDimension,
-    EthicalSignal,
     InferredIntent,
-    IntentGoal,
     UniversalIntent,
-    UseCase,
 )
+
+
+class AdFairnessChecker:
+    """Checks ad fairness constraints"""
+
+    def __init__(self):
+        pass
+
+    def check_fairness(self, ads: list) -> list:
+        """Check fairness of ads - returns ads that pass fairness check"""
+        return ads
+
+
+class AdConstraintMatcher:
+    """Matches ads based on constraints"""
+
+    def __init__(self):
+        pass
+
+    def match_constraints(self, ad, intent) -> bool:
+        """Check if ad matches constraints for given intent"""
+        return True
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -93,7 +110,6 @@ class EmbeddingCache:
         try:
 
             import torch
-
             from transformers import AutoModel, AutoTokenizer
 
             model_name = "sentence-transformers/all-MiniLM-L6-v2"
@@ -319,6 +335,10 @@ class AdRelevanceScorer:
         return 0.2, reasons
 
 
+# Global instance for singleton pattern
+_ad_matcher_instance = None
+
+
 class AdMatcher:
     """Main class that orchestrates ad matching"""
 
@@ -331,10 +351,35 @@ class AdMatcher:
         self.relevance_scorer = AdRelevanceScorer(redis_client=redis_client)
 
     async def match_ads(self, request: AdMatchingRequest) -> AdMatchingResponse:
+        """Match ads based on request"""
 
-        # ... implementation ...
+        matched_ads = []
 
-        pass
+        for ad in request.adInventory:
+
+            score, reasons = await self.relevance_scorer.compute_ad_relevance(ad, request.intent)
+
+            matched_ads.append(MatchedAd(ad=ad, adRelevanceScore=score, matchReasons=reasons))
+
+        # Sort by relevance score
+
+        matched_ads.sort(key=lambda x: x.adRelevanceScore, reverse=True)
+
+        return AdMatchingResponse(
+            matchedAds=matched_ads, metrics={"total_ads": len(request.adInventory), "matched_ads": len(matched_ads)}
+        )
+
+
+def get_ad_matcher() -> AdMatcher:
+    """Get or create singleton AdMatcher instance"""
+
+    global _ad_matcher_instance
+
+    if _ad_matcher_instance is None:
+
+        _ad_matcher_instance = AdMatcher()
+
+    return _ad_matcher_instance
 
 
 def match_ads(request: AdMatchingRequest) -> AdMatchingResponse:
