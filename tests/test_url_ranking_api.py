@@ -4,7 +4,9 @@ Integration tests for the /rank-urls API endpoint using httpx ASGITransport
 
 import asyncio
 import unittest
+
 import httpx
+
 from main_api import app
 
 
@@ -41,7 +43,7 @@ class TestURLRankingAPI(unittest.TestCase):
                 "https://google.com",
                 "https://duckduckgo.com",
                 "https://github.com",
-            ]
+            ],
         }
 
         response = self.post("/rank-urls", payload)
@@ -109,7 +111,7 @@ class TestURLRankingAPI(unittest.TestCase):
                 "https://facebook.com",
                 "https://tutanota.com",
             ],
-            "options": {"exclude_big_tech": True}
+            "options": {"exclude_big_tech": True},
         }
 
         response = self.post("/rank-urls", payload)
@@ -129,7 +131,7 @@ class TestURLRankingAPI(unittest.TestCase):
                 "https://protonmail.com",
                 "https://google.com",
             ],
-            "options": {"min_privacy_score": 0.8}
+            "options": {"min_privacy_score": 0.8},
         }
 
         response = self.post("/rank-urls", payload)
@@ -147,14 +149,7 @@ class TestURLRankingAPI(unittest.TestCase):
                 "https://protonmail.com",
                 "https://google.com",
             ],
-            "options": {
-                "weights": {
-                    "relevance": 0.1,
-                    "privacy": 0.6,
-                    "quality": 0.15,
-                    "ethics": 0.15
-                }
-            }
+            "options": {"weights": {"relevance": 0.1, "privacy": 0.6, "quality": 0.15, "ethics": 0.15}},
         }
 
         response = self.post("/rank-urls", payload)
@@ -175,15 +170,9 @@ class TestURLRankingAPI(unittest.TestCase):
             "intent": {
                 "intentId": "test-api-1",
                 "context": {"product": "search"},
-                "declared": {
-                    "query": "open source code hosting"
-                },
-                "inferred": {
-                    "ethicalSignals": [
-                        {"dimension": "openness", "preference": "open-source_preferred"}
-                    ]
-                }
-            }
+                "declared": {"query": "open source code hosting"},
+                "inferred": {"ethicalSignals": [{"dimension": "openness", "preference": "open-source_preferred"}]},
+            },
         }
 
         response = self.post("/rank-urls", payload)
@@ -209,12 +198,9 @@ class TestURLRankingAPI(unittest.TestCase):
             "intent": {
                 "intentId": "test-api-2",
                 "context": {"product": "search"},
-                "declared": {
-                    "query": "search engine",
-                    "negativePreferences": ["no google", "no facebook"]
-                },
-                "inferred": {}
-            }
+                "declared": {"query": "search engine", "negativePreferences": ["no google", "no facebook"]},
+                "inferred": {},
+            },
         }
 
         response = self.post("/rank-urls", payload)
@@ -238,10 +224,7 @@ class TestURLRankingAPI(unittest.TestCase):
 
     def test_response_schema(self):
         """Test that the response schema matches URLRankingAPIResponse"""
-        payload = {
-            "query": "privacy",
-            "urls": ["https://protonmail.com"]
-        }
+        payload = {"query": "privacy", "urls": ["https://protonmail.com"]}
 
         response = self.post("/rank-urls", payload)
         self.assertEqual(response.status_code, 200)
@@ -256,10 +239,18 @@ class TestURLRankingAPI(unittest.TestCase):
 
         result = data["ranked_urls"][0]
         expected_fields = [
-            "url", "title", "description", "domain",
-            "privacy_score", "tracker_count", "encryption_enabled",
-            "content_type", "is_open_source", "is_non_profit",
-            "relevance_score", "final_score"
+            "url",
+            "title",
+            "description",
+            "domain",
+            "privacy_score",
+            "tracker_count",
+            "encryption_enabled",
+            "content_type",
+            "is_open_source",
+            "is_non_profit",
+            "relevance_score",
+            "final_score",
         ]
         for field in expected_fields:
             self.assertIn(field, result, f"Missing field: {field}")
@@ -272,7 +263,7 @@ class TestURLRankingAPI(unittest.TestCase):
                 "https://protonmail.com",
                 "https://google.com",
                 "https://wikipedia.org",
-            ]
+            ],
         }
 
         response = self.post("/rank-urls", payload)

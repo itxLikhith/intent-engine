@@ -4,11 +4,13 @@ Intent Engine - Pydantic Models
 This module defines Pydantic models for all entities and requests used in the API.
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any, Union
-from datetime import datetime, date
+from datetime import date, datetime
 from enum import Enum
-from core.schema import UniversalIntent, IntentExtractionRequest
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel, Field
+
+from core.schema import IntentExtractionRequest, UniversalIntent
 
 
 # Database entity models
@@ -553,6 +555,7 @@ class TrendAnalysisResponse(BaseModel):
 # Unified Search Models (SearXNG Integration)
 class UnifiedSearchRequest(BaseModel):
     """Request model for unified privacy search with intent ranking."""
+
     query: str
     categories: Optional[List[str]] = None
     engines: Optional[List[str]] = None
@@ -568,6 +571,7 @@ class UnifiedSearchRequest(BaseModel):
 
 class RankedSearchResult(BaseModel):
     """Ranked search result with intent alignment and privacy scoring."""
+
     url: str
     title: str
     content: str
@@ -586,6 +590,7 @@ class RankedSearchResult(BaseModel):
 
 class ExtractedIntent(BaseModel):
     """Extracted intent from search query for API response."""
+
     goal: str
     constraints: List[Dict[str, Any]]
     use_cases: List[str]
@@ -596,6 +601,7 @@ class ExtractedIntent(BaseModel):
 
 class UnifiedSearchResponse(BaseModel):
     """Response model for unified search endpoint."""
+
     query: str
     results: List[RankedSearchResult]
     total_results: int

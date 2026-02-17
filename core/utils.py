@@ -4,14 +4,14 @@ Intent Engine - Core Utilities
 This module contains shared utilities used across all components of the Intent Engine.
 """
 
-import re
-import numpy as np
-from typing import List, Optional, Dict, Any
-from functools import lru_cache
-from collections import OrderedDict
 import logging
+import re
+from collections import OrderedDict
 from datetime import datetime, timezone
+from functools import lru_cache
+from typing import Any, Dict, List, Optional
 
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,8 +33,8 @@ class EmbeddingCache:
     def _load_model(self):
         """Load the sentence transformer model"""
         try:
-            from transformers import AutoTokenizer, AutoModel
             import torch
+            from transformers import AutoModel, AutoTokenizer
 
             # Use a lightweight model optimized for CPU
             model_name = "sentence-transformers/all-MiniLM-L6-v2"
@@ -43,7 +43,7 @@ class EmbeddingCache:
             self.model = AutoModel.from_pretrained(model_name)
 
             # Move model to CPU
-            self.model = self.model.to('cpu')
+            self.model = self.model.to("cpu")
 
             logger.info(f"Loaded embedding model: {model_name}")
         except ImportError:
@@ -103,7 +103,7 @@ class EmbeddingCache:
             "misses": self.misses,
             "hit_rate": hit_rate,
             "size": len(self.cache),
-            "maxsize": self.maxsize
+            "maxsize": self.maxsize,
         }
 
     def clear(self):
@@ -131,23 +131,23 @@ def extract_price_range(text: str) -> Optional[tuple]:
     """
     # Pattern to match prices like "under 100", "less than 50", etc.
     patterns = [
-        r'\b(under|less than|below)\s*(\d+)\s*(?:rupees|rs|₹|dollars?|usd)?\b',
-        r'\b(over|more than|above)\s*(\d+)\s*(?:rupees|rs|₹|dollars?|usd)?\b',
-        r'\b(above|greater than)\s*(\d+)\s*(?:rupees|rs|₹|dollars?|usd)?\b'
+        r"\b(under|less than|below)\s*(\d+)\s*(?:rupees|rs|₹|dollars?|usd)?\b",
+        r"\b(over|more than|above)\s*(\d+)\s*(?:rupees|rs|₹|dollars?|usd)?\b",
+        r"\b(above|greater than)\s*(\d+)\s*(?:rupees|rs|₹|dollars?|usd)?\b",
     ]
-    
+
     for pattern in patterns:
         match = re.search(pattern, text.lower())
         if match:
             operator_word = match.group(1)
             value = int(match.group(2))
-            
+
             # Map operator words to symbols
-            if operator_word in ['under', 'less than', 'below']:
-                return ('<=', value)
-            elif operator_word in ['over', 'more than', 'above', 'greater than']:
-                return ('>=', value)
-    
+            if operator_word in ["under", "less than", "below"]:
+                return ("<=", value)
+            elif operator_word in ["over", "more than", "above", "greater than"]:
+                return (">=", value)
+
     return None
 
 
@@ -157,11 +157,11 @@ def normalize_datetime(dt_str: str) -> datetime:
     """
     try:
         # Handle ISO format with Z suffix
-        if dt_str.endswith('Z'):
-            dt_str = dt_str[:-1] + '+00:00'
-        
+        if dt_str.endswith("Z"):
+            dt_str = dt_str[:-1] + "+00:00"
+
         # Parse the datetime
-        if '+' in dt_str or dt_str.count('-') > 2:  # Has timezone info
+        if "+" in dt_str or dt_str.count("-") > 2:  # Has timezone info
             return datetime.fromisoformat(dt_str)
         else:
             # Naive datetime, treat as UTC
@@ -184,7 +184,7 @@ def sanitize_input(text: str) -> str:
     Sanitize user input to prevent injection attacks
     """
     # Remove potentially dangerous characters/sequences
-    sanitized = re.sub(r'[<>"\';]', '', text)
+    sanitized = re.sub(r'[<>"\';]', "", text)
     return sanitized.strip()
 
 
@@ -202,13 +202,13 @@ def fuzzy_match(text1: str, text2: str, threshold: float = 0.7) -> bool:
     # Simple token-based similarity
     tokens1 = set(text1.lower().split())
     tokens2 = set(text2.lower().split())
-    
+
     intersection = tokens1.intersection(tokens2)
     union = tokens1.union(tokens2)
-    
+
     if not union:
         return False
-    
+
     similarity = len(intersection) / len(union)
     return similarity >= threshold
 

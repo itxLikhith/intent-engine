@@ -14,13 +14,13 @@ Tests include:
 """
 
 import asyncio
-import aiohttp
-import time
-import statistics
 import json
-from typing import List, Dict, Any
+import statistics
+import time
 from datetime import datetime
+from typing import Any, Dict, List
 
+import aiohttp
 
 BASE_URL = "http://localhost:8000"
 
@@ -40,28 +40,24 @@ class SearchEngineStressTest:
             "what is differential privacy",
             "how does end-to-end encryption work",
             "open source alternatives to Google Drive",
-            
             # Comparison queries
             "Signal vs Telegram privacy comparison",
             "ProtonMail vs Tutanota features",
             "best password manager 2024",
             "Firefox vs Brave privacy browser",
             "DuckDuckGo vs Startpage search engine",
-            
             # Transactional queries
             "download Signal for Android",
             "install Tor Browser Ubuntu",
             "setup VPN on router",
             "configure DNS over HTTPS",
             "enable two-factor authentication",
-            
             # Privacy-focused queries
             "privacy tools for journalists",
             "secure messaging apps for business",
             "how to avoid online tracking",
             "best VPN for privacy 2024",
             "anonymous browsing techniques",
-            
             # Technical queries
             "docker container security best practices",
             "Kubernetes encryption at rest",
@@ -81,26 +77,19 @@ class SearchEngineStressTest:
             "successful_requests": 0,
             "failed_requests": 0,
             "response_times": [],
-            "errors": []
+            "errors": [],
         }
 
         async with aiohttp.ClientSession() as session:
             for i in range(iterations):
                 query = self.test_queries[i % len(self.test_queries)]
-                
-                payload = {
-                    "query": query,
-                    "extract_intent": False,
-                    "rank_results": False,
-                    "num_results": 10
-                }
+
+                payload = {"query": query, "extract_intent": False, "rank_results": False, "num_results": 10}
 
                 start = time.time()
                 try:
                     async with session.post(
-                        f"{self.base_url}/search",
-                        json=payload,
-                        timeout=aiohttp.ClientTimeout(total=60)
+                        f"{self.base_url}/search", json=payload, timeout=aiohttp.ClientTimeout(total=60)
                     ) as response:
                         elapsed = (time.time() - start) * 1000
                         results["total_requests"] += 1
@@ -134,25 +123,23 @@ class SearchEngineStressTest:
             "successful_requests": 0,
             "failed_requests": 0,
             "response_times": [],
-            "errors": []
+            "errors": [],
         }
 
         async with aiohttp.ClientSession() as session:
             for i in range(iterations):
                 query = self.test_queries[i % len(self.test_queries)]
-                
+
                 payload = {
                     "product": "search",
                     "input": {"text": query},
-                    "context": {"sessionId": f"stress-test-{i}", "userLocale": "en-US"}
+                    "context": {"sessionId": f"stress-test-{i}", "userLocale": "en-US"},
                 }
 
                 start = time.time()
                 try:
                     async with session.post(
-                        f"{self.base_url}/extract-intent",
-                        json=payload,
-                        timeout=aiohttp.ClientTimeout(total=30)
+                        f"{self.base_url}/extract-intent", json=payload, timeout=aiohttp.ClientTimeout(total=30)
                     ) as response:
                         elapsed = (time.time() - start) * 1000
                         results["total_requests"] += 1
@@ -162,9 +149,11 @@ class SearchEngineStressTest:
                             results["successful_requests"] += 1
                             if i == 0:
                                 result_data = await response.json()
-                                intent = result_data.get('intent', {})
-                                declared = intent.get('declared', {})
-                                print(f"  Sample: goal={declared.get('goal', 'unknown')}, complexity={intent.get('inferred', {}).get('complexity', 'unknown')}")
+                                intent = result_data.get("intent", {})
+                                declared = intent.get("declared", {})
+                                print(
+                                    f"  Sample: goal={declared.get('goal', 'unknown')}, complexity={intent.get('inferred', {}).get('complexity', 'unknown')}"
+                                )
                         else:
                             results["failed_requests"] += 1
                             results["errors"].append(f"Request {i}: HTTP {response.status}")
@@ -190,26 +179,24 @@ class SearchEngineStressTest:
             "response_times": [],
             "search_times": [],
             "intent_times": [],
-            "errors": []
+            "errors": [],
         }
 
         async with aiohttp.ClientSession() as session:
             for i in range(iterations):
                 query = self.test_queries[i % len(self.test_queries)]
-                
+
                 # Step 1: Extract intent
                 intent_payload = {
                     "product": "search",
                     "input": {"text": query},
-                    "context": {"sessionId": f"two-step-{i}", "userLocale": "en-US"}
+                    "context": {"sessionId": f"two-step-{i}", "userLocale": "en-US"},
                 }
 
                 intent_start = time.time()
                 try:
                     async with session.post(
-                        f"{self.base_url}/extract-intent",
-                        json=intent_payload,
-                        timeout=aiohttp.ClientTimeout(total=30)
+                        f"{self.base_url}/extract-intent", json=intent_payload, timeout=aiohttp.ClientTimeout(total=30)
                     ) as intent_response:
                         intent_elapsed = (time.time() - intent_start) * 1000
                         results["intent_times"].append(intent_elapsed)
@@ -220,21 +207,19 @@ class SearchEngineStressTest:
                             continue
 
                         intent_data = await intent_response.json()
-                        intent = intent_data.get('intent', {})
+                        intent = intent_data.get("intent", {})
 
                         # Step 2: Basic search (without intent extraction)
                         search_payload = {
                             "query": query,
                             "extract_intent": False,
                             "rank_results": False,
-                            "num_results": 10
+                            "num_results": 10,
                         }
 
                         search_start = time.time()
                         async with session.post(
-                            f"{self.base_url}/search",
-                            json=search_payload,
-                            timeout=aiohttp.ClientTimeout(total=60)
+                            f"{self.base_url}/search", json=search_payload, timeout=aiohttp.ClientTimeout(total=60)
                         ) as search_response:
                             search_elapsed = (time.time() - search_start) * 1000
                             total_elapsed = (time.time() - intent_start) * 1000
@@ -275,23 +260,16 @@ class SearchEngineStressTest:
             "response_times": [],
             "errors": [],
             "start_time": time.time(),
-            "end_time": None
+            "end_time": None,
         }
 
         async def make_request(session, query: str, request_id: int):
-            payload = {
-                "query": query,
-                "extract_intent": True,
-                "rank_results": True,
-                "num_results": 10
-            }
+            payload = {"query": query, "extract_intent": True, "rank_results": True, "num_results": 10}
 
             start = time.time()
             try:
                 async with session.post(
-                    f"{self.base_url}/search",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=60)
+                    f"{self.base_url}/search", json=payload, timeout=aiohttp.ClientTimeout(total=60)
                 ) as response:
                     elapsed = (time.time() - start) * 1000
                     results["total_requests"] += 1
@@ -320,10 +298,7 @@ class SearchEngineStressTest:
                     tasks.append(task)
                     request_id += 1
 
-                done, pending = await asyncio.wait(
-                    tasks,
-                    return_when=asyncio.FIRST_COMPLETED
-                )
+                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
                 tasks = list(pending)
 
             if tasks:
@@ -354,18 +329,18 @@ class SearchEngineStressTest:
         async with aiohttp.ClientSession() as session:
             for config in test_configs:
                 print(f"\n  Testing: {config['name']}...")
-                
+
                 results = {
                     "total_requests": 0,
                     "successful_requests": 0,
                     "failed_requests": 0,
                     "response_times": [],
-                    "result_counts": []
+                    "result_counts": [],
                 }
 
                 for i in range(iterations):
                     query = self.test_queries[i % len(self.test_queries)]
-                    
+
                     payload = {
                         "query": query,
                         "extract_intent": True,
@@ -373,16 +348,14 @@ class SearchEngineStressTest:
                         "num_results": 20,
                         "exclude_big_tech": config["exclude_big_tech"],
                     }
-                    
+
                     if config["min_privacy_score"]:
                         payload["min_privacy_score"] = config["min_privacy_score"]
 
                     start = time.time()
                     try:
                         async with session.post(
-                            f"{self.base_url}/search",
-                            json=payload,
-                            timeout=aiohttp.ClientTimeout(total=60)
+                            f"{self.base_url}/search", json=payload, timeout=aiohttp.ClientTimeout(total=60)
                         ) as response:
                             elapsed = (time.time() - start) * 1000
                             results["total_requests"] += 1
@@ -391,14 +364,14 @@ class SearchEngineStressTest:
                             if response.status == 200:
                                 results["successful_requests"] += 1
                                 result_data = await response.json()
-                                results["result_counts"].append(len(result_data.get('results', [])))
+                                results["result_counts"].append(len(result_data.get("results", [])))
 
                     except Exception as e:
                         results["total_requests"] += 1
                         results["failed_requests"] += 1
 
                 all_results[config["name"]] = results
-                
+
                 print(f"    Avg response time: {statistics.mean(results['response_times']):.2f}ms")
                 print(f"    Avg results returned: {statistics.mean(results['result_counts']):.1f}")
                 print(f"    Success rate: {results['successful_requests']/results['total_requests']*100:.1f}%")
@@ -416,30 +389,23 @@ class SearchEngineStressTest:
         async with aiohttp.ClientSession() as session:
             for num_results in num_results_list:
                 print(f"\n  Testing with {num_results} results...")
-                
-                results = {
-                    "total_requests": 0,
-                    "successful_requests": 0,
-                    "response_times": [],
-                    "actual_results": []
-                }
+
+                results = {"total_requests": 0, "successful_requests": 0, "response_times": [], "actual_results": []}
 
                 for i in range(20):
                     query = self.test_queries[i % len(self.test_queries)]
-                    
+
                     payload = {
                         "query": query,
                         "extract_intent": False,
                         "rank_results": False,
-                        "num_results": num_results
+                        "num_results": num_results,
                     }
 
                     start = time.time()
                     try:
                         async with session.post(
-                            f"{self.base_url}/search",
-                            json=payload,
-                            timeout=aiohttp.ClientTimeout(total=60)
+                            f"{self.base_url}/search", json=payload, timeout=aiohttp.ClientTimeout(total=60)
                         ) as response:
                             elapsed = (time.time() - start) * 1000
                             results["total_requests"] += 1
@@ -448,16 +414,16 @@ class SearchEngineStressTest:
                             if response.status == 200:
                                 results["successful_requests"] += 1
                                 result_data = await response.json()
-                                results["actual_results"].append(len(result_data.get('results', [])))
+                                results["actual_results"].append(len(result_data.get("results", [])))
 
                     except Exception as e:
                         results["total_requests"] += 1
 
                 results_by_size[num_results] = results
-                
+
                 avg_time = statistics.mean(results["response_times"]) if results["response_times"] else 0
                 avg_returned = statistics.mean(results["actual_results"]) if results["actual_results"] else 0
-                
+
                 print(f"    Avg response time: {avg_time:.2f}ms")
                 print(f"    Avg results returned: {avg_returned:.1f}")
 
@@ -474,46 +440,39 @@ class SearchEngineStressTest:
             "results_with_content": [],
             "results_with_thumbnails": [],
             "unique_engines": set(),
-            "processing_times": []
+            "processing_times": [],
         }
 
         async with aiohttp.ClientSession() as session:
             for i in range(iterations):
                 query = self.test_queries[i % len(self.test_queries)]
-                
-                payload = {
-                    "query": query,
-                    "extract_intent": True,
-                    "rank_results": True,
-                    "num_results": 20
-                }
+
+                payload = {"query": query, "extract_intent": True, "rank_results": True, "num_results": 20}
 
                 try:
                     async with session.post(
-                        f"{self.base_url}/search",
-                        json=payload,
-                        timeout=aiohttp.ClientTimeout(total=60)
+                        f"{self.base_url}/search", json=payload, timeout=aiohttp.ClientTimeout(total=60)
                     ) as response:
                         if response.status == 200:
                             result_data = await response.json()
-                            results = result_data.get('results', [])
-                            
+                            results = result_data.get("results", [])
+
                             quality_metrics["total_results_returned"].append(len(results))
-                            
+
                             # Count results with content
-                            with_content = sum(1 for r in results if r.get('content'))
+                            with_content = sum(1 for r in results if r.get("content"))
                             quality_metrics["results_with_content"].append(with_content)
-                            
+
                             # Count results with thumbnails
-                            with_thumbnails = sum(1 for r in results if r.get('thumbnail'))
+                            with_thumbnails = sum(1 for r in results if r.get("thumbnail"))
                             quality_metrics["results_with_thumbnails"].append(with_thumbnails)
-                            
+
                             # Track engines used
-                            engines = result_data.get('engines_used', [])
+                            engines = result_data.get("engines_used", [])
                             quality_metrics["unique_engines"].update(engines)
-                            
+
                             # Track processing time
-                            processing_time = result_data.get('processing_time_ms', 0)
+                            processing_time = result_data.get("processing_time_ms", 0)
                             quality_metrics["processing_times"].append(processing_time)
 
                 except Exception as e:
@@ -540,42 +499,42 @@ class SearchEngineStressTest:
         print(f"  Total requests: {results['total_requests']}")
         print(f"  Successful: {results['successful_requests']}")
         print(f"  Failed: {results['failed_requests']}")
-        
-        if results['total_requests'] > 0:
-            success_rate = results['successful_requests'] / results['total_requests'] * 100
+
+        if results["total_requests"] > 0:
+            success_rate = results["successful_requests"] / results["total_requests"] * 100
             print(f"  Success rate: {success_rate:.1f}%")
 
-        if 'duration' in results and results['duration']:
+        if "duration" in results and results["duration"]:
             print(f"  Duration: {results['duration']:.2f}s")
-        
-        if 'rps' in results:
+
+        if "rps" in results:
             print(f"  Throughput: {results['rps']:.2f} requests/second")
 
-        if results['response_times']:
+        if results["response_times"]:
             print(f"\n  Response Times:")
             print(f"    Average: {statistics.mean(results['response_times']):.2f}ms")
             print(f"    Median: {statistics.median(results['response_times']):.2f}ms")
             print(f"    Min: {min(results['response_times']):.2f}ms")
             print(f"    Max: {max(results['response_times']):.2f}ms")
-            
-            sorted_times = sorted(results['response_times'])
+
+            sorted_times = sorted(results["response_times"])
             p95_idx = int(len(sorted_times) * 0.95)
             p99_idx = int(len(sorted_times) * 0.99)
             print(f"    95th percentile: {sorted_times[p95_idx]:.2f}ms")
             print(f"    99th percentile: {sorted_times[min(p99_idx, len(sorted_times)-1)]:.2f}ms")
 
-        if results.get('errors'):
+        if results.get("errors"):
             print(f"\n  [WARN] Errors ({len(results['errors'])}):")
-            for error in results['errors'][:5]:
+            for error in results["errors"][:5]:
                 print(f"    - {error}")
 
     async def run_all_search_tests(self):
         """Run all search engine stress tests"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("SEARCH ENGINE STRESS TEST SUITE")
         print(f"Target: {self.base_url}")
         print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("="*60)
+        print("=" * 60)
 
         try:
             # Test 1: Basic search throughput
@@ -599,9 +558,9 @@ class SearchEngineStressTest:
             # Test 7: Result quality
             await self.test_search_result_quality(iterations=15)
 
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("ALL SEARCH ENGINE TESTS COMPLETED")
-            print("="*60)
+            print("=" * 60)
 
         except Exception as e:
             print(f"\n[ERROR] Tests failed: {e}")
@@ -611,9 +570,9 @@ class SearchEngineStressTest:
 def main():
     """Main entry point"""
     print("Starting Search Engine Stress Tests...")
-    
+
     tester = SearchEngineStressTest()
-    
+
     try:
         asyncio.run(tester.run_all_search_tests())
     except KeyboardInterrupt:
@@ -621,6 +580,7 @@ def main():
     except Exception as e:
         print(f"\n[ERROR] Tests failed: {e}")
         import sys
+
         sys.exit(1)
 
 

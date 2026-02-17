@@ -9,13 +9,13 @@ This module tests database connection pool behavior under load:
 """
 
 import asyncio
-import aiohttp
-import time
-import statistics
 import os
-from typing import List, Dict, Any
+import statistics
+import time
 from datetime import datetime
+from typing import Any, Dict, List
 
+import aiohttp
 
 BASE_URL = "http://localhost:8000"
 
@@ -53,20 +53,18 @@ class DatabaseStressTest:
                     "budget": 1000.0,
                     "daily_budget": 100.0,
                     "start_date": datetime.utcnow().isoformat(),
-                    "status": "active"
+                    "status": "active",
                 }
 
                 start = time.time()
                 try:
                     async with session.post(
-                        f"{self.base_url}/campaigns",
-                        json=payload,
-                        timeout=aiohttp.ClientTimeout(total=10)
+                        f"{self.base_url}/campaigns", json=payload, timeout=aiohttp.ClientTimeout(total=10)
                     ) as response:
                         elapsed = (time.time() - start) * 1000
                         if response.status == 200:
                             data = await response.json()
-                            created_ids.append(data.get('id'))
+                            created_ids.append(data.get("id"))
                             results["creates"]["success"] += 1
                         else:
                             results["creates"]["failed"] += 1
@@ -81,8 +79,7 @@ class DatabaseStressTest:
                 start = time.time()
                 try:
                     async with session.get(
-                        f"{self.base_url}/campaigns",
-                        timeout=aiohttp.ClientTimeout(total=10)
+                        f"{self.base_url}/campaigns", timeout=aiohttp.ClientTimeout(total=10)
                     ) as response:
                         elapsed = (time.time() - start) * 1000
                         if response.status == 200:
@@ -97,18 +94,14 @@ class DatabaseStressTest:
             # UPDATE operations (on first 10 created)
             print("  Running UPDATE operations...")
             for i, campaign_id in enumerate(created_ids[:10]):
-                payload = {
-                    "name": f"Updated Campaign {i}",
-                    "budget": 1500.0,
-                    "status": "paused"
-                }
+                payload = {"name": f"Updated Campaign {i}", "budget": 1500.0, "status": "paused"}
 
                 start = time.time()
                 try:
                     async with session.put(
                         f"{self.base_url}/campaigns/{campaign_id}",
                         json=payload,
-                        timeout=aiohttp.ClientTimeout(total=10)
+                        timeout=aiohttp.ClientTimeout(total=10),
                     ) as response:
                         elapsed = (time.time() - start) * 1000
                         if response.status == 200:
@@ -126,8 +119,7 @@ class DatabaseStressTest:
                 start = time.time()
                 try:
                     async with session.delete(
-                        f"{self.base_url}/campaigns/{campaign_id}",
-                        timeout=aiohttp.ClientTimeout(total=10)
+                        f"{self.base_url}/campaigns/{campaign_id}", timeout=aiohttp.ClientTimeout(total=10)
                     ) as response:
                         elapsed = (time.time() - start) * 1000
                         if response.status == 200:
@@ -150,13 +142,7 @@ class DatabaseStressTest:
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*60}")
 
-        results = {
-            "total_requests": 0,
-            "successful": 0,
-            "failed": 0,
-            "response_times": [],
-            "errors": []
-        }
+        results = {"total_requests": 0, "successful": 0, "failed": 0, "response_times": [], "errors": []}
 
         start_time = time.time()
 
@@ -165,8 +151,7 @@ class DatabaseStressTest:
                 # Mix of read operations only (ads endpoint may have validation issues)
                 # Focus on testing database connection pool, not API validation
                 async with session.get(
-                    f"{self.base_url}/campaigns",
-                    timeout=aiohttp.ClientTimeout(total=10)
+                    f"{self.base_url}/campaigns", timeout=aiohttp.ClientTimeout(total=10)
                 ) as response:
                     elapsed = (time.time() - start_time) * 1000
 
@@ -220,12 +205,7 @@ class DatabaseStressTest:
         print(f"Iterations: {iterations}")
         print(f"{'='*60}")
 
-        results = {
-            "total": 0,
-            "success": 0,
-            "failed": 0,
-            "times": []
-        }
+        results = {"total": 0, "success": 0, "failed": 0, "times": []}
 
         async with aiohttp.ClientSession() as session:
             for i in range(iterations):
@@ -233,8 +213,7 @@ class DatabaseStressTest:
                 try:
                     # Rapid fire read operations
                     async with session.get(
-                        f"{self.base_url}/campaigns",
-                        timeout=aiohttp.ClientTimeout(total=5)
+                        f"{self.base_url}/campaigns", timeout=aiohttp.ClientTimeout(total=5)
                     ) as response:
                         elapsed = (time.time() - start) * 1000
                         results["total"] += 1
@@ -256,7 +235,7 @@ class DatabaseStressTest:
         print(f"  Failed: {results['failed']}")
         print(f"  Success rate: {(results['success']/results['total']*100):.1f}%")
 
-        if results['times']:
+        if results["times"]:
             print(f"\n  Response Times:")
             print(f"    Average: {statistics.mean(results['times']):.2f}ms")
             print(f"    Median: {statistics.median(results['times']):.2f}ms")
@@ -264,8 +243,8 @@ class DatabaseStressTest:
 
             # Check for connection exhaustion pattern
             # (increasing response times indicate connection pool issues)
-            first_quarter_avg = statistics.mean(results['times'][:len(results['times'])//4])
-            last_quarter_avg = statistics.mean(results['times'][-len(results['times'])//4:])
+            first_quarter_avg = statistics.mean(results["times"][: len(results["times"]) // 4])
+            last_quarter_avg = statistics.mean(results["times"][-len(results["times"]) // 4 :])
 
             if last_quarter_avg > first_quarter_avg * 2:
                 print(f"\n  [WARN] Response times increased {last_quarter_avg/first_quarter_avg:.1f}x")
@@ -283,11 +262,7 @@ class DatabaseStressTest:
 
         # Note: This test requires API endpoints that support transactions
         # For now, we'll test error handling with invalid data
-        results = {
-            "invalid_requests": 0,
-            "proper_errors": 0,
-            "server_errors": 0
-        }
+        results = {"invalid_requests": 0, "proper_errors": 0, "server_errors": 0}
 
         async with aiohttp.ClientSession() as session:
             # Try to create campaigns with invalid data
@@ -301,9 +276,7 @@ class DatabaseStressTest:
                 for i in range(10):
                     try:
                         async with session.post(
-                            f"{self.base_url}/campaigns",
-                            json=payload,
-                            timeout=aiohttp.ClientTimeout(total=5)
+                            f"{self.base_url}/campaigns", json=payload, timeout=aiohttp.ClientTimeout(total=5)
                         ) as response:
                             results["invalid_requests"] += 1
                             if response.status in [400, 422]:
@@ -318,7 +291,7 @@ class DatabaseStressTest:
         print(f"  Proper validation errors (400/422): {results['proper_errors']}")
         print(f"  Server errors (500): {results['server_errors']}")
 
-        if results['server_errors'] > 0:
+        if results["server_errors"] > 0:
             print(f"\n  [WARN] Server errors detected during invalid input!")
         else:
             print(f"\n  [OK] Proper error handling (no server errors)")
@@ -329,10 +302,10 @@ class DatabaseStressTest:
         """Print CRUD test results"""
         print(f"\n{test_name} Results:")
         for operation, data in results.items():
-            success = data.get('success', 0)
-            failed = data.get('failed', 0)
+            success = data.get("success", 0)
+            failed = data.get("failed", 0)
             total = success + failed
-            times = data.get('times', [])
+            times = data.get("times", [])
 
             print(f"\n  {operation.upper()}:")
             print(f"    Total: {total}")
@@ -354,23 +327,23 @@ class DatabaseStressTest:
         print(f"  Duration: {results['duration']:.2f}s")
         print(f"  RPS: {results['rps']:.2f}")
 
-        if results.get('response_times'):
+        if results.get("response_times"):
             print(f"\n  Response Times:")
             print(f"    Average: {results['avg_response_time']:.2f}ms")
             print(f"    Median: {results['median_response_time']:.2f}ms")
             print(f"    95th percentile: {results['p95_response_time']:.2f}ms")
             print(f"    Max: {results['max_response_time']:.2f}ms")
 
-        if results.get('errors') and len(results['errors']) > 0:
+        if results.get("errors") and len(results["errors"]) > 0:
             print(f"\n  [WARN] Errors ({len(results['errors'])}):")
-            for error in results['errors'][:5]:
+            for error in results["errors"][:5]:
                 print(f"    - {error}")
 
     async def run_all_database_tests(self):
         """Run all database stress tests"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("DATABASE CONNECTION POOL STRESS TEST SUITE")
-        print("="*60)
+        print("=" * 60)
 
         try:
             # Test 1: CRUD operations
@@ -385,9 +358,9 @@ class DatabaseStressTest:
             # Test 4: Transaction rollback
             await self.test_transaction_rollback()
 
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("ALL DATABASE TESTS COMPLETED")
-            print("="*60)
+            print("=" * 60)
 
         except Exception as e:
             print(f"\n[ERROR] Database tests failed: {e}")
@@ -405,6 +378,7 @@ def main():
     except Exception as e:
         print(f"\n[ERROR] Tests failed: {e}")
         import sys
+
         sys.exit(1)
 
 

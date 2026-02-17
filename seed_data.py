@@ -6,23 +6,24 @@ for testing and demonstration purposes.
 
 Usage:
     python seed_data.py [--reset]
-    
+
 Options:
     --reset    Drop and recreate all tables before seeding
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from database import db_manager, Advertiser, Campaign, AdGroup, Ad, CreativeAsset, Base, engine
 from sqlalchemy.orm import Session
+
+from database import Ad, AdGroup, Advertiser, Base, Campaign, CreativeAsset, db_manager, engine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ def reset_database():
 def seed_advertisers(db: Session) -> List[Advertiser]:
     """Create sample advertisers"""
     logger.info("Seeding advertisers...")
-    
+
     advertisers_data = [
         {"name": "TechCorp Solutions", "contact_email": "ads@techcorp.com"},
         {"name": "GreenEnergy Inc", "contact_email": "marketing@greenenergy.com"},
@@ -52,13 +53,13 @@ def seed_advertisers(db: Session) -> List[Advertiser]:
         {"name": "GameZone Entertainment", "contact_email": "marketing@gamezone.com"},
         {"name": "HomeComfort Living", "contact_email": "ads@homecomfort.com"},
     ]
-    
+
     advertisers = []
     for data in advertisers_data:
         advertiser = Advertiser(**data)
         db.add(advertiser)
         advertisers.append(advertiser)
-    
+
     db.commit()
     logger.info(f"Created {len(advertisers)} advertisers")
     return advertisers
@@ -67,50 +68,51 @@ def seed_advertisers(db: Session) -> List[Advertiser]:
 def seed_campaigns(db: Session, advertisers: List[Advertiser]) -> List[Campaign]:
     """Create sample campaigns"""
     logger.info("Seeding campaigns...")
-    
+
     now = datetime.utcnow()
     campaigns_data = [
         # TechCorp campaigns
         {"advertiser_id": advertisers[0].id, "name": "Q1 2026 Product Launch", "budget": 50000, "daily_budget": 500},
         {"advertiser_id": advertisers[0].id, "name": "Developer Tools Promotion", "budget": 25000, "daily_budget": 250},
-        
         # GreenEnergy campaigns
         {"advertiser_id": advertisers[1].id, "name": "Solar Panel Awareness", "budget": 30000, "daily_budget": 300},
         {"advertiser_id": advertisers[1].id, "name": "EV Charging Network", "budget": 20000, "daily_budget": 200},
-        
         # EduLearn campaigns
         {"advertiser_id": advertisers[2].id, "name": "Online Courses 2026", "budget": 40000, "daily_budget": 400},
-        {"advertiser_id": advertisers[2].id, "name": "Professional Certifications", "budget": 35000, "daily_budget": 350},
-        
+        {
+            "advertiser_id": advertisers[2].id,
+            "name": "Professional Certifications",
+            "budget": 35000,
+            "daily_budget": 350,
+        },
         # HealthFirst campaigns
         {"advertiser_id": advertisers[3].id, "name": "Telemedicine Services", "budget": 25000, "daily_budget": 250},
         {"advertiser_id": advertisers[3].id, "name": "Health Screening Campaign", "budget": 15000, "daily_budget": 150},
-        
         # FinanceWise campaigns
-        {"advertiser_id": advertisers[4].id, "name": "Investment Platform Launch", "budget": 45000, "daily_budget": 450},
+        {
+            "advertiser_id": advertisers[4].id,
+            "name": "Investment Platform Launch",
+            "budget": 45000,
+            "daily_budget": 450,
+        },
         {"advertiser_id": advertisers[4].id, "name": "Retirement Planning", "budget": 20000, "daily_budget": 200},
-        
         # TravelBug campaigns
         {"advertiser_id": advertisers[5].id, "name": "Summer Vacation Deals", "budget": 35000, "daily_budget": 350},
         {"advertiser_id": advertisers[5].id, "name": "Adventure Tours 2026", "budget": 25000, "daily_budget": 250},
-        
         # FoodieDelights campaigns
         {"advertiser_id": advertisers[6].id, "name": "Recipe App Promotion", "budget": 15000, "daily_budget": 150},
         {"advertiser_id": advertisers[6].id, "name": "Meal Kit Delivery", "budget": 20000, "daily_budget": 200},
-        
         # StyleHub campaigns
         {"advertiser_id": advertisers[7].id, "name": "Spring Collection 2026", "budget": 30000, "daily_budget": 300},
         {"advertiser_id": advertisers[7].id, "name": "Sustainable Fashion", "budget": 18000, "daily_budget": 180},
-        
         # GameZone campaigns
         {"advertiser_id": advertisers[8].id, "name": "New Game Releases", "budget": 40000, "daily_budget": 400},
         {"advertiser_id": advertisers[8].id, "name": "Gaming Hardware Sale", "budget": 25000, "daily_budget": 250},
-        
         # HomeComfort campaigns
         {"advertiser_id": advertisers[9].id, "name": "Smart Home Devices", "budget": 35000, "daily_budget": 350},
         {"advertiser_id": advertisers[9].id, "name": "Furniture Collection", "budget": 28000, "daily_budget": 280},
     ]
-    
+
     campaigns = []
     for data in campaigns_data:
         campaign = Campaign(
@@ -120,11 +122,11 @@ def seed_campaigns(db: Session, advertisers: List[Advertiser]) -> List[Campaign]
             end_date=now + timedelta(days=60),
             budget=data["budget"],
             daily_budget=data["daily_budget"],
-            status="active"
+            status="active",
         )
         db.add(campaign)
         campaigns.append(campaign)
-    
+
     db.commit()
     logger.info(f"Created {len(campaigns)} campaigns")
     return campaigns
@@ -133,38 +135,39 @@ def seed_campaigns(db: Session, advertisers: List[Advertiser]) -> List[Campaign]
 def seed_ad_groups(db: Session, campaigns: List[Campaign]) -> List[AdGroup]:
     """Create sample ad groups"""
     logger.info("Seeding ad groups...")
-    
+
     ad_groups_data = [
         # For each campaign, create 2-3 ad groups
         {"campaign_id": campaigns[0].id, "name": "Search Ads", "bid_strategy": "automated"},
         {"campaign_id": campaigns[0].id, "name": "Display Ads", "bid_strategy": "manual"},
         {"campaign_id": campaigns[0].id, "name": "Video Ads", "bid_strategy": "automated"},
-        
         {"campaign_id": campaigns[1].id, "name": "Developer Targeting", "bid_strategy": "automated"},
         {"campaign_id": campaigns[1].id, "name": "Enterprise Targeting", "bid_strategy": "manual"},
     ]
-    
+
     # Generate ad groups for all campaigns
     for i, campaign in enumerate(campaigns):
         if i < 2:  # Already defined above
             continue
-        
-        ad_groups_data.extend([
-            {"campaign_id": campaign.id, "name": f"{campaign.name} - Group A", "bid_strategy": "automated"},
-            {"campaign_id": campaign.id, "name": f"{campaign.name} - Group B", "bid_strategy": "manual"},
-        ])
-    
+
+        ad_groups_data.extend(
+            [
+                {"campaign_id": campaign.id, "name": f"{campaign.name} - Group A", "bid_strategy": "automated"},
+                {"campaign_id": campaign.id, "name": f"{campaign.name} - Group B", "bid_strategy": "manual"},
+            ]
+        )
+
     ad_groups = []
     for data in ad_groups_data:
         ad_group = AdGroup(
             campaign_id=data["campaign_id"],
             name=data["name"],
             bid_strategy=data["bid_strategy"],
-            targeting_settings={"demographics": "all", "interests": []}
+            targeting_settings={"demographics": "all", "interests": []},
         )
         db.add(ad_group)
         ad_groups.append(ad_group)
-    
+
     db.commit()
     logger.info(f"Created {len(ad_groups)} ad groups")
     return ad_groups
@@ -173,7 +176,7 @@ def seed_ad_groups(db: Session, campaigns: List[Campaign]) -> List[AdGroup]:
 def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup]) -> List[Ad]:
     """Create sample ads"""
     logger.info("Seeding ads...")
-    
+
     ads_data = [
         # TechCorp ads
         {
@@ -185,7 +188,7 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.85,
             "creative_format": "banner",
             "ethical_tags": ["open_source", "privacy"],
-            "targeting_constraints": {"device_type": ["desktop"], "interests": ["programming", "technology"]}
+            "targeting_constraints": {"device_type": ["desktop"], "interests": ["programming", "technology"]},
         },
         {
             "advertiser_id": advertisers[0].id,
@@ -196,9 +199,8 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.90,
             "creative_format": "native",
             "ethical_tags": ["enterprise", "security"],
-            "targeting_constraints": {"industry": ["technology", "finance"]}
+            "targeting_constraints": {"industry": ["technology", "finance"]},
         },
-        
         # GreenEnergy ads
         {
             "advertiser_id": advertisers[1].id,
@@ -209,7 +211,7 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.82,
             "creative_format": "banner",
             "ethical_tags": ["sustainability", "green"],
-            "targeting_constraints": {"location": ["suburban", "rural"]}
+            "targeting_constraints": {"location": ["suburban", "rural"]},
         },
         {
             "advertiser_id": advertisers[1].id,
@@ -220,9 +222,8 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.78,
             "creative_format": "native",
             "ethical_tags": ["sustainability", "transportation"],
-            "targeting_constraints": {"interests": ["electric_vehicles", "sustainability"]}
+            "targeting_constraints": {"interests": ["electric_vehicles", "sustainability"]},
         },
-        
         # EduLearn ads
         {
             "advertiser_id": advertisers[2].id,
@@ -233,9 +234,8 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.88,
             "creative_format": "video",
             "ethical_tags": ["education", "career"],
-            "targeting_constraints": {"age_range": ["18-34", "35-54"]}
+            "targeting_constraints": {"age_range": ["18-34", "35-54"]},
         },
-        
         # HealthFirst ads
         {
             "advertiser_id": advertisers[3].id,
@@ -246,9 +246,8 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.91,
             "creative_format": "banner",
             "ethical_tags": ["healthcare", "accessibility"],
-            "targeting_constraints": {"interests": ["health", "wellness"]}
+            "targeting_constraints": {"interests": ["health", "wellness"]},
         },
-        
         # FinanceWise ads
         {
             "advertiser_id": advertisers[4].id,
@@ -259,9 +258,8 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.84,
             "creative_format": "native",
             "ethical_tags": ["finance", "technology"],
-            "targeting_constraints": {"income_range": ["middle", "high"]}
+            "targeting_constraints": {"income_range": ["middle", "high"]},
         },
-        
         # TravelBug ads
         {
             "advertiser_id": advertisers[5].id,
@@ -272,9 +270,8 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.79,
             "creative_format": "video",
             "ethical_tags": ["travel", "adventure"],
-            "targeting_constraints": {"interests": ["travel", "outdoor_activities"]}
+            "targeting_constraints": {"interests": ["travel", "outdoor_activities"]},
         },
-        
         # GameZone ads
         {
             "advertiser_id": advertisers[8].id,
@@ -285,9 +282,8 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.87,
             "creative_format": "video",
             "ethical_tags": ["gaming", "entertainment"],
-            "targeting_constraints": {"interests": ["gaming", "rpg"]}
+            "targeting_constraints": {"interests": ["gaming", "rpg"]},
         },
-        
         # HomeComfort ads
         {
             "advertiser_id": advertisers[9].id,
@@ -298,10 +294,10 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             "quality_score": 0.83,
             "creative_format": "banner",
             "ethical_tags": ["technology", "home"],
-            "targeting_constraints": {"interests": ["smart_home", "technology"]}
+            "targeting_constraints": {"interests": ["smart_home", "technology"]},
         },
     ]
-    
+
     ads = []
     for data in ads_data:
         ad = Ad(
@@ -316,11 +312,11 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
             targeting_constraints=data["targeting_constraints"],
             bid_amount=1.50,
             status="active",
-            approval_status="approved"
+            approval_status="approved",
         )
         db.add(ad)
         ads.append(ad)
-    
+
     db.commit()
     logger.info(f"Created {len(ads)} ads")
     return ads
@@ -329,37 +325,45 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
 def seed_creative_assets(db: Session, ads: List[Ad]) -> List[CreativeAsset]:
     """Create sample creative assets"""
     logger.info("Seeding creative assets...")
-    
+
     assets_data = []
     for i, ad in enumerate(ads):
         if ad.creative_format == "banner":
-            assets_data.append({
-                "ad_id": ad.id,
-                "asset_type": "image",
-                "asset_url": f"/assets/banners/ad_{ad.id}_300x250.jpg",
-                "dimensions": {"width": 300, "height": 250}
-            })
-            assets_data.append({
-                "ad_id": ad.id,
-                "asset_type": "image",
-                "asset_url": f"/assets/banners/ad_{ad.id}_728x90.jpg",
-                "dimensions": {"width": 728, "height": 90}
-            })
+            assets_data.append(
+                {
+                    "ad_id": ad.id,
+                    "asset_type": "image",
+                    "asset_url": f"/assets/banners/ad_{ad.id}_300x250.jpg",
+                    "dimensions": {"width": 300, "height": 250},
+                }
+            )
+            assets_data.append(
+                {
+                    "ad_id": ad.id,
+                    "asset_type": "image",
+                    "asset_url": f"/assets/banners/ad_{ad.id}_728x90.jpg",
+                    "dimensions": {"width": 728, "height": 90},
+                }
+            )
         elif ad.creative_format == "video":
-            assets_data.append({
-                "ad_id": ad.id,
-                "asset_type": "video",
-                "asset_url": f"/assets/videos/ad_{ad.id}_30s.mp4",
-                "dimensions": {"width": 1920, "height": 1080, "duration": 30}
-            })
+            assets_data.append(
+                {
+                    "ad_id": ad.id,
+                    "asset_type": "video",
+                    "asset_url": f"/assets/videos/ad_{ad.id}_30s.mp4",
+                    "dimensions": {"width": 1920, "height": 1080, "duration": 30},
+                }
+            )
         elif ad.creative_format == "native":
-            assets_data.append({
-                "ad_id": ad.id,
-                "asset_type": "html",
-                "asset_url": f"/assets/native/ad_{ad.id}.html",
-                "dimensions": {"responsive": True}
-            })
-    
+            assets_data.append(
+                {
+                    "ad_id": ad.id,
+                    "asset_type": "html",
+                    "asset_url": f"/assets/native/ad_{ad.id}.html",
+                    "dimensions": {"responsive": True},
+                }
+            )
+
     creative_assets = []
     for data in assets_data:
         asset = CreativeAsset(
@@ -367,11 +371,11 @@ def seed_creative_assets(db: Session, ads: List[Ad]) -> List[CreativeAsset]:
             asset_type=data["asset_type"],
             asset_url=data["asset_url"],
             dimensions=data["dimensions"],
-            checksum=f"checksum_{data['ad_id']}_{data['asset_type']}"
+            checksum=f"checksum_{data['ad_id']}_{data['asset_type']}",
         )
         db.add(asset)
         creative_assets.append(asset)
-    
+
     db.commit()
     logger.info(f"Created {len(creative_assets)} creative assets")
     return creative_assets
@@ -380,23 +384,23 @@ def seed_creative_assets(db: Session, ads: List[Ad]) -> List[CreativeAsset]:
 def main():
     """Main function to seed all data"""
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Seed Intent Engine database with sample data')
-    parser.add_argument('--reset', action='store_true', help='Drop and recreate all tables before seeding')
+
+    parser = argparse.ArgumentParser(description="Seed Intent Engine database with sample data")
+    parser.add_argument("--reset", action="store_true", help="Drop and recreate all tables before seeding")
     args = parser.parse_args()
-    
+
     logger.info("Starting data seeding...")
-    
+
     # Reset database if requested
     if args.reset:
         reset_database()
     else:
         # Ensure tables exist
         Base.metadata.create_all(bind=engine)
-    
+
     # Create database session
     db = next(db_manager.get_db())
-    
+
     try:
         # Seed all data
         advertisers = seed_advertisers(db)
@@ -404,7 +408,7 @@ def main():
         ad_groups = seed_ad_groups(db, campaigns)
         ads = seed_ads(db, advertisers, ad_groups)
         creative_assets = seed_creative_assets(db, ads)
-        
+
         logger.info("=" * 60)
         logger.info("Seeding complete!")
         logger.info("=" * 60)
@@ -413,7 +417,7 @@ def main():
         logger.info(f"Ad Groups: {len(ad_groups)}")
         logger.info(f"Ads: {len(ads)}")
         logger.info(f"Creative Assets: {len(creative_assets)}")
-        
+
     except Exception as e:
         db.rollback()
         logger.error(f"Error during seeding: {e}")

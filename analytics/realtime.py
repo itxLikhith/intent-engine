@@ -9,36 +9,38 @@ import asyncio
 import json
 from datetime import datetime
 from typing import Dict, List, Optional, Set
+
 from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
+
 from models import AdMetric
 
 
 class ConnectionManager:
     """Manages WebSocket connections for real-time analytics"""
-    
+
     def __init__(self):
         self.active_connections: Set[WebSocket] = set()
-    
+
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.add(websocket)
-    
+
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
-    
+
     async def broadcast(self, message: Dict):
         """Broadcast message to all connected clients"""
         if not self.active_connections:
             return
-            
+
         disconnected = set()
         for connection in self.active_connections:
             try:
                 await connection.send_text(json.dumps(message))
             except WebSocketDisconnect:
                 disconnected.add(connection)
-        
+
         # Remove disconnected clients
         for connection in disconnected:
             self.disconnect(connection)
@@ -50,14 +52,16 @@ manager = ConnectionManager()
 
 class RealTimeAnalytics:
     """Handles real-time metrics collection and broadcasting"""
-    
+
     def __init__(self, db_session: Session):
         self.db = db_session
-    
+
     async def get_live_metrics(self, campaign_id: Optional[int] = None) -> Dict:
         """Get current live metrics"""
         # Import database entities inside the method to avoid circular imports
-        from database import AdMetric as DbAdMetric, Ad as DbAd, AdGroup as DbAdGroup
+        from database import Ad as DbAd
+        from database import AdGroup as DbAdGroup
+        from database import AdMetric as DbAdMetric
 
         # Get latest metrics from database
         query = self.db.query(DbAdMetric)
@@ -68,6 +72,7 @@ class RealTimeAnalytics:
 
         # Get metrics from last hour
         from datetime import timedelta
+
         one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         query = query.filter(DbAdMetric.created_at >= one_hour_ago)
 
@@ -91,14 +96,15 @@ class RealTimeAnalytics:
             "cpc": round(cpc, 2),
             "roas": round(roas, 2),
             "active_campaigns": self._get_active_campaigns_count(),
-            "live_users": self._get_live_users_count()
+            "live_users": self._get_live_users_count(),
         }
-    
+
     def _get_active_campaigns_count(self) -> int:
         """Get count of currently active campaigns"""
         from database import Campaign as DbCampaign
+
         return self.db.query(DbCampaign).filter(DbCampaign.status == "active").count()
-    
+
     def _get_live_users_count(self) -> int:
         """Get estimated count of live users (placeholder)"""
         # In a real implementation, this would track active sessions
@@ -109,18 +115,18 @@ async def handle_analytics_websocket(websocket: WebSocket, db: Session):
     """Handle incoming WebSocket connection for real-time analytics"""
     await manager.connect(websocket)
     analytics = RealTimeAnalytics(db)
-    
+
     try:
         # Send initial data
         initial_data = await analytics.get_live_metrics()
         await manager.broadcast(initial_data)
-        
+
         # Send updates every 5 seconds
         while True:
             await asyncio.sleep(5)
             metrics = await analytics.get_live_metrics()
             await manager.broadcast(metrics)
-            
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
     except Exception as e:

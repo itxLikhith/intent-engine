@@ -46,7 +46,7 @@ def query_searxng(
         "categories": categories,
     }
 
-    print(f"\n🔍 Querying SearXNG: \"{query}\"")
+    print(f'\n🔍 Querying SearXNG: "{query}"')
     print(f"   URL: {searxng_url}/search?q={query}&format=json")
 
     try:
@@ -55,7 +55,7 @@ def query_searxng(
     except requests.exceptions.ConnectionError:
         print(f"\n❌ Cannot connect to SearXNG at {searxng_url}")
         print("   Make sure SearXNG is running:")
-        print("   cd \"intent engine\" && docker compose -f docker-compose.searxng.yml up -d")
+        print('   cd "intent engine" && docker compose -f docker-compose.searxng.yml up -d')
         sys.exit(1)
     except requests.exceptions.HTTPError as e:
         print(f"\n❌ SearXNG returned an error: {e}")
@@ -115,7 +115,7 @@ def rank_urls(
     except requests.exceptions.ConnectionError:
         print(f"\n❌ Cannot connect to Intent Engine API at {ranking_api_url}")
         print("   Make sure the API is running:")
-        print("   cd \"intent engine\" && python main_api.py")
+        print('   cd "intent engine" && python main_api.py')
         sys.exit(1)
     except requests.exceptions.HTTPError as e:
         print(f"\n❌ Ranking API returned an error: {e}")
@@ -236,37 +236,22 @@ def print_ranked_results(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Demo: SearXNG + Intent Engine Privacy-Aware URL Ranking"
-    )
+    parser = argparse.ArgumentParser(description="Demo: SearXNG + Intent Engine Privacy-Aware URL Ranking")
     parser.add_argument("query", help="Search query")
     parser.add_argument(
-        "--num-results", type=int, default=25,
-        help="Number of URLs to fetch from SearXNG (default: 25)"
+        "--num-results", type=int, default=25, help="Number of URLs to fetch from SearXNG (default: 25)"
     )
     parser.add_argument(
-        "--exclude-big-tech", action="store_true",
-        help="Exclude big tech domains (Google, Facebook, Amazon, etc.)"
+        "--exclude-big-tech", action="store_true", help="Exclude big tech domains (Google, Facebook, Amazon, etc.)"
     )
+    parser.add_argument("--min-privacy", type=float, default=0.0, help="Minimum privacy score threshold (0.0-1.0)")
+    parser.add_argument("--searxng-url", default=SEARXNG_URL, help=f"SearXNG base URL (default: {SEARXNG_URL})")
     parser.add_argument(
-        "--min-privacy", type=float, default=0.0,
-        help="Minimum privacy score threshold (0.0-1.0)"
+        "--api-url", default=RANKING_API_URL, help=f"Intent Engine API base URL (default: {RANKING_API_URL})"
     )
+    parser.add_argument("--categories", default="general", help="SearXNG search categories (default: general)")
     parser.add_argument(
-        "--searxng-url", default=SEARXNG_URL,
-        help=f"SearXNG base URL (default: {SEARXNG_URL})"
-    )
-    parser.add_argument(
-        "--api-url", default=RANKING_API_URL,
-        help=f"Intent Engine API base URL (default: {RANKING_API_URL})"
-    )
-    parser.add_argument(
-        "--categories", default="general",
-        help="SearXNG search categories (default: general)"
-    )
-    parser.add_argument(
-        "--show-original", action="store_true",
-        help="Also show original SearXNG results before re-ranking"
+        "--show-original", action="store_true", help="Also show original SearXNG results before re-ranking"
     )
 
     args = parser.parse_args()
