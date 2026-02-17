@@ -29,12 +29,13 @@ from database import Ad as DbAd
 from database import AdGroup as DbAdGroup
 from database import AdMetric as DbAdMetric
 from database import Advertiser as DbAdvertiser
-from database import Base, db_manager, engine
+from database import Base
 from database import Campaign as DbCampaign
 from database import ClickTracking as DbClickTracking
 from database import ConversionTracking as DbConversionTracking
 from database import CreativeAsset as DbCreativeAsset
 from database import FraudDetection as DbFraudDetection
+from database import db_manager, engine
 from extraction.extractor import extract_intent
 from models import (
     ABTestCreate,
