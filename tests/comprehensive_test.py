@@ -2,7 +2,6 @@
 Comprehensive test script for the Intent Engine with Advertising System
 """
 
-
 import requests
 
 BASE_URL = "http://localhost:8000"
