@@ -8,7 +8,8 @@ services:
       - "8000:8000"
     environment:
       # Database configuration
-      - DATABASE_URL=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine
+      - DATABASE_URL=postgresql://intent_user:intent_secure_password_change_in_prod@pgbouncer:6543/intent_engine
+      - PGBOUNCER_ENABLED=true
       - DATABASE_POOL_SIZE=10
       - DATABASE_MAX_OVERFLOW=20
       - DATABASE_POOL_TIMEOUT=30
@@ -60,8 +61,30 @@ services:
       start_period: 40s
     depends_on:
       - postgres
+      - pgbouncer
       - redis
       - searxng
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: anony45/intent-engine-api:latest # Reusing the same image
+    command: arq worker.WorkerSettings --watch .
+    environment:
+      - DATABASE_URL=postgresql://intent_user:intent_secure_password_change_in_prod@pgbouncer:6543/intent_engine
+      - PGBOUNCER_ENABLED=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - .:/app
+    networks:
+      - intent-network
+      - searxng
+    depends_on:
+      - redis
+      - pgbouncer
+    restart: unless-stopped
 
   searxng:
     image: docker.io/searxng/searxng:latest
@@ -96,7 +119,7 @@ services:
     image: postgres:15-alpine
     container_name: intent-engine-postgres
     environment:
-      - POSTGRES_USER=intent_user
+      - POSTGRES_USER=.env.example
       - POSTGRES_PASSWORD=intent_secure_password_change_in_prod
       - POSTGRES_DB=intent_engine
     ports:
@@ -110,6 +133,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer
+    container_name: intent-pgbouncer
+    ports:
+      - "6543:6543"
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    networks:
+      - intent-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:v2.48.0

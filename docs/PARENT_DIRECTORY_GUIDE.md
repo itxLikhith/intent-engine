@@ -54,7 +54,7 @@ intent-ads/
 4. **docker-compose.yml** - Create root-level compose
    ```yaml
    version: '3.8'
-   
+
    services:
      intent-engine:
        build: ./intent-engine
@@ -65,7 +65,7 @@ intent-ads/
        depends_on:
          - db
          - redis
-   
+
      db:
        image: postgres:15-alpine
        volumes:
@@ -74,12 +74,12 @@ intent-ads/
          - POSTGRES_DB=intent_engine
          - POSTGRES_USER=user
          - POSTGRES_USER_PASSWORD=pass
-   
+
      redis:
        image: redis:7-alpine
        volumes:
          - redis_data:/data
-   
+
    volumes:
      postgres_data:
      redis_data:
@@ -104,16 +104,16 @@ Create `scripts/` directory with:
    ```bash
    #!/bin/bash
    # Setup script for Intent Engine
-   
+
    echo "Setting up Intent Engine..."
-   
+
    # Install Python dependencies
    cd intent-engine
    pip install -r requirements.txt
-   
+
    # Setup database
    python init_sample_data.py
-   
+
    echo "Setup complete!"
    ```
 
@@ -121,11 +121,11 @@ Create `scripts/` directory with:
    ```batch
    @echo off
    echo Setting up Intent Engine...
-   
+
    cd intent-engine
    pip install -r requirements.txt
    python init_sample_data.py
-   
+
    echo Setup complete!
    ```
 

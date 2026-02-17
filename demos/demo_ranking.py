@@ -1,27 +1,23 @@
 """
 Demo script to show the intent ranker functionality
 """
-from ranking.ranker import (
-    rank_results,
-    RankingRequest,
-    SearchResult,
-    RankedResult
-)
+
 from core.schema import (
-    UniversalIntent,
-    DeclaredIntent,
-    InferredIntent,
-    TemporalIntent,
     Constraint,
     ConstraintType,
-    UseCase,
-    EthicalSignal,
+    DeclaredIntent,
     EthicalDimension,
-    TemporalHorizon,
-    Recency,
+    EthicalSignal,
     Frequency,
-    SkillLevel
+    InferredIntent,
+    Recency,
+    SkillLevel,
+    TemporalHorizon,
+    TemporalIntent,
+    UniversalIntent,
+    UseCase,
 )
+from ranking.ranker import RankedResult, RankingRequest, SearchResult, rank_results
 
 
 def create_sample_intent():
@@ -32,42 +28,44 @@ def create_sample_intent():
             "product": "search",
             "timestamp": "2026-01-23T12:00:00Z",
             "sessionId": "demo-session",
-            "userLocale": "en-US"
+            "userLocale": "en-US",
         },
         declared=DeclaredIntent(
             query="How to set up E2E encrypted email on Android, no big tech solutions",
             constraints=[
                 Constraint(type=ConstraintType.INCLUSION, dimension="platform", value="Android", hardFilter=True),
-                Constraint(type=ConstraintType.EXCLUSION, dimension="provider", value=["Google", "Microsoft"], hardFilter=True),
-                Constraint(type=ConstraintType.INCLUSION, dimension="feature", value="end-to-end_encryption", hardFilter=True)
+                Constraint(
+                    type=ConstraintType.EXCLUSION, dimension="provider", value=["Google", "Microsoft"], hardFilter=True
+                ),
+                Constraint(
+                    type=ConstraintType.INCLUSION, dimension="feature", value="end-to-end_encryption", hardFilter=True
+                ),
             ],
             negativePreferences=["no big tech"],
-            skillLevel=SkillLevel.INTERMEDIATE
+            skillLevel=SkillLevel.INTERMEDIATE,
         ),
         inferred=InferredIntent(
             useCases=[UseCase.LEARNING, UseCase.TROUBLESHOOTING],
             temporalIntent=TemporalIntent(
-                horizon=TemporalHorizon.TODAY,
-                recency=Recency.RECENT,
-                frequency=Frequency.ONEOFF
+                horizon=TemporalHorizon.TODAY, recency=Recency.RECENT, frequency=Frequency.ONEOFF
             ),
             resultType=None,
             ethicalSignals=[
                 EthicalSignal(dimension=EthicalDimension.PRIVACY, preference="privacy-first"),
-                EthicalSignal(dimension=EthicalDimension.OPENNESS, preference="open-source_preferred")
-            ]
-        )
+                EthicalSignal(dimension=EthicalDimension.OPENNESS, preference="open-source_preferred"),
+            ],
+        ),
     )
 
 
 def demo_ranking():
     """Demonstrate the ranking functionality"""
     print("=== Intent Engine Phase 2: Constraint Satisfaction & Ranking Demo ===\n")
-    
+
     # Create sample intent
     intent = create_sample_intent()
     print(f"Input Intent Query: {intent.declared.query}\n")
-    
+
     # Create sample search results
     candidates = [
         SearchResult(
@@ -82,7 +80,7 @@ def demo_ranking():
             privacyRating=0.9,
             opensource=True,
             complexity="intermediate",
-            recency="2026-01-20T10:00:00Z"
+            recency="2026-01-20T10:00:00Z",
         ),
         SearchResult(
             id="2",
@@ -96,7 +94,7 @@ def demo_ranking():
             privacyRating=0.95,
             opensource=True,
             complexity="intermediate",
-            recency="2026-01-18T15:30:00Z"
+            recency="2026-01-18T15:30:00Z",
         ),
         SearchResult(
             id="3",
@@ -110,7 +108,7 @@ def demo_ranking():
             privacyRating=0.3,
             opensource=False,
             complexity="beginner",
-            recency="2026-01-15T09:00:00Z"
+            recency="2026-01-15T09:00:00Z",
         ),
         SearchResult(
             id="4",
@@ -124,24 +122,23 @@ def demo_ranking():
             privacyRating=0.5,
             opensource=True,
             complexity="intermediate",
-            recency="2026-01-10T14:00:00Z"
-        )
+            recency="2026-01-10T14:00:00Z",
+        ),
     ]
-    
+
     print("Candidate Results:")
     for candidate in candidates:
-        print(f"  - ID: {candidate.id}, Title: {candidate.title}, Platform: {candidate.platform}, Provider: {candidate.provider}")
+        print(
+            f"  - ID: {candidate.id}, Title: {candidate.title}, Platform: {candidate.platform}, Provider: {candidate.provider}"
+        )
     print()
-    
+
     # Create ranking request
-    request = RankingRequest(
-        intent=intent,
-        candidates=candidates
-    )
-    
+    request = RankingRequest(intent=intent, candidates=candidates)
+
     # Perform ranking
     response = rank_results(request)
-    
+
     print("Ranked Results (after constraint filtering):")
     for i, ranked_result in enumerate(response.rankedResults, 1):
         print(f"  {i}. Title: {ranked_result.result.title}")
@@ -149,8 +146,10 @@ def demo_ranking():
         print(f"     Reasons: {', '.join(ranked_result.matchReasons)}")
         print(f"     Platform: {ranked_result.result.platform}, Provider: {ranked_result.result.provider}")
         print()
-    
-    print(f"Summary: {len(candidates)} candidates were processed, {len(response.rankedResults)} passed constraints and were ranked.")
+
+    print(
+        f"Summary: {len(candidates)} candidates were processed, {len(response.rankedResults)} passed constraints and were ranked."
+    )
 
 
 if __name__ == "__main__":

@@ -5,125 +5,128 @@ This module defines the universal intent schema and related data structures
 used across all components of the Intent Engine.
 """
 
+import logging
 import re
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Dict, Optional, Union, Any
-from dataclasses import dataclass, field
-import logging
+from typing import Any, Dict, List, Optional, Union
+
+from dataclasses_json import DataClassJsonMixin
 
 
 # Define enums matching the TypeScript definitions from the docs
 class IntentGoal(Enum):
     # Search-specific
-    FIND_INFORMATION = 'find_information'
-    COMPARISON = 'comparison'
-    TROUBLESHOOTING = 'troubleshooting'
-    PURCHASE = 'purchase'
-    LOCAL_SERVICE = 'local_service'
-    NAVIGATION = 'navigation'
+    FIND_INFORMATION = "find_information"
+    COMPARISON = "comparison"
+    TROUBLESHOOTING = "troubleshooting"
+    PURCHASE = "purchase"
+    LOCAL_SERVICE = "local_service"
+    NAVIGATION = "navigation"
 
     # Docs/Mail-specific
-    DRAFT_DOCUMENT = 'draft_document'
-    COLLABORATE = 'collaborate'
-    ORGANIZE = 'organize'
-    ANALYZE = 'analyze'
-    SCHEDULE = 'schedule'
+    DRAFT_DOCUMENT = "draft_document"
+    COLLABORATE = "collaborate"
+    ORGANIZE = "organize"
+    ANALYZE = "analyze"
+    SCHEDULE = "schedule"
 
     # Cross-product
-    LEARN = 'learn'
-    CREATE = 'create'
-    REFLECT = 'reflect'  # Diary
+    LEARN = "learn"
+    CREATE = "create"
+    REFLECT = "reflect"  # Diary
 
 
 class UseCase(Enum):
-    COMPARISON = 'comparison'
-    LEARNING = 'learning'
-    TROUBLESHOOTING = 'troubleshooting'
-    VERIFICATION = 'verification'
-    ENTERTAINMENT = 'entertainment'
-    COMMUNITY_ENGAGEMENT = 'community_engagement'
-    PROFESSIONAL_DEVELOPMENT = 'professional_development'
-    MARKET_RESEARCH = 'market_research'
+    COMPARISON = "comparison"
+    LEARNING = "learning"
+    TROUBLESHOOTING = "troubleshooting"
+    VERIFICATION = "verification"
+    ENTERTAINMENT = "entertainment"
+    COMMUNITY_ENGAGEMENT = "community_engagement"
+    PROFESSIONAL_DEVELOPMENT = "professional_development"
+    MARKET_RESEARCH = "market_research"
 
 
 class ConstraintType(Enum):
-    INCLUSION = 'inclusion'
-    EXCLUSION = 'exclusion'
-    RANGE = 'range'
-    DATATYPE = 'datatype'
+    INCLUSION = "inclusion"
+    EXCLUSION = "exclusion"
+    RANGE = "range"
+    DATATYPE = "datatype"
 
 
 class Urgency(Enum):
-    IMMEDIATE = 'immediate'
-    SOON = 'soon'
-    FLEXIBLE = 'flexible'
-    EXPLORATORY = 'exploratory'
+    IMMEDIATE = "immediate"
+    SOON = "soon"
+    FLEXIBLE = "flexible"
+    EXPLORATORY = "exploratory"
 
 
 class SkillLevel(Enum):
-    BEGINNER = 'beginner'
-    INTERMEDIATE = 'intermediate'
-    ADVANCED = 'advanced'
-    EXPERT = 'expert'
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
 
 
 class TemporalHorizon(Enum):
-    IMMEDIATE = 'immediate'
-    TODAY = 'today'
-    WEEK = 'week'
-    MONTH = 'month'
-    LONGTERM = 'longterm'
-    FLEXIBLE = 'flexible'
+    IMMEDIATE = "immediate"
+    TODAY = "today"
+    WEEK = "week"
+    MONTH = "month"
+    LONGTERM = "longterm"
+    FLEXIBLE = "flexible"
 
 
 class Recency(Enum):
-    BREAKING = 'breaking'
-    RECENT = 'recent'
-    EVERGREEN = 'evergreen'
-    HISTORICAL = 'historical'
+    BREAKING = "breaking"
+    RECENT = "recent"
+    EVERGREEN = "evergreen"
+    HISTORICAL = "historical"
 
 
 class Frequency(Enum):
-    ONEOFF = 'oneoff'
-    RECURRING = 'recurring'
-    EXPLORATORY = 'exploratory'
-    FLEXIBLE = 'flexible'
+    ONEOFF = "oneoff"
+    RECURRING = "recurring"
+    EXPLORATORY = "exploratory"
+    FLEXIBLE = "flexible"
 
 
 class EthicalDimension(Enum):
-    PRIVACY = 'privacy'
-    SUSTAINABILITY = 'sustainability'
-    ETHICS = 'ethics'
-    ACCESSIBILITY = 'accessibility'
-    OPENNESS = 'openness'
+    PRIVACY = "privacy"
+    SUSTAINABILITY = "sustainability"
+    ETHICS = "ethics"
+    ACCESSIBILITY = "accessibility"
+    OPENNESS = "openness"
 
 
 class ResultType(Enum):
-    ANSWER = 'answer'
-    TUTORIAL = 'tutorial'
-    TOOL = 'tool'
-    MARKETPLACE = 'marketplace'
-    COMMUNITY = 'community'
+    ANSWER = "answer"
+    TUTORIAL = "tutorial"
+    TOOL = "tool"
+    MARKETPLACE = "marketplace"
+    COMMUNITY = "community"
 
 
 class Complexity(Enum):
-    SIMPLE = 'simple'
-    MODERATE = 'moderate'
-    ADVANCED = 'advanced'
+    SIMPLE = "simple"
+    MODERATE = "moderate"
+    ADVANCED = "advanced"
 
 
 class ContentType(Enum):
-    TEXT = 'text'
-    SPREADSHEET = 'spreadsheet'
-    PRESENTATION = 'presentation'
-    FORM = 'form'
+    TEXT = "text"
+    SPREADSHEET = "spreadsheet"
+    PRESENTATION = "presentation"
+    FORM = "form"
 
 
 @dataclass
-class Constraint:
+class Constraint(DataClassJsonMixin):
     """Represents a constraint extracted from user input"""
+
     type: ConstraintType
     dimension: str  # 'language', 'region', 'price', 'license', 'format', 'recency'
     value: Union[str, int, float, List[Union[str, int, float]], List[int]]  # Single value, range, or list
@@ -131,16 +134,18 @@ class Constraint:
 
 
 @dataclass
-class TemporalIntent:
+class TemporalIntent(DataClassJsonMixin):
     """Temporal aspects of user intent"""
+
     horizon: TemporalHorizon
     recency: Recency
     frequency: Frequency
 
 
 @dataclass
-class DocumentContext:
+class DocumentContext(DataClassJsonMixin):
     """Context from open documents"""
+
     docId: Optional[str] = None
     content: Optional[str] = None  # First 1000 chars only, not persisted
     lastEditTime: Optional[str] = None
@@ -149,8 +154,9 @@ class DocumentContext:
 
 
 @dataclass
-class MeetingContext:
+class MeetingContext(DataClassJsonMixin):
     """Context from calendar/meetings"""
+
     meetingId: Optional[str] = None
     subject: Optional[str] = None
     participantCount: Optional[int] = None
@@ -159,15 +165,17 @@ class MeetingContext:
 
 
 @dataclass
-class EthicalSignal:
+class EthicalSignal(DataClassJsonMixin):
     """Ethical preferences extracted from intent"""
+
     dimension: EthicalDimension
     preference: str  # "privacy-first", "open-source", "carbon-neutral", etc.
 
 
 @dataclass
-class DeclaredIntent:
+class DeclaredIntent(DataClassJsonMixin):
     """User-declared intent components"""
+
     query: Optional[str] = None  # Free-form text
     goal: Optional[IntentGoal] = None  # Structured goal
     constraints: List[Constraint] = field(default_factory=list)  # Hard filters
@@ -178,8 +186,9 @@ class DeclaredIntent:
 
 
 @dataclass
-class InferredIntent:
+class InferredIntent(DataClassJsonMixin):
     """Inferred intent components"""
+
     useCases: List[UseCase] = field(default_factory=list)  # [comparison, learning, troubleshooting, ...]
     temporalIntent: Optional[TemporalIntent] = None
     documentContext: Optional[DocumentContext] = None  # From open docs/emails
@@ -190,8 +199,9 @@ class InferredIntent:
 
 
 @dataclass
-class SessionFeedback:
+class SessionFeedback(DataClassJsonMixin):
     """Feedback captured during the session"""
+
     clicked: Optional[List[str]] = None  # URLs clicked
     dwell: Optional[int] = None  # Seconds on result
     reformulated: Optional[bool] = None  # User refined query
@@ -199,8 +209,9 @@ class SessionFeedback:
 
 
 @dataclass
-class UniversalIntent:
+class UniversalIntent(DataClassJsonMixin):
     """Main intent object matching the schema from the whitepaper"""
+
     # Unique session-scoped ID (not persistent)
     intentId: str
 
@@ -221,8 +232,9 @@ class UniversalIntent:
 
 
 @dataclass
-class IntentExtractionRequest:
+class IntentExtractionRequest(DataClassJsonMixin):
     """Request object for intent extraction API"""
+
     product: str  # 'search' | 'docs' | 'mail' | 'calendar' | 'meet' | 'forms' | 'diary' | 'sites'
     input: Dict[str, str]  # TextInput | FormInput | DocumentInput | EventInput
     context: Dict[str, Any]  # ExtractionContext
@@ -230,7 +242,8 @@ class IntentExtractionRequest:
 
 
 @dataclass
-class IntentExtractionResponse:
+class IntentExtractionResponse(DataClassJsonMixin):
     """Response object for intent extraction API"""
+
     intent: UniversalIntent
     extractionMetrics: Dict[str, Any]  # confidence, extractedDimensions, warnings

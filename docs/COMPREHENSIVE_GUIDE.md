@@ -684,7 +684,7 @@ from pydantic import validator
 
 class IntentRequest(BaseModel):
     query: str
-    
+
     @validator('query')
     def validate_query(cls, v):
         if len(v) > 1000:
@@ -781,5 +781,5 @@ For issues and questions:
 
 ---
 
-**Last Updated:** 2026-02-17  
+**Last Updated:** 2026-02-17
 **Version:** 2.0.0

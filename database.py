@@ -5,18 +5,20 @@ This module implements the database layer using SQLAlchemy ORM with support for
 both SQLite (for local development) and PostgreSQL (for production).
 """
 
-import os
 import json
-from datetime import datetime, timedelta, timezone
-from typing import Optional, List, Dict, Any
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Float, Date, Text, JSON
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
-from sqlalchemy.sql import func
+import logging
+import os
 import threading
 import time
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-import logging
+from sqlalchemy import JSON, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.pool import NullPool
+from sqlalchemy.sql import func
 
 logger = logging.getLogger(__name__)
 
@@ -29,36 +31,36 @@ POOL_SIZE = int(os.getenv("DATABASE_POOL_SIZE", "10"))
 POOL_MAX_OVERFLOW = int(os.getenv("DATABASE_MAX_OVERFLOW", "20"))
 POOL_TIMEOUT = int(os.getenv("DATABASE_POOL_TIMEOUT", "30"))
 POOL_RECYCLE = int(os.getenv("DATABASE_POOL_RECYCLE", "1800"))
+PGBOUNCER_ENABLED = os.getenv("PGBOUNCER_ENABLED", "false").lower() in ("true", "1", "t")
 
 # Configure engine based on database type
 if "postgresql" in DATABASE_URL:
-    # PostgreSQL configuration with connection pooling
-    engine = create_engine(
-        DATABASE_URL,
-        pool_size=POOL_SIZE,
-        max_overflow=POOL_MAX_OVERFLOW,
-        pool_timeout=POOL_TIMEOUT,
-        pool_recycle=POOL_RECYCLE,
-        pool_pre_ping=True,
-        echo=False
-    )
-    logger.info(f"PostgreSQL engine initialized with pool_size={POOL_SIZE}, max_overflow={POOL_MAX_OVERFLOW}")
+    if PGBOUNCER_ENABLED:
+        engine = create_engine(
+            DATABASE_URL,
+            poolclass=NullPool,
+            echo=False,
+        )
+        logger.info("PostgreSQL engine initialized with PgBouncer (NullPool)")
+    else:
+        # PostgreSQL configuration with connection pooling
+        engine = create_engine(
+            DATABASE_URL,
+            pool_size=POOL_SIZE,
+            max_overflow=POOL_MAX_OVERFLOW,
+            pool_timeout=POOL_TIMEOUT,
+            pool_recycle=POOL_RECYCLE,
+            pool_pre_ping=True,
+            echo=False,
+        )
+        logger.info(f"PostgreSQL engine initialized with pool_size={POOL_SIZE}, max_overflow={POOL_MAX_OVERFLOW}")
 elif "sqlite" in DATABASE_URL:
     # SQLite configuration (for local development only)
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        pool_pre_ping=True,
-        echo=False
-    )
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, pool_pre_ping=True, echo=False)
     logger.warning("SQLite engine initialized (use PostgreSQL for production)")
 else:
     # Default configuration
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,
-        echo=False
-    )
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, echo=False)
     logger.info(f"Database engine initialized for: {DATABASE_URL.split(':')[0]}")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -69,6 +71,7 @@ class Advertiser(Base):
     """
     Advertisers (publishers) table
     """
+
     __tablename__ = "advertisers"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -86,6 +89,7 @@ class Campaign(Base):
     """
     Campaigns table
     """
+
     __tablename__ = "campaigns"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -108,6 +112,7 @@ class AdGroup(Base):
     """
     Ad Groups table
     """
+
     __tablename__ = "ad_groups"  # Using "ad_groups" to avoid conflicts with SQL reserved word
 
     id = Column(Integer, primary_key=True, index=True)
@@ -127,6 +132,7 @@ class Ad(Base):
     """
     Ads (with fairness constraints) table
     """
+
     __tablename__ = "ads"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -158,6 +164,7 @@ class CreativeAsset(Base):
     """
     Creative Assets table
     """
+
     __tablename__ = "creative_assets"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -176,6 +183,7 @@ class AdMetric(Base):
     """
     Aggregated Metrics (with differential privacy applied later) table
     """
+
     __tablename__ = "ad_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -202,6 +210,7 @@ class ClickTracking(Base):
     """
     Click Tracking table for recording ad clicks
     """
+
     __tablename__ = "click_tracking"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -220,6 +229,7 @@ class ConversionTracking(Base):
     """
     Conversion Tracking table for recording ad conversions
     """
+
     __tablename__ = "conversion_tracking"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -237,6 +247,7 @@ class FraudDetection(Base):
     """
     Fraud Detection table for tracking suspicious activities
     """
+
     __tablename__ = "fraud_detection"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -275,15 +286,16 @@ class DatabaseManager:
         self.scheduler.add_job(
             self.cleanup_expired_metrics,
             trigger=IntervalTrigger(hours=1),
-            id='cleanup_expired_metrics',
-            name='Cleanup expired ad metrics',
-            replace_existing=True
+            id="cleanup_expired_metrics",
+            name="Cleanup expired ad metrics",
+            replace_existing=True,
         )
         if not self.scheduler.running:
             self.scheduler.start()
 
         # Also schedule shutdown handler
         import atexit
+
         atexit.register(lambda: self.scheduler.shutdown())
 
     def get_db(self):

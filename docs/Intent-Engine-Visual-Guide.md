@@ -1,7 +1,7 @@
 # INTENT ENGINE: Visual Architecture Guide & Quick Reference
 
-**Version:** 2.0  
-**Format:** System Design Companion (PDF-Ready)  
+**Version:** 2.0
+**Format:** System Design Companion (PDF-Ready)
 **Date:** February 17, 2026
 
 ---

@@ -9,7 +9,7 @@ This module provides comprehensive load testing capabilities:
 Usage:
     # Run Locust load test
     locust -f load_testing/locustfile.py --host=http://localhost:8000
-    
+
     # Run stress tests
     python -m load_testing.stress_test
 """
@@ -28,6 +28,6 @@ except ImportError:
     pass
 
 try:
-    from .locustfile import IntentEngineLoadTest, CampaignManagementLoadTest
+    from .locustfile import CampaignManagementLoadTest, IntentEngineLoadTest
 except ImportError:
     pass

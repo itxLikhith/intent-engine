@@ -23,3 +23,5 @@ httpx==0.25.2
 redis==5.0.1  # For Redis caching support
 slowapi==0.1.9  # For rate limiting
 limits==3.6.0  # Rate limiting utilities
+arq==0.25.0
+dataclasses-json==0.6.4

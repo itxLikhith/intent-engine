@@ -381,16 +381,16 @@ cp .env.example .env
 
 ### Common Issues
 
-**Issue**: Models not loading  
+**Issue**: Models not loading
 **Solution**: Ensure 4GB+ RAM available; check model cache directory
 
-**Issue**: Database connection errors  
+**Issue**: Database connection errors
 **Solution**: Verify DATABASE_URL; check PostgreSQL is running
 
-**Issue**: High latency  
+**Issue**: High latency
 **Solution**: Enable Redis caching; check model warm-up
 
-**Issue**: Docker build fails  
+**Issue**: Docker build fails
 **Solution**: Increase Docker memory limit; check network connectivity
 
 ### Getting Help

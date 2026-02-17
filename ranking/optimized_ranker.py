@@ -12,21 +12,32 @@ Improvements:
 - Configurable ranking weights
 """
 
-import re
-import numpy as np
-from typing import List, Dict, Any, Optional, Tuple, Set
-from dataclasses import dataclass
-import logging
-from datetime import timezone, datetime
 import hashlib
+import logging
+import re
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from core.schema import (
-    UniversalIntent, Constraint, ConstraintType, UseCase, EthicalDimension,
-    TemporalHorizon, Recency, Frequency, SkillLevel, ResultType, Complexity,
-    DeclaredIntent, InferredIntent
-)
+import numpy as np
+
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_ranking_cache
+from core.schema import (
+    Complexity,
+    Constraint,
+    ConstraintType,
+    DeclaredIntent,
+    EthicalDimension,
+    Frequency,
+    InferredIntent,
+    Recency,
+    ResultType,
+    SkillLevel,
+    TemporalHorizon,
+    UniversalIntent,
+    UseCase,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +45,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SearchResult:
     """Represents a search result candidate with metadata"""
+
     id: str
     title: str
     description: str
@@ -53,6 +65,7 @@ class SearchResult:
 @dataclass
 class RankedResult:
     """Represents a ranked result with alignment score and reasons"""
+
     result: SearchResult
     alignmentScore: float
     matchReasons: List[str]
@@ -61,6 +74,7 @@ class RankedResult:
 @dataclass
 class RankingRequest:
     """Request object for ranking API"""
+
     intent: UniversalIntent
     candidates: List[SearchResult]
     options: Optional[Dict[str, Any]] = None
@@ -69,6 +83,7 @@ class RankingRequest:
 @dataclass
 class RankingResponse:
     """Response object for ranking API"""
+
     rankedResults: List[RankedResult]
     cache_hit: bool = False
     processing_time_ms: float = 0.0
@@ -76,29 +91,29 @@ class RankingResponse:
 
 class OptimizedConstraintSatisfactionEngine:
     """Improved constraint satisfaction with better performance"""
-    
+
     def __init__(self):
         self.embedding_cache = get_embedding_cache()
-    
+
     def satisfies_constraints(self, result: SearchResult, constraints: List[Constraint]) -> bool:
         """Check if a result satisfies all hard constraints"""
         for constraint in constraints:
             if not constraint.hardFilter:
                 continue
-            
+
             if not self._satisfies_single_constraint(result, constraint):
                 return False
-        
+
         return True
-    
+
     def _satisfies_single_constraint(self, result: SearchResult, constraint: Constraint) -> bool:
         """Check if a result satisfies a single constraint with semantic matching"""
         dimension = constraint.dimension
         value = constraint.value
         constraint_type = constraint.type
-        
+
         result_value = getattr(result, dimension, None)
-        
+
         if constraint_type == ConstraintType.INCLUSION:
             if isinstance(value, str):
                 if result_value != value:
@@ -108,7 +123,7 @@ class OptimizedConstraintSatisfactionEngine:
                 if result_value not in value:
                     # Check if any value in the list matches semantically
                     return any(self._semantic_match(result_value, v) for v in value)
-        
+
         elif constraint_type == ConstraintType.EXCLUSION:
             if isinstance(value, str):
                 if result_value == value:
@@ -122,74 +137,74 @@ class OptimizedConstraintSatisfactionEngine:
                 # Check if any excluded value matches semantically
                 if any(self._semantic_match(result_value, v) for v in value):
                     return False
-        
+
         elif constraint_type == ConstraintType.RANGE:
-            if dimension == 'price' and result_value is not None:
+            if dimension == "price" and result_value is not None:
                 return self._check_price_range(result_value, value)
-        
+
         return True
-    
+
     def _semantic_match(self, value1: Optional[str], value2: str) -> bool:
         """Check if two values match semantically"""
         if not value1 or not value2:
             return False
-        
+
         # Direct match
         if value1.lower() == value2.lower():
             return True
-        
+
         # Check if one contains the other
         v1_lower = value1.lower()
         v2_lower = value2.lower()
-        
+
         if v2_lower in v1_lower or v1_lower in v2_lower:
             return True
-        
+
         # Use embeddings for semantic similarity
         try:
             emb1 = self.embedding_cache.encode_text(value1)
             emb2 = self.embedding_cache.encode_text(value2)
-            
+
             if emb1 is not None and emb2 is not None:
                 similarity = self.embedding_cache.cosine_similarity(emb1, emb2)
                 return similarity > 0.7  # High similarity threshold
         except Exception:
             pass
-        
+
         return False
-    
+
     def _check_price_range(self, price: float, range_spec: str) -> bool:
         """Check if price satisfies range specification"""
         # Parse range specification
         # Formats: "<=100", ">=50", "<100", ">50", "budget"
         range_spec = str(range_spec).lower().strip()
-        
-        if range_spec == 'budget' or range_spec == 'free' or range_spec == '0':
+
+        if range_spec == "budget" or range_spec == "free" or range_spec == "0":
             return price == 0
-        
-        match = re.match(r'([<>]=?)(\d+)', range_spec)
+
+        match = re.match(r"([<>]=?)(\d+)", range_spec)
         if match:
             operator, limit = match.groups()
             limit = float(limit)
-            
-            if operator == '<=':
+
+            if operator == "<=":
                 return price <= limit
-            elif operator == '>=':
+            elif operator == ">=":
                 return price >= limit
-            elif operator == '<':
+            elif operator == "<":
                 return price < limit
-            elif operator == '>':
+            elif operator == ">":
                 return price > limit
-        
+
         return True
 
 
 class OptimizedIntentAlignmentEngine:
     """Improved intent alignment with better scoring"""
-    
+
     def __init__(self):
         self.embedding_cache = get_embedding_cache()
-    
+
     def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> Tuple[float, List[str]]:
         """Compute alignment score with improved weighting"""
         scores = []
@@ -235,8 +250,10 @@ class OptimizedIntentAlignmentEngine:
         alignment_score = max(0.0, min(1.0, alignment_score))
 
         return alignment_score, list(set(reasons))  # Remove duplicate reasons
-    
-    def _compute_query_content_alignment(self, result: SearchResult, intent: UniversalIntent, declared: DeclaredIntent) -> Tuple[float, List[str]]:
+
+    def _compute_query_content_alignment(
+        self, result: SearchResult, intent: UniversalIntent, declared: DeclaredIntent
+    ) -> Tuple[float, List[str]]:
         """Compute semantic similarity between query and result"""
         reasons = []
 
@@ -270,28 +287,30 @@ class OptimizedIntentAlignmentEngine:
 
         # Fallback to keyword matching
         return self._keyword_match_score(query, content), ["keyword-match"]
-    
+
     def _keyword_match_score(self, query: str, content: str) -> float:
         """Calculate keyword match score"""
         query_words = set(query.lower().split())
         content_words = set(content.lower().split())
-        
+
         if not query_words:
             return 0.5
-        
+
         # Calculate weighted match
         matches = query_words.intersection(content_words)
-        
+
         # Boost for title matches
         title_bonus = 0
-        if hasattr(self, '_last_result_title'):
+        if hasattr(self, "_last_result_title"):
             title_words = set(self._last_result_title.lower().split())
             title_matches = query_words.intersection(title_words)
             title_bonus = len(title_matches) / len(query_words) * 0.2
-        
+
         return (len(matches) / len(query_words)) * 0.8 + title_bonus
-    
-    def _compute_use_case_alignment(self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent) -> Tuple[float, List[str]]:
+
+    def _compute_use_case_alignment(
+        self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent
+    ) -> Tuple[float, List[str]]:
         """Compute use case alignment"""
         reasons = []
 
@@ -307,7 +326,7 @@ class OptimizedIntentAlignmentEngine:
         tag_emb = self.embedding_cache.encode_text(tag_text)
 
         for use_case in use_cases:
-            use_case_str = use_case.value.replace('_', ' ')
+            use_case_str = use_case.value.replace("_", " ")
 
             # Direct match
             if use_case_str in tag_text:
@@ -327,8 +346,10 @@ class OptimizedIntentAlignmentEngine:
             score = min(1.0, score / len(use_cases))
 
         return score, reasons
-    
-    def _compute_ethical_alignment(self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent) -> Tuple[float, List[str]]:
+
+    def _compute_ethical_alignment(
+        self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent
+    ) -> Tuple[float, List[str]]:
         """Compute ethical signal alignment"""
         reasons = []
 
@@ -345,26 +366,28 @@ class OptimizedIntentAlignmentEngine:
                     score += 0.5
                     reasons.append("privacy-aligned")
                 # Check for privacy keywords in description
-                privacy_keywords = ['privacy', 'encrypted', 'secure', 'private']
+                privacy_keywords = ["privacy", "encrypted", "secure", "private"]
                 if any(kw in result.description.lower() for kw in privacy_keywords):
                     score += 0.2
-                    
+
             elif signal.dimension == EthicalDimension.OPENNESS:
                 if result.opensource:
                     score += 0.5
                     reasons.append("open-source-aligned")
                 # Check for open source keywords
-                oss_keywords = ['open source', 'foss', 'free software']
+                oss_keywords = ["open source", "foss", "free software"]
                 if any(kw in result.description.lower() for kw in oss_keywords):
                     score += 0.2
-        
+
         # Normalize
         if ethical_signals:
             score = min(1.0, score / len(ethical_signals))
 
         return score, reasons
 
-    def _compute_skill_alignment(self, result: SearchResult, intent: UniversalIntent, declared: DeclaredIntent) -> Tuple[float, List[str]]:
+    def _compute_skill_alignment(
+        self, result: SearchResult, intent: UniversalIntent, declared: DeclaredIntent
+    ) -> Tuple[float, List[str]]:
         """Compute skill level alignment"""
         reasons = []
 
@@ -377,10 +400,10 @@ class OptimizedIntentAlignmentEngine:
 
         # Map complexity to skill levels
         complexity_to_skill = {
-            'beginner': SkillLevel.BEGINNER,
-            'intermediate': SkillLevel.INTERMEDIATE,
-            'advanced': SkillLevel.ADVANCED,
-            'expert': SkillLevel.EXPERT
+            "beginner": SkillLevel.BEGINNER,
+            "intermediate": SkillLevel.INTERMEDIATE,
+            "advanced": SkillLevel.ADVANCED,
+            "expert": SkillLevel.EXPERT,
         }
 
         if result_complexity in complexity_to_skill:
@@ -399,7 +422,9 @@ class OptimizedIntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_temporal_alignment(self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent) -> Tuple[float, List[str]]:
+    def _compute_temporal_alignment(
+        self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent
+    ) -> Tuple[float, List[str]]:
         """Compute temporal intent alignment"""
         reasons = []
         score = 0.5
@@ -408,14 +433,14 @@ class OptimizedIntentAlignmentEngine:
         temporal_intent = inferred.temporalIntent if inferred else None
         if not temporal_intent or not result.recency:
             return score, reasons
-        
+
         try:
             # Parse recency date
             result_date = self._parse_date(result.recency)
             if result_date:
                 now = datetime.now(timezone.utc)
                 days_old = (now - result_date).days
-                
+
                 # Check recency preferences
                 if temporal_intent.recency == Recency.RECENT:
                     if days_old <= 30:
@@ -423,7 +448,7 @@ class OptimizedIntentAlignmentEngine:
                         reasons.append("recent-content")
                     elif days_old <= 90:
                         score += 0.1
-                
+
                 # Check horizon preferences
                 if temporal_intent.horizon == TemporalHorizon.TODAY and days_old <= 1:
                     score += 0.2
@@ -431,18 +456,18 @@ class OptimizedIntentAlignmentEngine:
                 elif temporal_intent.horizon == TemporalHorizon.WEEK and days_old <= 7:
                     score += 0.15
                     reasons.append("week-relevant")
-                    
+
         except Exception:
             pass
-        
+
         return max(0.0, min(1.0, score)), reasons
-    
+
     def _parse_date(self, date_str: str) -> Optional[datetime]:
         """Parse date string to datetime"""
         try:
-            if date_str.endswith('Z'):
-                return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            elif '+' in date_str or date_str.count('-') > 2:
+            if date_str.endswith("Z"):
+                return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            elif "+" in date_str or date_str.count("-") > 2:
                 return datetime.fromisoformat(date_str)
             else:
                 return datetime.fromisoformat(date_str).replace(tzinfo=timezone.utc)
@@ -452,27 +477,27 @@ class OptimizedIntentAlignmentEngine:
 
 class ResultDeduplicator:
     """Deduplicate results based on content similarity"""
-    
+
     def __init__(self, similarity_threshold: float = 0.85):
         self.similarity_threshold = similarity_threshold
         self.embedding_cache = get_embedding_cache()
-    
+
     def deduplicate(self, results: List[RankedResult]) -> List[RankedResult]:
         """Remove duplicate results based on content similarity"""
         if not results:
             return results
-        
+
         unique_results = []
         seen_embeddings = []
-        
+
         for result in results:
             content = f"{result.result.title} {result.result.description}"
             embedding = self.embedding_cache.encode_text(content)
-            
+
             if embedding is None:
                 unique_results.append(result)
                 continue
-            
+
             # Check similarity with all seen results
             is_duplicate = False
             for seen_emb in seen_embeddings:
@@ -480,83 +505,71 @@ class ResultDeduplicator:
                 if similarity > self.similarity_threshold:
                     is_duplicate = True
                     break
-            
+
             if not is_duplicate:
                 unique_results.append(result)
                 seen_embeddings.append(embedding)
-        
+
         return unique_results
 
 
 class OptimizedIntentRanker:
     """Main ranking class with optimizations"""
-    
+
     def __init__(self):
         self.constraint_engine = OptimizedConstraintSatisfactionEngine()
         self.alignment_engine = OptimizedIntentAlignmentEngine()
         self.deduplicator = ResultDeduplicator()
         self.cache = get_ranking_cache()
-    
+
     def rank_results(self, request: RankingRequest) -> RankingResponse:
         """Rank results with caching and optimizations"""
         import time
+
         start_time = time.time()
-        
+
         # Create cache key
         cache_key = self._make_cache_key(request)
-        
+
         # Check cache
         cached_result = self.cache.get(cache_key)
         if cached_result is not None:
             cached_result.cache_hit = True
             cached_result.processing_time_ms = 0
             return cached_result
-        
+
         # Filter candidates
         filtered_candidates = self._filter_candidates(request)
-        
+
         # Compute alignment scores
         ranked_results = []
         for candidate in filtered_candidates:
-            score, reasons = self.alignment_engine.compute_intent_alignment(
-                candidate, request.intent
-            )
-            ranked_results.append(RankedResult(
-                result=candidate,
-                alignmentScore=score,
-                matchReasons=reasons
-            ))
-        
+            score, reasons = self.alignment_engine.compute_intent_alignment(candidate, request.intent)
+            ranked_results.append(RankedResult(result=candidate, alignmentScore=score, matchReasons=reasons))
+
         # Deduplicate
         ranked_results = self.deduplicator.deduplicate(ranked_results)
-        
+
         # Sort by score
         ranked_results.sort(key=lambda x: x.alignmentScore, reverse=True)
-        
+
         # Create response
         processing_time = (time.time() - start_time) * 1000
-        response = RankingResponse(
-            rankedResults=ranked_results,
-            cache_hit=False,
-            processing_time_ms=processing_time
-        )
-        
+        response = RankingResponse(rankedResults=ranked_results, cache_hit=False, processing_time_ms=processing_time)
+
         # Cache result
         self.cache.set(cache_key, response)
-        
+
         return response
-    
+
     def _filter_candidates(self, request: RankingRequest) -> List[SearchResult]:
         """Filter candidates based on constraints"""
         filtered = []
         for candidate in request.candidates:
-            if self.constraint_engine.satisfies_constraints(
-                candidate, 
-                request.intent.declared.constraints
-            ):
+            if self.constraint_engine.satisfies_constraints(candidate, request.intent.declared.constraints):
                 filtered.append(candidate)
         return filtered
-    
+
     def _make_cache_key(self, request: RankingRequest) -> str:
         """Create cache key for request"""
         # Hash intent query and candidate IDs

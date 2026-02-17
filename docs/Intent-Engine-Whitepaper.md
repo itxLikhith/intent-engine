@@ -1,8 +1,8 @@
 # INTENT ENGINE: Foundational Architecture for Privacy-First Workspace Ecosystems
 
-**Version:** 2.0  
-**Date:** February 17, 2026  
-**Target Audience:** Founders, Principal Engineers, System Architects  
+**Version:** 2.0
+**Date:** February 17, 2026
+**Target Audience:** Founders, Principal Engineers, System Architects
 **Classification:** Technical Design Document
 
 ---
@@ -118,7 +118,7 @@ The schema must be:
 interface UniversalIntent {
   // Unique session-scoped ID (not persistent)
   intentId: string;
-  
+
   // Product context (which service generated this)
   context: {
     product: 'search' | 'docs' | 'mail' | 'calendar' | 'meet' | 'forms' | 'sites' | 'diary';
@@ -412,9 +412,9 @@ def parse_text_intent(text: str, context: Context) -> ParsedIntent:
     Extract explicit constraints, goals, and signals from free-form text.
     Uses regex, NLP, and rule-based patterns—no ML models that require user data.
     """
-    
+
     parsed = ParsedIntent()
-    
+
     # 1. Constraint extraction (hard filters)
     constraints = extract_constraints(text)
     # Examples:
@@ -424,7 +424,7 @@ def parse_text_intent(text: str, context: Context) -> ParsedIntent:
     #   "2024" → constraint(year = 2024)
     #   "open source" → constraint(license = open_source)
     parsed.constraints = constraints
-    
+
     # 2. Goal inference from question/imperative patterns
     goal = classify_goal(text)
     # Patterns:
@@ -434,7 +434,7 @@ def parse_text_intent(text: str, context: Context) -> ParsedIntent:
     #   "Where can I..." → LOCAL_SERVICE or NAVIGATION
     #   "I need to draft..." → DRAFT_DOCUMENT
     parsed.goal = goal
-    
+
     # 3. Use case detection
     use_cases = detect_use_cases(text)
     # Keywords map:
@@ -442,7 +442,7 @@ def parse_text_intent(text: str, context: Context) -> ParsedIntent:
     #   "tutorial", "learn", "explain", "basics" → LEARNING
     #   "broken", "error", "not working" → TROUBLESHOOTING
     parsed.use_cases = use_cases
-    
+
     # 4. Temporal intent extraction
     temporal = extract_temporal_intent(text)
     # Patterns:
@@ -450,7 +450,7 @@ def parse_text_intent(text: str, context: Context) -> ParsedIntent:
     #   "this week" → horizon = week
     #   "evergreen tutorial" → recency = evergreen
     parsed.temporal_intent = temporal
-    
+
     # 5. Skill level inference
     skill_level = infer_skill_level(text)
     # Heuristics:
@@ -458,7 +458,7 @@ def parse_text_intent(text: str, context: Context) -> ParsedIntent:
     #   "Advanced setup" → ADVANCED
     #   "API documentation" → EXPERT
     parsed.skill_level = skill_level
-    
+
     # 6. Ethical signal extraction
     ethical_signals = extract_ethical_signals(text)
     # Keywords:
@@ -466,7 +466,7 @@ def parse_text_intent(text: str, context: Context) -> ParsedIntent:
     #   "open source" → openness
     #   "sustainable", "carbon neutral" → sustainability
     parsed.ethical_signals = ethical_signals
-    
+
     return parsed
 
 def extract_constraints(text: str) -> List[Constraint]:
@@ -474,7 +474,7 @@ def extract_constraints(text: str) -> List[Constraint]:
     Rule-based constraint extraction without ML.
     """
     constraints = []
-    
+
     # Dimension-specific regex patterns
     patterns = {
         'platform': [r'\b(Android|iOS|Windows|macOS|Linux)\b'],
@@ -499,7 +499,7 @@ def extract_constraints(text: str) -> List[Constraint]:
             r'(2020|2021|older|historical)'
         ],
     }
-    
+
     for dimension, pattern_list in patterns.items():
         for pattern in pattern_list:
             matches = re.finditer(pattern, text, re.IGNORECASE)
@@ -507,7 +507,7 @@ def extract_constraints(text: str) -> List[Constraint]:
                 # Detect inclusion vs exclusion
                 before_text = text[max(0, match.start()-50):match.start()]
                 is_excluded = bool(re.search(r'\b(no|not|without|avoid|exclude)\s+', before_text, re.IGNORECASE))
-                
+
                 constraint = Constraint(
                     type='exclusion' if is_excluded else 'inclusion',
                     dimension=dimension,
@@ -515,7 +515,7 @@ def extract_constraints(text: str) -> List[Constraint]:
                     hardFilter=True
                 )
                 constraints.append(constraint)
-    
+
     return constraints
 
 def classify_goal(text: str) -> IntentGoal:
@@ -556,12 +556,12 @@ def classify_goal(text: str) -> IntentGoal:
             r'\bin\s+\w+\s+(?:city|area)\b',
         ],
     }
-    
+
     for goal, patterns in goal_patterns.items():
         for pattern in patterns:
             if re.search(pattern, text, re.IGNORECASE):
                 return goal
-    
+
     # Default: FIND_INFORMATION if no pattern matched
     return IntentGoal.FIND_INFORMATION
 ```
@@ -576,20 +576,20 @@ def parse_form_intent(form_data: Dict[str, Any], context: Context) -> ParsedInte
     Extract intent from form submissions (no text).
     Example: User fills "Skills: Python, Rust" | "Budget: <5000" | "Company Size: Startup"
     """
-    
+
     parsed = ParsedIntent()
-    
+
     # Direct constraint mapping
     for field_name, field_value in form_data.items():
         if field_value is not None and field_value != "":
             constraint = map_field_to_constraint(field_name, field_value)
             parsed.constraints.append(constraint)
-    
+
     # Infer goal from form context
     # Example: resume builder form → goal = CREATE
     form_name = context.get('form_name', '')
     parsed.goal = infer_goal_from_form(form_name)
-    
+
     return parsed
 
 def map_field_to_constraint(field_name: str, field_value: Any) -> Constraint:
@@ -608,9 +608,9 @@ def map_field_to_constraint(field_name: str, field_value: Any) -> Constraint:
         'experience': 'skill_level',
         'location': 'region',
     }
-    
+
     dimension = dimension_map.get(field_name.lower(), field_name.lower())
-    
+
     return Constraint(
         type='inclusion',
         dimension=dimension,
@@ -627,20 +627,20 @@ def parse_document_context(doc_id: str, doc_state: DocumentState) -> DocumentCon
     Extract intent signals from an open document without reading all content.
     Only read: title, first 1000 chars, metadata (NOT persisted).
     """
-    
+
     doc_context = DocumentContext()
     doc_context.docId = doc_id
-    
+
     # Read minimal content
     doc_context.content = doc_state.content[:1000]  # First 1KB only
     doc_context.lastEditTime = doc_state.last_edit_time
     doc_context.collaborators = len(doc_state.collaborator_list)
     doc_context.contentType = infer_content_type(doc_state.mime_type)
-    
+
     # Goal inference from document state
     # If doc has numerical data and user opens "Data" → analyze
     # If multiple collaborators and user leaves comment → collaborate
-    
+
     return doc_context
 ```
 
@@ -654,9 +654,9 @@ def detect_use_cases(text: str, context: Context) -> List[UseCase]:
     Infer use cases from question structure and keywords.
     NO user history, NO profile data—only current context.
     """
-    
+
     use_cases = []
-    
+
     # Linguistic pattern detection
     patterns = {
         UseCase.COMPARISON: [
@@ -680,17 +680,17 @@ def detect_use_cases(text: str, context: Context) -> List[UseCase]:
             r'\b(?:forum|reddit|discussion)\b',
         ],
     }
-    
+
     for use_case, pattern_list in patterns.items():
         for pattern in pattern_list:
             if re.search(pattern, text, re.IGNORECASE):
                 use_cases.append(use_case)
                 break  # Avoid duplicates per use case
-    
+
     # Fallback
     if not use_cases:
         use_cases.append(UseCase.LEARNING)
-    
+
     return list(set(use_cases))  # Deduplicate
 ```
 
@@ -701,9 +701,9 @@ def extract_temporal_intent(text: str) -> TemporalIntent:
     """
     Infer time horizon, recency preference, and frequency from textual and contextual clues.
     """
-    
+
     temporal = TemporalIntent()
-    
+
     # Horizon detection
     horizon_patterns = {
         'immediate': [r'\b(?:now|today|urgent|asap|right\s+away)\b'],
@@ -712,17 +712,17 @@ def extract_temporal_intent(text: str) -> TemporalIntent:
         'month': [r'\b(?:this\s+month|next\s+month|a\s+month)\b'],
         'longterm': [r'\b(?:next\s+year|long[\s-]?term|future)\b'],
     }
-    
+
     for horizon_type, patterns in horizon_patterns.items():
         for pattern in patterns:
             if re.search(pattern, text, re.IGNORECASE):
                 temporal.horizon = horizon_type
                 break
-    
+
     # Default based on goal
     if not temporal.horizon:
         temporal.horizon = 'flexible'
-    
+
     # Recency preference
     if re.search(r'\b(?:latest|recent|breaking|2024|2025)\b', text, re.IGNORECASE):
         temporal.recency = 'recent'
@@ -730,13 +730,13 @@ def extract_temporal_intent(text: str) -> TemporalIntent:
         temporal.recency = 'evergreen'
     else:
         temporal.recency = 'recent'  # Default
-    
+
     # Frequency
     if re.search(r'\b(?:every|weekly|daily|recurring|repeating)\b', text, re.IGNORECASE):
         temporal.frequency = 'recurring'
     else:
         temporal.frequency = 'oneoff'
-    
+
     return temporal
 ```
 
@@ -747,19 +747,19 @@ def infer_skill_level(text: str) -> str:
     """
     Infer user's implied technical proficiency from language patterns.
     """
-    
+
     advanced_indicators = [
         r'\b(?:API|CLI|regex|algorithm|optimization|memory\s+leak)\b',
         r'\b(?:database|SQL|concurrency|threading|async)\b',
         r'\b(?:architecture|design\s+pattern|microservices)\b',
     ]
-    
+
     beginner_indicators = [
         r'\b(?:what\s+is|basics|beginner|simple|easy)\b',
         r'\b(?:first\s+time|never\s+used|newbie|explain\s+like)\b',
         r'\b(?:step\s+by\s+step|walkthrough)\b',
     ]
-    
+
     if any(re.search(pattern, text, re.IGNORECASE) for pattern in advanced_indicators):
         return 'advanced'
     elif any(re.search(pattern, text, re.IGNORECASE) for pattern in beginner_indicators):
@@ -775,9 +775,9 @@ def extract_ethical_signals(text: str) -> List[EthicalSignal]:
     """
     Detect privacy, sustainability, openness preferences from explicit mentions.
     """
-    
+
     signals = []
-    
+
     ethical_patterns = {
         'privacy': {
             'keywords': [r'\b(?:privacy|encrypted|no\s+tracking|anonymous|confidential)\b'],
@@ -800,7 +800,7 @@ def extract_ethical_signals(text: str) -> List[EthicalSignal]:
             'preference': 'ethical'
         },
     }
-    
+
     for dimension, config in ethical_patterns.items():
         for keyword_pattern in config['keywords']:
             if re.search(keyword_pattern, text, re.IGNORECASE):
@@ -809,7 +809,7 @@ def extract_ethical_signals(text: str) -> List[EthicalSignal]:
                     preference=config['preference']
                 ))
                 break
-    
+
     return signals
 ```
 
@@ -820,15 +820,15 @@ def normalize_to_schema(parsed: ParsedIntent, context: Context) -> UniversalInte
     """
     Combine parsed and inferred signals into the UniversalIntent schema.
     """
-    
+
     import uuid
     from datetime import datetime, timedelta
-    
+
     now = datetime.utcnow()
     session_ttl = timedelta(hours=8)  # Intent expires at session end
-    
+
     intent = UniversalIntent()
-    
+
     # Identifiers (session-scoped only)
     intent.intentId = f"intent_{uuid.uuid4().hex[:12]}"
     intent.context = IntentContext(
@@ -837,7 +837,7 @@ def normalize_to_schema(parsed: ParsedIntent, context: Context) -> UniversalInte
         sessionId=context.session_id,
         userLocale=context.locale,
     )
-    
+
     # Declared intent
     intent.declared = DeclaredIntent(
         query=parsed.query or None,
@@ -848,7 +848,7 @@ def normalize_to_schema(parsed: ParsedIntent, context: Context) -> UniversalInte
         budget=parsed.budget or None,
         skillLevel=parsed.skill_level,
     )
-    
+
     # Inferred intent
     intent.inferred = InferredIntent(
         useCases=parsed.use_cases,
@@ -857,13 +857,13 @@ def normalize_to_schema(parsed: ParsedIntent, context: Context) -> UniversalInte
         complexity=map_complexity(parsed.skill_level),
         ethicalSignals=parsed.ethical_signals,
     )
-    
+
     # Session feedback (empty at creation, populated on interaction)
     intent.sessionFeedback = SessionFeedback()
-    
+
     # TTL
     intent.expiresAt = (now + session_ttl).isoformat()
-    
+
     return intent
 
 def map_urgency(horizon: str) -> str:
@@ -879,7 +879,7 @@ def map_urgency(horizon: str) -> str:
 
 def map_result_type(goal: IntentGoal, use_cases: List[UseCase]) -> str:
     """Infer result type from goal and use cases."""
-    
+
     result_type_map = {
         IntentGoal.LEARN: 'tutorial',
         IntentGoal.COMPARISON: 'comparison',
@@ -891,7 +891,7 @@ def map_result_type(goal: IntentGoal, use_cases: List[UseCase]) -> str:
         IntentGoal.CREATE: 'tool',
         IntentGoal.REFLECT: 'community',
     }
-    
+
     return result_type_map.get(goal, 'answer')
 
 def map_complexity(skill_level: str) -> str:
@@ -920,37 +920,37 @@ def rank_search_results(
     3. Quality signals (freshness, authority, accessibility)
     4. Ethical alignment
     """
-    
+
     ranked = []
-    
+
     for result in candidate_results:
-        
+
         # Step 1: Apply hard filters (constraints)
         if not satisfies_constraints(result, intent.declared.constraints):
             continue  # Skip this result
-        
+
         # Step 2: Compute intent alignment score
         alignment_score = compute_intent_alignment(result, intent)
-        
+
         # Step 3: Quality signals (no tracking)
         quality_score = compute_quality_score(result, intent)
-        
+
         # Step 4: Ethical alignment
         ethical_score = compute_ethical_alignment(result, intent.inferred.ethicalSignals)
-        
+
         # Step 5: Combine scores
         final_score = (
             0.50 * alignment_score +
             0.30 * quality_score +
             0.20 * ethical_score
         )
-        
+
         ranked.append(RankedResult(
             result=result,
             score=final_score,
             reasons=[...]  # Explainability
         ))
-    
+
     # Sort descending by score
     ranked.sort(key=lambda x: x.score, reverse=True)
     return ranked
@@ -959,11 +959,11 @@ def satisfies_constraints(result: SearchResult, constraints: List[Constraint]) -
     """
     Check if result satisfies ALL hard constraints.
     """
-    
+
     for constraint in constraints:
         if not satisfies_constraint(result, constraint):
             return False
-    
+
     return True
 
 def satisfies_constraint(result: SearchResult, constraint: Constraint) -> bool:
@@ -971,17 +971,17 @@ def satisfies_constraint(result: SearchResult, constraint: Constraint) -> bool:
     Check one constraint.
     Extract result metadata (title, snippet, domain, structured data) and compare.
     """
-    
+
     if constraint.type == 'inclusion':
         # Result must contain the value in its metadata
         result_text = f"{result.title} {result.snippet} {result.domain}"
         return constraint.value.lower() in result_text.lower()
-    
+
     elif constraint.type == 'exclusion':
         # Result must NOT contain the value
         result_text = f"{result.title} {result.snippet} {result.domain}"
         return constraint.value.lower() not in result_text.lower()
-    
+
     elif constraint.type == 'range':
         # Numeric comparison (e.g., price)
         result_value = extract_numeric_value(result, constraint.dimension)
@@ -989,7 +989,7 @@ def satisfies_constraint(result: SearchResult, constraint: Constraint) -> bool:
             return False
         min_val, max_val = constraint.value
         return min_val <= result_value <= max_val
-    
+
     return True
 
 def compute_intent_alignment(result: SearchResult, intent: UniversalIntent) -> float:
@@ -997,31 +997,31 @@ def compute_intent_alignment(result: SearchResult, intent: UniversalIntent) -> f
     Score how well the result aligns with user's declared intent.
     Uses semantic similarity (no tracking, no user history).
     """
-    
+
     score = 0.0
-    
+
     # 1. Goal alignment (result type vs expected type)
     result_type = classify_result_type(result)  # Infer from URL structure, content
     if result_type == intent.inferred.resultType:
         score += 0.25
-    
+
     # 2. Use case alignment
     for use_case in intent.inferred.useCases:
         if result_contains_use_case(result, use_case):
             score += 0.15 / len(intent.inferred.useCases)
-    
+
     # 3. Skill level match (avoid beginner results for experts and vice versa)
     if matches_skill_level(result, intent.declared.skillLevel):
         score += 0.20
-    
+
     # 4. Temporal alignment
     if matches_temporal_preference(result, intent.inferred.temporalIntent):
         score += 0.15
-    
+
     # 5. Recency preference
     if matches_recency(result, intent.inferred.temporalIntent.recency):
         score += 0.10
-    
+
     return min(score, 1.0)  # Clamp to [0, 1]
 
 def classify_result_type(result: SearchResult) -> str:
@@ -1034,9 +1034,9 @@ def classify_result_type(result: SearchResult) -> str:
     - amazon.com/* → marketplace
     - wikipedia.org/* → reference
     """
-    
+
     domain = extract_domain(result.url)
-    
+
     type_map = {
         'github.com': 'code',
         'stackoverflow.com': 'community',
@@ -1049,11 +1049,11 @@ def classify_result_type(result: SearchResult) -> str:
         'wikipedia.org': 'reference',
         'pytorch.org': 'documentation',
     }
-    
+
     for domain_keyword, type_label in type_map.items():
         if domain_keyword in domain:
             return type_label
-    
+
     # Default heuristic: analyze URL structure
     if '/docs/' in result.url or '/documentation/' in result.url:
         return 'documentation'
@@ -1070,9 +1070,9 @@ def compute_quality_score(result: SearchResult, intent: UniversalIntent) -> floa
     - Content completeness (length, structure)
     - Accessibility (alt text, captions, language)
     """
-    
+
     score = 0.0
-    
+
     # Domain authority (public signals only)
     domain_authority = get_domain_authority(result.domain)  # Public data
     if domain_authority > 50:
@@ -1081,7 +1081,7 @@ def compute_quality_score(result: SearchResult, intent: UniversalIntent) -> floa
         score += 0.15
     else:
         score += 0.05
-    
+
     # Recency
     days_old = (datetime.utcnow() - result.last_crawl).days
     if days_old < 7:
@@ -1090,15 +1090,15 @@ def compute_quality_score(result: SearchResult, intent: UniversalIntent) -> floa
         score += 0.15
     elif days_old < 365:
         score += 0.05
-    
+
     # Content completeness
     if len(result.snippet) > 150:  # Substantial content
         score += 0.25
-    
+
     # Accessibility (has alt text, captions, etc.)
     if result.accessibility_signals:
         score += 0.20
-    
+
     return min(score, 1.0)
 
 def compute_ethical_alignment(result: SearchResult, ethical_signals: List[EthicalSignal]) -> float:
@@ -1106,28 +1106,28 @@ def compute_ethical_alignment(result: SearchResult, ethical_signals: List[Ethica
     Score based on ethical signal matching.
     Example: User declares "privacy-first" → rank privacy-respecting sites higher.
     """
-    
+
     score = 0.5  # Neutral baseline
-    
+
     if not ethical_signals:
         return score  # No ethical preferences declared
-    
+
     for signal in ethical_signals:
         if signal.dimension == 'privacy':
             # Check if domain is privacy-respecting (public reputation signals)
             if is_privacy_respecting_domain(result.domain):
                 score += 0.25
-        
+
         elif signal.dimension == 'openness':
             # Preference for open-source projects
             if 'github.com' in result.domain or 'opensource' in result.url.lower():
                 score += 0.25
-        
+
         elif signal.dimension == 'accessibility':
             # Preference for accessible content
             if result.accessibility_signals:
                 score += 0.25
-    
+
     return min(score, 1.0)
 ```
 
@@ -1144,14 +1144,14 @@ def recommend_services(
     Given a user's intent, recommend the best workspace services to use.
     Example: If intent suggests "collaboration" → recommend Docs > Meet > Mail
     """
-    
+
     recommendations = []
-    
+
     for service_name, service in available_services.items():
-        
+
         # Score intent match for this service
         match_score = compute_service_match(intent, service)
-        
+
         # Add to recommendations
         if match_score > 0.3:  # Threshold
             recommendations.append(ServiceRecommendation(
@@ -1159,7 +1159,7 @@ def recommend_services(
                 score=match_score,
                 reason=explain_match(intent, service)
             ))
-    
+
     # Sort by score
     recommendations.sort(key=lambda x: x.score, reverse=True)
     return recommendations
@@ -1168,7 +1168,7 @@ def compute_service_match(intent: UniversalIntent, service: Service) -> float:
     """
     Score service relevance based on intent goal and use cases.
     """
-    
+
     # Mapping of intent goals to services
     service_affinity = {
         'search': {
@@ -1203,16 +1203,16 @@ def compute_service_match(intent: UniversalIntent, service: Service) -> float:
             IntentGoal.REFLECT: 0.95,
         },
     }
-    
+
     # Base score from goal affinity
     base_score = service_affinity.get(service.name, {}).get(intent.declared.goal, 0.3)
-    
+
     # Boost for use cases
     use_case_boost = 0.0
     for use_case in intent.inferred.useCases:
         if use_case in service.supported_use_cases:
             use_case_boost += 0.1
-    
+
     return min(base_score + use_case_boost, 1.0)
 ```
 
@@ -1228,39 +1228,39 @@ def match_ads(
 ) -> List[MatchedAd]:
     """
     Match relevant ads to user intent.
-    
+
     Ad matching respects:
     1. User's hard constraints (exclusions, budget, region, etc.)
     2. Advertiser's hard constraints (target audience demographics NOT allowed)
     3. Relevance to declared goal + use case
     4. User's ethical preferences
-    
+
     NO: User history, behavioral profiles, third-party data
     NO: Proxy discrimination via sensitive attributes
     """
-    
+
     matched = []
-    
+
     for ad in ad_inventory:
-        
+
         # Filter 1: User's hard constraints
         if not satisfies_user_constraints(ad, intent.declared.constraints):
             continue
-        
+
         # Filter 2: Advertiser's hard constraints (without discriminating)
         if not satisfies_advertiser_constraints(ad, intent):
             continue
-        
+
         # Filter 3: Relevance score
         relevance_score = compute_ad_relevance(ad, intent)
-        
+
         if relevance_score > 0.4:  # Minimum relevance threshold
             matched.append(MatchedAd(
                 ad=ad,
                 relevance_score=relevance_score,
                 matchedIntentDimensions=[...]  # Transparency
             ))
-    
+
     # Sort by relevance
     matched.sort(key=lambda x: x.relevance_score, reverse=True)
     return matched[:5]  # Top 5 ads max
@@ -1274,37 +1274,37 @@ def satisfies_user_constraints(ad: Ad, constraints: List[Constraint]) -> bool:
             # User excluded this category
             if ad.category == constraint.value or ad.brand == constraint.value:
                 return False
-    
+
     return True
 
 def satisfies_advertiser_constraints(ad: Ad, intent: UniversalIntent) -> bool:
     """
     Validate advertiser's constraints don't violate fairness.
-    
+
     ALLOWED constraints (non-discriminatory):
     - Geographic region (India, EU, US)
     - Language (English, Hindi, Spanish)
     - Device type (mobile, desktop)
     - Declared intent (users searching for "running shoes")
-    
+
     FORBIDDEN constraints (discriminatory):
     - Age, gender, race, religion, sexuality
     - Income, credit score, parental status
     - Health conditions, political affiliation
     - Behavioral profiling ("users who viewed X")
     """
-    
+
     # Check for forbidden constraints
     forbidden_attrs = [
         'age', 'gender', 'race', 'religion', 'sexuality',
         'income', 'parental_status', 'health_condition',
         'behavioral_segment', 'lookalike_audience'
     ]
-    
+
     for constraint in ad.advertiser_constraints:
         if constraint.dimension in forbidden_attrs:
             return False  # Reject ad with forbidden targeting
-    
+
     # Allowed: geographic, device, intent-based targeting
     return True
 
@@ -1312,35 +1312,35 @@ def compute_ad_relevance(ad: Ad, intent: UniversalIntent) -> float:
     """
     Score ad relevance based on intent match.
     """
-    
+
     score = 0.0
-    
+
     # 1. Goal match
     if ad.primary_goal == intent.declared.goal:
         score += 0.40
-    
+
     # 2. Use case match
     for use_case in intent.inferred.useCases:
         if use_case in ad.target_use_cases:
             score += 0.15 / len(ad.target_use_cases)
-    
+
     # 3. Keyword relevance
     query_words = intent.declared.query.split() if intent.declared.query else []
     ad_keywords = set(ad.keywords)
     matching_keywords = len(set(query_words) & ad_keywords)
     if matching_keywords > 0:
         score += 0.20 * (matching_keywords / len(query_words))
-    
+
     # 4. Ethical alignment
     if intent.inferred.ethicalSignals:
         # Ad respects ethical preferences
         if is_ad_ethical(ad, intent.inferred.ethicalSignals):
             score += 0.10
-    
+
     # 5. Skill level match
     if matches_skill_level(ad, intent.declared.skillLevel):
         score += 0.10
-    
+
     return min(score, 1.0)
 ```
 
@@ -1447,16 +1447,16 @@ CREATE TABLE intent (
     product STRING NOT NULL, -- search, docs, mail, calendar, meet, forms, diary
     created_at TIMESTAMP NOT NULL,
     expires_at TIMESTAMP NOT NULL,
-    
+
     -- Declared intent (JSON)
     declared_intent JSON NOT NULL, -- goal, constraints, urgency, skill_level, etc.
-    
+
     -- Inferred intent (JSON)
     inferred_intent JSON NOT NULL, -- use_cases, temporal_intent, ethical_signals, etc.
-    
+
     -- Session feedback (mutable)
     session_feedback JSON, -- clicks, dwell_time, bounced, reformulated
-    
+
     -- Index for cleanup
     CREATE INDEX idx_expires_at ON intent(expires_at)
 );
@@ -1477,15 +1477,15 @@ CREATE TABLE ranking_log (
     intent_id STRING NOT NULL, -- Reference to intent object
     query_text STRING, -- Only if search intent
     product STRING,
-    
+
     -- Anonymized result metadata
     result_urls STRING[], -- URLs only, no titles or snippets
     result_scores FLOAT64[], -- Relevance scores
     ranking_reasons JSON, -- Why result ranked high (for system improvement)
-    
+
     created_at TIMESTAMP NOT NULL,
     expires_at TIMESTAMP NOT NULL, -- 7 days
-    
+
     CREATE INDEX idx_expires_at ON ranking_log(expires_at)
 );
 ```
@@ -1496,17 +1496,17 @@ CREATE TABLE ranking_log (
 CREATE TABLE ad_impressions_aggregated (
     ad_id STRING NOT NULL,
     date DATE NOT NULL,
-    
+
     -- Intent dimensions (aggregated, no user identity)
     intent_goal STRING, -- e.g., 'PURCHASE'
     intent_use_case STRING, -- e.g., 'COMPARISON'
     advertiser_id STRING NOT NULL,
-    
+
     -- Aggregated metrics (differential privacy applied)
     impression_count INT64, -- With noise added
     click_count INT64, -- With noise added
     conversion_count INT64, -- With noise added
-    
+
     PRIMARY KEY (ad_id, date, intent_goal, intent_use_case)
 );
 ```
@@ -1516,7 +1516,7 @@ CREATE TABLE ad_impressions_aggregated (
 ```sql
 -- No persistent storage—computed on-demand from intent schema
 -- Example pseudocode:
-SELECT 
+SELECT
     service_name,
     COMPUTE_SERVICE_MATCH(intent, service) AS match_score
 FROM services
@@ -1761,7 +1761,7 @@ This architecture forms the foundation for building a **Google-like workspace ec
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: January 19, 2026  
-**Status**: Ready for Implementation  
+**Document Version**: 1.0
+**Last Updated**: January 19, 2026
+**Status**: Ready for Implementation
 **Author**: Generalist AI Architect
