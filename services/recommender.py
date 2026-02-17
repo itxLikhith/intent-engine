@@ -6,22 +6,15 @@ This module implements service recommendation logic based on user intent.
 
 import logging
 from dataclasses import dataclass
-from datetime import timezone
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from core.schema import (
-    EthicalDimension,
-    EthicalSignal,
     Frequency,
-    IntentGoal,
     Recency,
     TemporalHorizon,
-    TemporalIntent,
     UniversalIntent,
-    UseCase,
 )
 
 # Configure logging

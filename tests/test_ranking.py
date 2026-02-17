@@ -21,7 +21,6 @@ from core.schema import (
     UseCase,
 )
 from ranking.ranker import (
-    RankedResult,
     RankingRequest,
     SearchResult,
     rank_results,

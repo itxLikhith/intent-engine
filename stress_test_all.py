@@ -13,14 +13,10 @@ Usage:
 """
 
 import asyncio
-import json
-import os
 import statistics
-import subprocess
-import sys
 import threading
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -200,7 +196,7 @@ class StressTester:
         print(f"Successful: {result.successful_requests} ({result.success_rate:.1f}%)")
         print(f"Failed: {result.failed_requests}")
         print(f"Throughput: {result.requests_per_second:.2f} req/s")
-        print(f"\nLatency (ms):")
+        print("\nLatency (ms):")
         print(f"  Min: {result.min_latency_ms:.2f}")
         print(f"  Avg: {result.avg_latency_ms:.2f}")
         print(f"  P50: {result.p50_latency_ms:.2f}")
@@ -719,7 +715,7 @@ class StressTester:
         print("INTENT ENGINE - COMPREHENSIVE STRESS TEST SUITE")
         print("=" * 80)
         print(f"Started: {datetime.now().isoformat()}")
-        print(f"Configuration:")
+        print("Configuration:")
         print(f"  Base URL: {self.config.base_url}")
         print(f"  Workers: {self.config.num_workers}")
         print(f"  Requests per test: {self.config.num_requests}")

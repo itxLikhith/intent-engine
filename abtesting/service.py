@@ -10,17 +10,16 @@ This module implements A/B testing capabilities including:
 
 import hashlib
 import math
-import random
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql import func
 
-from database import Base, engine
+from database import Base
 
 
 class ABTestStatus(Enum):

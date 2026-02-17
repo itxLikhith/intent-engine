@@ -22,7 +22,6 @@ from core.schema import (
 from services.recommender import (
     ServiceMetadata,
     ServiceRecommendationRequest,
-    ServiceRecommendationResponse,
     recommend_services,
 )
 
@@ -147,7 +146,7 @@ class TestServiceRecommender(unittest.TestCase):
 
         # The search service should be ranked highest for LEARN goal
         self.assertGreater(len(response.recommendations), 0)
-        top_recommendation = response.recommendations[0]
+        response.recommendations[0]
         # Note: This might not be search if docs also supports LEARN, let's check if search is highly ranked
         search_ranked = False
         for rec in response.recommendations:
@@ -299,10 +298,8 @@ class TestServiceRecommender(unittest.TestCase):
         response = recommend_services(request)
 
         # Should return recommendations with temporal reasons
-        temporal_matched = False
         for rec in response.recommendations:
             if any("temporal-" in reason for reason in rec.matchReasons):
-                temporal_matched = True
                 break
 
         # Temporal matching might not always produce reasons depending on implementation,

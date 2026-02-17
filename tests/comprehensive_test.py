@@ -2,8 +2,6 @@
 Comprehensive test script for the Intent Engine with Advertising System
 """
 
-import json
-import time
 
 import requests
 

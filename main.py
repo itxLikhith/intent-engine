@@ -8,14 +8,10 @@ It supports CLI commands and can serve as a server entry point.
 import argparse
 import json
 import sys
-from typing import Any, Dict
 
-from ads.matcher import AdMatchingRequest, AdMetadata, match_ads
 from config.model_cache import initialize_models
-from core.schema import UniversalIntent
+
 from extraction.extractor import IntentExtractionRequest, extract_intent
-from ranking.ranker import RankingRequest, SearchResult, rank_results
-from services.recommender import ServiceMetadata, ServiceRecommendationRequest, recommend_services
 
 
 def run_demo_search():
@@ -52,8 +48,6 @@ def run_demo_ranking():
 
 def run_tests():
     """Run all unit tests"""
-    import os
-    import sys
     import unittest
 
     # Discover and run tests
@@ -69,7 +63,6 @@ def run_tests():
 
 def run_perf_tests():
     """Run all performance tests"""
-    import time
 
     print("Running Performance Tests...\n")
 

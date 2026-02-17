@@ -8,12 +8,10 @@ using WebSockets for live dashboard updates.
 import asyncio
 import json
 from datetime import datetime
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
-
-from models import AdMetric
 
 
 class ConnectionManager:

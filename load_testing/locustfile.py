@@ -14,13 +14,10 @@ Usage:
 Then open http://localhost:8089 in your browser
 """
 
-import json
 import random
 import threading
-import time
 
 from locust import HttpUser, between, events, task
-from locust.runners import MasterRunner
 
 # FIX: Add locks for shared state in load tests
 _query_history_lock = threading.Lock()
@@ -318,7 +315,7 @@ class IntentEngineLoadTest(HttpUser):
                 {
                     "id": f"ad-{i}",
                     "title": f"Ad {i} for {query[:20]}",
-                    "description": f"Great product related to your search",
+                    "description": "Great product related to your search",
                     "targetingConstraints": {},
                     "forbiddenDimensions": [],
                     "qualityScore": random.uniform(0.6, 0.95),
@@ -444,7 +441,6 @@ def on_quitting(environment, **kwargs):
 
 
 if __name__ == "__main__":
-    import sys
 
     # Allow running with: python locustfile.py
     # This is just for testing the file structure

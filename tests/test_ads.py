@@ -5,7 +5,7 @@ Unit tests for the ad_matcher module
 import copy
 import unittest
 
-from ads.matcher import AdMatchingRequest, AdMatchingResponse, AdMetadata, match_ads
+from ads.matcher import AdMatchingRequest, AdMetadata, match_ads
 from core.schema import (
     Constraint,
     ConstraintType,

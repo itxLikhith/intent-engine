@@ -16,7 +16,7 @@ import logging
 import time
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from core.schema import UniversalIntent
 from extraction.extractor import IntentExtractionRequest, extract_intent

@@ -35,7 +35,7 @@ import time
 import traceback
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import aiohttp
 import psutil
@@ -153,7 +153,7 @@ class ComprehensiveStressTestSuite:
     async def test_intent_extraction(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test intent extraction endpoint"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: Intent Extraction")
+        print("STRESS TEST: Intent Extraction")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -183,7 +183,7 @@ class ComprehensiveStressTestSuite:
                             results.successful_requests += 1
                         else:
                             results.failed_requests += 1
-                            results.errors.append(f"Missing intent in response")
+                            results.errors.append("Missing intent in response")
                     else:
                         results.failed_requests += 1
                         results.errors.append(f"HTTP {response.status}")
@@ -221,7 +221,7 @@ class ComprehensiveStressTestSuite:
     async def test_url_ranking(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test URL ranking endpoint"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: URL Ranking")
+        print("STRESS TEST: URL Ranking")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -290,7 +290,7 @@ class ComprehensiveStressTestSuite:
     async def test_rank_results(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test result ranking endpoint"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: Result Ranking")
+        print("STRESS TEST: Result Ranking")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -386,7 +386,7 @@ class ComprehensiveStressTestSuite:
     async def test_ad_matching(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test ad matching endpoint"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: Ad Matching")
+        print("STRESS TEST: Ad Matching")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -424,7 +424,7 @@ class ComprehensiveStressTestSuite:
                         {
                             "id": f"ad-{request_id}-{i}",
                             "title": f"Ad {i} for {query[:20]}",
-                            "description": f"Great product related to your search",
+                            "description": "Great product related to your search",
                             "targetingConstraints": {},
                             "forbiddenDimensions": [],
                             "qualityScore": random.uniform(0.6, 0.95),
@@ -482,7 +482,7 @@ class ComprehensiveStressTestSuite:
     async def test_service_recommendation(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test service recommendation endpoint"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: Service Recommendation")
+        print("STRESS TEST: Service Recommendation")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -592,7 +592,7 @@ class ComprehensiveStressTestSuite:
     async def test_campaign_management(self, concurrency: int = 20, duration: int = 30) -> TestResults:
         """Stress test campaign management endpoints"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: Campaign Management")
+        print("STRESS TEST: Campaign Management")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -694,7 +694,7 @@ class ComprehensiveStressTestSuite:
     async def test_reporting_endpoints(self, concurrency: int = 20, duration: int = 30) -> TestResults:
         """Stress test reporting endpoints"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: Reporting Endpoints")
+        print("STRESS TEST: Reporting Endpoints")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -772,7 +772,7 @@ class ComprehensiveStressTestSuite:
                     async with session.post(f"{self.base_url}/extract-intent", json=payload) as response:
                         await response.json()
                         successful += 1
-                except Exception as e:
+                except Exception:
                     failed += 1
 
                 # Sample memory every 50 iterations
@@ -797,23 +797,23 @@ class ComprehensiveStressTestSuite:
             analysis["memory_growth_mb"] = growth
             analysis["potential_leak"] = growth > 50
 
-            print(f"\nMemory Analysis:")
+            print("\nMemory Analysis:")
             print(f"  Initial: {first:.1f} MB")
             print(f"  Final: {last:.1f} MB")
             print(f"  Growth: {growth:.1f} MB")
             print(f"  Growth per 100 requests: {growth / len(memory_samples) * 100:.2f} MB")
 
             if growth > 50:
-                print(f"  [WARNING] Potential memory leak detected!")
+                print("  [WARNING] Potential memory leak detected!")
             else:
-                print(f"  [OK] Memory usage stable")
+                print("  [OK] Memory usage stable")
 
         return analysis
 
     async def test_concurrent_all_endpoints(self, concurrency: int = 100, duration: int = 60) -> TestResults:
         """Stress test all endpoints simultaneously"""
         print(f"\n{'='*70}")
-        print(f"STRESS TEST: All Endpoints Combined")
+        print("STRESS TEST: All Endpoints Combined")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*70}")
 
@@ -882,7 +882,7 @@ class ComprehensiveStressTestSuite:
                         if intent_response.status != 200:
                             results.total_requests += 1
                             results.failed_requests += 1
-                            results.errors.append(f"Intent extraction failed")
+                            results.errors.append("Intent extraction failed")
                             return
                         intent_data = await intent_response.json()
                         intent = intent_data.get("intent", {})
@@ -986,7 +986,7 @@ class ComprehensiveStressTestSuite:
         print(f"  Requests/sec: {results.rps:.2f}")
 
         if results.response_times:
-            print(f"\n  Response Times (ms):")
+            print("\n  Response Times (ms):")
             print(f"    Min: {results.min_response_time:.2f}")
             print(f"    Avg: {results.avg_response_time:.2f}")
             print(f"    Median: {results.median_response_time:.2f}")
@@ -994,7 +994,7 @@ class ComprehensiveStressTestSuite:
             print(f"    99th percentile: {results.p99_response_time:.2f}")
             print(f"    Max: {results.max_response_time:.2f}")
 
-        print(f"\n  Memory Usage:")
+        print("\n  Memory Usage:")
         print(f"    Start: {results.start_memory_mb:.1f} MB")
         print(f"    End: {results.end_memory_mb:.1f} MB")
         print(f"    Change: {results.end_memory_mb - results.start_memory_mb:+.1f} MB")
@@ -1033,7 +1033,7 @@ class ComprehensiveStressTestSuite:
         print(f"\n{'='*70}")
         print(f"STRESS TEST REPORT GENERATED: {output_file}")
         print(f"{'='*70}")
-        print(f"\nOverall Summary:")
+        print("\nOverall Summary:")
         print(f"  Total Tests Run: {report['summary']['total_tests']}")
         print(f"  Total Requests: {report['summary']['total_requests']:,}")
         print(f"  Success Rate: {report['summary']['overall_success_rate']:.2f}%")

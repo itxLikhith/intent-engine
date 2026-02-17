@@ -8,20 +8,14 @@ It extracts structured intent from free-form user queries using hybrid parsing (
 import logging
 import re
 import uuid
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from functools import lru_cache
-from typing import Any, Dict, List, Optional, Union
-
-import numpy as np
+from typing import List, Optional
 
 from core.schema import (
     Complexity,
     Constraint,
     ConstraintType,
-    ContentType,
     DeclaredIntent,
-    DocumentContext,
     EthicalDimension,
     EthicalSignal,
     Frequency,
@@ -29,7 +23,6 @@ from core.schema import (
     IntentExtractionRequest,
     IntentExtractionResponse,
     IntentGoal,
-    MeetingContext,
     Recency,
     ResultType,
     SessionFeedback,

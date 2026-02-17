@@ -8,8 +8,7 @@ import logging
 import re
 from collections import OrderedDict
 from datetime import datetime, timezone
-from functools import lru_cache
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 

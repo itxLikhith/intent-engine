@@ -4,14 +4,13 @@ Intent Engine - Main API Service
 This module implements the FastAPI service with all required endpoints for the Intent Engine.
 """
 
-import asyncio
 import logging
 import os
 import time
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocket
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
@@ -30,19 +29,17 @@ from database import Ad as DbAd
 from database import AdGroup as DbAdGroup
 from database import AdMetric as DbAdMetric
 from database import Advertiser as DbAdvertiser
-from database import Base
+from database import Base, db_manager, engine
 from database import Campaign as DbCampaign
 from database import ClickTracking as DbClickTracking
 from database import ConversionTracking as DbConversionTracking
 from database import CreativeAsset as DbCreativeAsset
 from database import FraudDetection as DbFraudDetection
-from database import db_manager, engine
 from extraction.extractor import extract_intent
 from models import (
     ABTestCreate,
     ABTestResponse,
     ABTestResultsResponse,
-    ABTestUpdate,
     ABTestVariantCreate,
     ABTestVariantResponse,
     Ad,
@@ -58,7 +55,6 @@ from models import (
     AdvertiserCreate,
     AttributionResultResponse,
     AuditEvent,
-    AuditEventRequest,
     AuditStats,
     Campaign,
     CampaignCreate,
@@ -68,7 +64,6 @@ from models import (
     ClickTracking,
     ClickTrackingCreate,
     ConsentRecord,
-    ConsentRequest,
     ConsentSummary,
     ConversionTracking,
     ConversionTrackingCreate,
@@ -94,13 +89,10 @@ from models import (
     URLRankingAPIRequest,
     URLRankingAPIResponse,
 )
-from privacy.consent_manager import ConsentStatus, ConsentType, get_consent_manager
-from privacy.enhanced_privacy import DataRetentionPeriod, PrivacyControlType, get_enhanced_privacy_controls
+from privacy.consent_manager import ConsentType, get_consent_manager
+from privacy.enhanced_privacy import DataRetentionPeriod, get_enhanced_privacy_controls
 from privacy_core import anonymize_intent_data, is_intent_expired, validate_advertiser_constraints
 from ranking.optimized_ranker import rank_results
-from ranking.optimized_url_ranker import URLRankingRequest
-from ranking.optimized_url_ranker import URLRankingResponse as InternalURLRankingResponse
-from ranking.optimized_url_ranker import rank_urls
 from searxng.unified_search import get_unified_search_service
 from services.recommender import recommend_services
 
@@ -383,9 +375,6 @@ async def startup_event():
 
     # Import all modules that define database tables to ensure they're registered with Base.metadata
     # We need to explicitly access the model classes to ensure they're registered with Base.metadata
-    from abtesting.service import ABTest, ABTestAssignment, ABTestVariant
-    from audit.audit_trail import AuditTrail
-    from privacy.consent_manager import UserConsent
 
     # Log the tables that will be created
     logger.info(f"Registered tables: {list(Base.metadata.tables.keys())}")
@@ -430,7 +419,7 @@ async def extract_intent_endpoint(request: Dict[str, Any]):
     """
     extraction_requests.inc()  # Increment counter
 
-    start_time = time.time()
+    time.time()
 
     try:
         # Convert dict to IntentExtractionRequest

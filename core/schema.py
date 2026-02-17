@@ -5,11 +5,7 @@ This module defines the universal intent schema and related data structures
 used across all components of the Intent Engine.
 """
 
-import logging
-import re
-import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 

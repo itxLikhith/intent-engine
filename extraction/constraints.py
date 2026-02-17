@@ -5,7 +5,7 @@ This module handles constraint parsing and validation logic.
 """
 
 import re
-from typing import Dict, List, Tuple, Union
+from typing import List
 
 from ..core.schema import Constraint, ConstraintType
 

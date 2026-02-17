@@ -9,9 +9,8 @@ import json
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
-import pytest
 import requests
 
 BASE_URL = "http://localhost:8000"
@@ -646,7 +645,6 @@ class ComprehensiveQueryTestSuite:
 
 def main():
     """Run comprehensive query tests"""
-    import statistics
 
     # Check if server is running
     try:

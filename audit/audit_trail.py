@@ -9,11 +9,10 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import JSON, Column, DateTime, Integer, String, Text
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
 # Define Base here to avoid circular import
-from database import Base, db_manager
+from database import Base
 
 
 class AuditEventType(Enum):

@@ -11,8 +11,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import numpy as np
@@ -20,15 +19,8 @@ import numpy as np
 from core.schema import (
     Constraint,
     ConstraintType,
-    DeclaredIntent,
     EthicalDimension,
-    Frequency,
-    InferredIntent,
-    Recency,
-    SkillLevel,
-    TemporalHorizon,
     UniversalIntent,
-    UseCase,
 )
 from ranking.ranker import EmbeddingCache
 

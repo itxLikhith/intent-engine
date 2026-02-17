@@ -5,13 +5,9 @@ This module implements the database layer using SQLAlchemy ORM with support for
 both SQLite (for local development) and PostgreSQL (for production).
 """
 
-import json
 import logging
 import os
-import threading
-import time
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger

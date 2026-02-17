@@ -6,8 +6,6 @@ This module implements ethical ad matching based on user intent without tracking
 
 import logging
 from dataclasses import dataclass
-from datetime import timezone
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -16,12 +14,8 @@ from core.schema import (
     Constraint,
     ConstraintType,
     DeclaredIntent,
-    EthicalDimension,
-    EthicalSignal,
     InferredIntent,
-    IntentGoal,
     UniversalIntent,
-    UseCase,
 )
 
 # Configure logging

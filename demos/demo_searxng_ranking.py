@@ -15,10 +15,7 @@ Usage:
 
 import argparse
 import io
-import json
-import os
 import sys
-import time
 from typing import Any, Dict, List, Optional
 
 import requests

@@ -36,11 +36,11 @@ def test_basic_functionality():
     print(f"Result Type: {intent.inferred.resultType.value if intent.inferred.resultType else None}")
     print(f"Complexity: {intent.inferred.complexity.value}")
 
-    print(f"\nEthical Signals:")
+    print("\nEthical Signals:")
     for signal in intent.inferred.ethicalSignals:
         print(f"  - Dimension: {signal.dimension.value}, Preference: {signal.preference}")
 
-    print(f"\nTemporal Intent:")
+    print("\nTemporal Intent:")
     if intent.inferred.temporalIntent:
         print(f"  - Horizon: {intent.inferred.temporalIntent.horizon.value}")
         print(f"  - Recency: {intent.inferred.temporalIntent.recency.value}")

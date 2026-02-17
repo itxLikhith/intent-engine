@@ -2,8 +2,6 @@
 Test script for the new advertising system API endpoints
 """
 
-import json
-import time
 from datetime import datetime, timedelta
 
 import requests
@@ -16,7 +14,6 @@ def test_campaign_endpoints():
     print("Testing Campaign Management Endpoints...")
 
     # Create an advertiser first
-    advertiser_data = {"name": "Test Advertiser", "contact_email": "test@example.com"}
 
     try:
         # Create advertiser (this would require an endpoint that we may need to add)
