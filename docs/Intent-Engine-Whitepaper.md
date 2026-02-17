@@ -1,7 +1,7 @@
 # INTENT ENGINE: Foundational Architecture for Privacy-First Workspace Ecosystems
 
-**Version:** 1.0  
-**Date:** January 19, 2026  
+**Version:** 2.0  
+**Date:** February 17, 2026  
 **Target Audience:** Founders, Principal Engineers, System Architects  
 **Classification:** Technical Design Document
 
@@ -111,6 +111,8 @@ The schema must be:
 5. **Inspectable**: Users can view which intent signals were extracted
 
 ### Core Data Model
+
+> **Note:** The following TypeScript representation is for illustrative purposes. The canonical data models are defined in Python in the `core/schema.py` file.
 
 ```typescript
 interface UniversalIntent {
@@ -1638,6 +1640,8 @@ User Session Feedback (captured locally)
 
 ## IMPLEMENTATION ROADMAP
 
+> **Note:** The following roadmap is a historical document outlining the original implementation plan.
+
 ### Phase 1: Core Intent Schema & Extraction (Months 1–2)
 
 **Deliverables**:
@@ -1754,7 +1758,6 @@ This architecture forms the foundation for building a **Google-like workspace ec
 4. **Fair ML**: https://fairmlbook.org
 5. **Schema Design**: https://schema.org (structured data standards)
 6. **GDPR/CCPA Compliance**: https://gdpr-info.eu, https://cpra.ca.gov
-7. **Your Intent Engine Ad System**: See `Intent-Based-Ad-System.md` for detailed ad matching algorithms
 
 ---
 

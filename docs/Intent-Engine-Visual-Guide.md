@@ -1,8 +1,8 @@
 # INTENT ENGINE: Visual Architecture Guide & Quick Reference
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Format:** System Design Companion (PDF-Ready)  
-**Date:** January 19, 2026
+**Date:** February 17, 2026
 
 ---
 
@@ -698,6 +698,8 @@ Intent:  [Query/Action] → [Intent schema] → [Matched results/ads]
 
 ## IMPLEMENTATION ROADMAP
 
+> **Note:** The following roadmap is a historical document outlining the original implementation plan.
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │           INTENT ENGINE LAUNCH TIMELINE                      │
@@ -891,4 +893,4 @@ Intent:  [Query/Action] → [Intent schema] → [Matched results/ads]
 
 **End of Visual Architecture Guide**
 
-For detailed algorithms, see: `Intent-Engine-Whitepaper.md`
+For detailed algorithms, see: [Intent-Engine-Whitepaper.md](Intent-Engine-Whitepaper.md)

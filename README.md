@@ -29,6 +29,7 @@ The Intent Engine is a privacy-first, intent-driven system for search, service r
 The project follows a clean, modular structure:
 ```
 intent_engine/
+├── docs/                   # Documentation files
 ├── core/                   # Shared schema and utilities
 │   ├── schema.py           # UniversalIntent class + enums
 │   └── utils.py            # Shared helpers (caching, logging)
@@ -80,11 +81,6 @@ intent_engine/
 ├── Dockerfile              # Full Docker image
 ├── docker-compose.yml      # Docker Compose configuration
 ├── README.md               # This file
-├── PROJECT_OVERVIEW.md     # Quick reference overview
-├── COMPREHENSIVE_GUIDE.md  # Complete usage guide
-├── Intent-Engine-Tech-Reference.md # Technical reference
-├── Intent-Engine-Visual-Guide.md   # Visual guide
-├── Intent-Engine-Whitepaper.md     # Whitepaper
 └── benchmark.py            # Benchmarking utilities
 ```
 
@@ -457,17 +453,17 @@ docker-compose down
 
 ## Documentation
 
-Comprehensive documentation is available in this directory:
+Comprehensive documentation is available in the `docs` directory:
 
 | Document | Description |
 |----------|-------------|
 | **[README.md](README.md)** | Main README with quick start guide |
-| **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** | Quick reference and project overview |
-| **[COMPREHENSIVE_GUIDE.md](COMPREHENSIVE_GUIDE.md)** | Complete usage guide with examples |
-| **[Intent-Engine-Whitepaper.md](Intent-Engine-Whitepaper.md)** | Technical whitepaper and architecture |
-| **[Intent-Engine-Tech-Reference.md](Intent-Engine-Tech-Reference.md)** | Developer reference documentation |
-| **[Intent-Engine-Visual-Guide.md](Intent-Engine-Visual-Guide.md)** | Visual diagrams and illustrations |
-| **[PARENT_DIRECTORY_GUIDE.md](PARENT_DIRECTORY_GUIDE.md)** | Parent directory information |
+| **[PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)** | Quick reference and project overview |
+| **[COMPREHENSIVE_GUIDE.md](docs/COMPREHENSIVE_GUIDE.md)** | Complete usage guide with examples |
+| **[Intent-Engine-Whitepaper.md](docs/Intent-Engine-Whitepaper.md)** | Technical whitepaper and architecture |
+| **[Intent-Engine-Tech-Reference.md](docs/Intent-Engine-Tech-Reference.md)** | Developer reference documentation |
+| **[Intent-Engine-Visual-Guide.md](docs/Intent-Engine-Visual-Guide.md)** | Visual diagrams and illustrations |
+| **[PARENT_DIRECTORY_GUIDE.md](docs/PARENT_DIRECTORY_GUIDE.md)** | Parent directory information |
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.

@@ -28,7 +28,7 @@
 
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone git@github.com-work:itxLikhith/intent-engine.git
 cd intent-engine
 
 # Start with Docker
@@ -634,7 +634,7 @@ active_sessions 42
 
 ### Grafana Dashboard
 
-Import dashboard JSON from `monitoring/grafana-dashboard.json`
+Import dashboard JSON from `grafana/dashboards/intent_engine_overview.json`
 
 Key panels:
 - Request latency percentiles
@@ -777,10 +777,9 @@ For issues and questions:
 
 1. Check this troubleshooting guide
 2. Review logs: `docker-compose logs`
-3. Run diagnostics: `python diagnose.py`
-4. Open issue on GitHub
+3. Open issue on GitHub
 
 ---
 
-**Last Updated:** 2026-02-16  
-**Version:** 1.0.0
+**Last Updated:** 2026-02-17  
+**Version:** 2.0.0

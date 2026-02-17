@@ -7,7 +7,7 @@ This module implements the FastAPI service with all required endpoints for the I
 import asyncio
 import os
 import time
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -350,7 +350,7 @@ async def startup_event():
 @app.get("/", response_model=HealthCheckResponse)
 async def health_check():
     """Health check endpoint"""
-    return HealthCheckResponse(status="healthy", timestamp=datetime.utcnow())
+    return HealthCheckResponse(status="healthy", timestamp=datetime.now(timezone.utc))
 
 
 @app.post("/extract-intent", response_model=Dict[str, Any])

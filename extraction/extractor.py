@@ -7,7 +7,7 @@ It extracts structured intent from free-form user queries using hybrid parsing (
 
 import re
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional, Union, Any
 from dataclasses import dataclass, field
 import logging
@@ -497,13 +497,14 @@ class IntentExtractor:
         Create a UniversalIntent object with proper structure
         """
         intent_id = f"{session_id}_{uuid.uuid4().hex[:8]}"
-        
+
         # Calculate expiration time (8 hours from now)
-        expires_at = (datetime.utcnow() + timedelta(hours=8)).isoformat() + "Z"
-        
+        now = datetime.now(timezone.utc)
+        expires_at = (now + timedelta(hours=8)).isoformat().replace('+00:00', 'Z')
+
         context_dict = {
             "product": product,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": now.isoformat().replace('+00:00', 'Z'),
             "sessionId": session_id,
             "userLocale": user_locale
         }

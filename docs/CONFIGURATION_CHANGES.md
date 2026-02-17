@@ -1,5 +1,7 @@
 # Configuration Changes: PostgreSQL, Redis, and CORS
 
+> **Note:** This document is a historical record of configuration changes made to the project. For the current configuration, please refer to the relevant source code files (`docker-compose.yml`, `.env.example`, `main_api.py`, etc.).
+
 ## Summary
 
 This document describes the changes made to configure the Intent Engine to use:
@@ -94,12 +96,12 @@ CORS_ALLOW_HEADERS=Authorization,Content-Type,X-Requested-With
 
 | File | Changes |
 |------|---------|
-| `intent engine/.env` | Created with PostgreSQL, Redis, CORS settings |
-| `intent engine/database.py` | PostgreSQL connection pooling configuration |
-| `intent engine/main_api.py` | Dynamic CORS configuration from environment |
-| `intent engine/docker-compose.yml` | Redis env vars, PostgreSQL credentials, dependencies |
-| `intent engine/requirements.txt` | Added redis==5.0.1 |
-| `intent engine/searxng/client.py` | Fixed indentation error (pre-existing bug) |
+| `.env` | Created with PostgreSQL, Redis, CORS settings |
+| `database.py` | PostgreSQL connection pooling configuration |
+| `main_api.py` | Dynamic CORS configuration from environment |
+| `docker-compose.yml` | Redis env vars, PostgreSQL credentials, dependencies |
+| `requirements.txt` | Added redis==5.0.1 |
+| `searxng/client.py` | Fixed indentation error (pre-existing bug) |
 
 ---
 

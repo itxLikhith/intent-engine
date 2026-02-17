@@ -7,11 +7,10 @@ both SQLite (for local development) and PostgreSQL (for production).
 
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Float, Date, Text, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from sqlalchemy.sql import func
 import threading
 import time
@@ -304,7 +303,7 @@ class DatabaseManager:
         db = SessionLocal()
         try:
             # Find and delete expired metrics
-            expired_before = datetime.utcnow()
+            expired_before = datetime.now(timezone.utc)
             deleted_count = db.query(AdMetric).filter(AdMetric.expires_at < expired_before).delete()
             db.commit()
             print(f"Cleaned up {deleted_count} expired ad metrics")

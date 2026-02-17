@@ -362,11 +362,9 @@ class URLRanker:
     
     async def _analyze_urls_parallel(self, urls: List[str]) -> List[URLResult]:
         """Analyze multiple URLs in parallel"""
-        loop = asyncio.get_event_loop()
-        
         # Create tasks for parallel execution
         tasks = [
-            loop.run_in_executor(self.executor, self.analyzer.analyze_url, url)
+            asyncio.get_running_loop().run_in_executor(self.executor, self.analyzer.analyze_url, url)
             for url in urls
         ]
         

@@ -1,5 +1,7 @@
 # Intent Engine - Parent Directory Structure Guide
 
+> **Note:** This document provides a recommended structure for the parent directory (`intent-ads/`). It is a guide for organizing the project as it expands to include a frontend, infrastructure code, and other components.
+
 This document outlines the recommended structure for the parent directory (`intent-ads/`) and which files should be placed there.
 
 ## Recommended Parent Directory Structure

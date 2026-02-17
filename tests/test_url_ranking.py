@@ -153,8 +153,7 @@ class TestURLRanker(unittest.TestCase):
         )
         
         # Run the async ranking
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
+        response = asyncio.run(self.ranker.rank_urls(request))
         
         # Verify results
         self.assertEqual(len(response.ranked_urls), 25)
@@ -181,37 +180,35 @@ class TestURLRanker(unittest.TestCase):
             "https://facebook.com",
             "https://tutanota.com",
         ]
-        
+
         request = URLRankingRequest(
             query="email service",
             urls=urls,
             options={"exclude_big_tech": True}
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
-        
+
+        response = asyncio.run(self.ranker.rank_urls(request))
+
         # Big tech should be filtered out
         domains = [r.domain for r in response.ranked_urls]
         self.assertNotIn("google.com", domains)
         self.assertNotIn("facebook.com", domains)
         self.assertEqual(response.filtered_count, 2)
-    
+
     def test_min_privacy_score_filter(self):
         """Test minimum privacy score filtering"""
         urls = [
             "https://protonmail.com",
             "https://google.com",
         ]
-        
+
         request = URLRankingRequest(
             query="privacy",
             urls=urls,
             options={"min_privacy_score": 0.8}
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
+
+        response = asyncio.run(self.ranker.rank_urls(request))
         
         # Only high privacy domains should remain
         self.assertEqual(len(response.ranked_urls), 1)
@@ -247,10 +244,9 @@ class TestURLRanker(unittest.TestCase):
             urls=urls,
             intent=intent
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
-        
+
+        response = asyncio.run(self.ranker.rank_urls(request))
+
         # Only github should remain
         self.assertEqual(len(response.ranked_urls), 1)
         self.assertEqual(response.ranked_urls[0].domain, "github.com")
@@ -285,10 +281,9 @@ class TestURLRanker(unittest.TestCase):
             urls=urls,
             intent=intent
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
-        
+
+        response = asyncio.run(self.ranker.rank_urls(request))
+
         # Google should be excluded
         domains = [r.domain for r in response.ranked_urls]
         self.assertNotIn("google.com", domains)
@@ -322,26 +317,24 @@ class TestURLRanker(unittest.TestCase):
             intent=intent
         )
         
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
-        
+        response = asyncio.run(self.ranker.rank_urls(request))
+
         self.assertEqual(len(response.ranked_urls), 3)
-    
+
     def test_scoring_weights(self):
         """Test custom scoring weights"""
         urls = [
             "https://protonmail.com",
             "https://google.com",
         ]
-        
+
         request = URLRankingRequest(
             query="email",
             urls=urls,
             options={"weights": {"relevance": 0.1, "privacy": 0.6, "quality": 0.15, "ethics": 0.15}}
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
+
+        response = asyncio.run(self.ranker.rank_urls(request))
         
         # ProtonMail should rank higher due to privacy weight
         self.assertEqual(response.ranked_urls[0].domain, "protonmail.com")
@@ -352,26 +345,24 @@ class TestURLRanker(unittest.TestCase):
             query="test",
             urls=[]
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
-        
+
+        response = asyncio.run(self.ranker.rank_urls(request))
+
         self.assertEqual(len(response.ranked_urls), 0)
         self.assertEqual(response.total_urls, 0)
-    
+
     def test_single_url(self):
         """Test with single URL"""
         request = URLRankingRequest(
             query="privacy email",
             urls=["https://protonmail.com"]
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
-        
+
+        response = asyncio.run(self.ranker.rank_urls(request))
+
         self.assertEqual(len(response.ranked_urls), 1)
         self.assertEqual(response.ranked_urls[0].url, "https://protonmail.com")
-    
+
     def test_scores_are_normalized(self):
         """Test that scores are properly normalized to 0-1 range"""
         urls = [
@@ -379,14 +370,13 @@ class TestURLRanker(unittest.TestCase):
             "https://google.com",
             "https://wikipedia.org",
         ]
-        
+
         request = URLRankingRequest(
             query="privacy",
             urls=urls
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
+
+        response = asyncio.run(self.ranker.rank_urls(request))
         
         for result in response.ranked_urls:
             self.assertGreaterEqual(result.final_score, 0.0)
@@ -399,17 +389,16 @@ class TestURLRanker(unittest.TestCase):
     def test_processing_time_tracked(self):
         """Test that processing time is tracked"""
         urls = [f"https://example{i}.com" for i in range(10)]
-        
+
         request = URLRankingRequest(
             query="test",
             urls=urls
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
-        
+
+        response = asyncio.run(self.ranker.rank_urls(request))
+
         self.assertGreater(response.processing_time_ms, 0)
-    
+
     def test_negative_preferences(self):
         """Test negative preferences like 'no google'"""
         intent = UniversalIntent(
@@ -421,22 +410,21 @@ class TestURLRanker(unittest.TestCase):
             ),
             inferred=InferredIntent()
         )
-        
+
         urls = [
             "https://duckduckgo.com",
             "https://google.com",
             "https://facebook.com",
             "https://startpage.com",
         ]
-        
+
         request = URLRankingRequest(
             query="search",
             urls=urls,
             intent=intent
         )
-        
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(self.ranker.rank_urls(request))
+
+        response = asyncio.run(self.ranker.rank_urls(request))
         
         # Google and Facebook should be filtered out
         domains = [r.domain for r in response.ranked_urls]
