@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_ranking_cache
+
 from core.schema import (
     Constraint,
     ConstraintType,
