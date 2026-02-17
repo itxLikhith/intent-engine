@@ -10,9 +10,8 @@ import json
 import sys
 from typing import Any, Dict
 
-from config.model_cache import initialize_models
-
 from ads.matcher import AdMatchingRequest, AdMetadata, match_ads
+from config.model_cache import initialize_models
 from core.schema import UniversalIntent
 from extraction.extractor import IntentExtractionRequest, extract_intent
 from ranking.ranker import RankingRequest, SearchResult, rank_results
