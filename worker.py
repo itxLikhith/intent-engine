@@ -1,5 +1,3 @@
-import asyncio
-
 from arq import create_pool
 from arq.connections import RedisSettings
 

@@ -10,13 +10,10 @@ Tests include:
 """
 
 import asyncio
-import concurrent.futures
-import json
 import os
 import statistics
 import time
-from datetime import datetime
-from typing import Any, Dict, List
+from typing import Dict
 
 import aiohttp
 import psutil
@@ -56,7 +53,7 @@ class StressTestSuite:
     async def test_concurrent_intent_extraction(self, concurrency: int = 100, duration: int = 60):
         """Test intent extraction under high concurrent load"""
         print(f"\n{'='*60}")
-        print(f"Stress Test: Concurrent Intent Extraction")
+        print("Stress Test: Concurrent Intent Extraction")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*60}")
 
@@ -220,16 +217,16 @@ class StressTestSuite:
             last = memory_samples[-1]["rss_mb"]
             growth = last - first
 
-            print(f"\nMemory Analysis:")
+            print("\nMemory Analysis:")
             print(f"  Initial: {first:.1f} MB")
             print(f"  Final: {last:.1f} MB")
             print(f"  Growth: {growth:.1f} MB")
             print(f"  Growth per 100 requests: {growth / len(memory_samples):.2f} MB")
 
             if growth > 50:  # More than 50MB growth
-                print(f"  [WARNING] Potential memory leak detected!")
+                print("  [WARNING] Potential memory leak detected!")
             else:
-                print(f"  [OK] Memory usage stable")
+                print("  [OK] Memory usage stable")
 
         return memory_samples
 
@@ -356,7 +353,7 @@ class StressTestSuite:
             else 0
         )
 
-        print(f"\nCache Performance:")
+        print("\nCache Performance:")
         print(f"  First pass avg (cold cache): {results['first_pass']['avg_time']:.2f}ms")
         print(f"  Second pass avg (same queries): {results['second_pass']['avg_time']:.2f}ms")
         print(f"  Speedup (same queries): {speedup_second:.2f}x")
@@ -364,18 +361,18 @@ class StressTestSuite:
         print(f"  Speedup (repeated queries): {speedup_repeated:.2f}x")
 
         if speedup_second > 1.5 or speedup_repeated > 2:
-            print(f"  [OK] Cache working effectively")
+            print("  [OK] Cache working effectively")
         else:
-            print(f"  [WARN] Cache may be full or not working optimally")
-            print(f"  [INFO] Note: /extract-intent uses rule-based extraction, not embeddings")
-            print(f"  [INFO] Cache is used in /rank-results and /match-ads endpoints")
+            print("  [WARN] Cache may be full or not working optimally")
+            print("  [INFO] Note: /extract-intent uses rule-based extraction, not embeddings")
+            print("  [INFO] Cache is used in /rank-results and /match-ads endpoints")
 
         return results
 
     async def test_ranking_with_embeddings(self, concurrency: int = 30, duration: int = 20):
         """Test ranking endpoint which uses embedding cache"""
         print(f"\n{'='*60}")
-        print(f"Stress Test: Ranking with Embeddings (uses cache)")
+        print("Stress Test: Ranking with Embeddings (uses cache)")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*60}")
 
@@ -392,14 +389,14 @@ class StressTestSuite:
                 async with session.post(f"{self.base_url}/extract-intent", json=extract_payload) as response:
                     if response.status != 200:
                         print(f"  [WARN] Failed to get valid intent: HTTP {response.status}")
-                        print(f"  [INFO] Skipping ranking test")
+                        print("  [INFO] Skipping ranking test")
                         return {}
 
                     intent_response = await response.json()
                     valid_intent = intent_response.get("intent", {})
             except Exception as e:
                 print(f"  [ERROR] Failed to extract intent: {e}")
-                print(f"  [INFO] Skipping ranking test")
+                print("  [INFO] Skipping ranking test")
                 return {}
 
         # Sample candidates for ranking
@@ -493,13 +490,13 @@ class StressTestSuite:
         print(f"  RPS: {results['rps']:.2f}")
 
         if results["response_times"]:
-            print(f"\n  Response Times:")
+            print("\n  Response Times:")
             print(f"    Average: {results['avg_response_time']:.2f}ms")
             print(f"    Median: {results['median_response_time']:.2f}ms")
             print(f"    95th percentile: {results['p95_response_time']:.2f}ms")
             print(f"    Max: {results['max_response_time']:.2f}ms")
 
-        print(f"\n  Memory Usage:")
+        print("\n  Memory Usage:")
         print(f"    Start: {results['start_memory']['rss_mb']:.1f} MB")
         print(f"    End: {results['end_memory']['rss_mb']:.1f} MB")
         print(f"    Growth: {results['end_memory']['rss_mb'] - results['start_memory']['rss_mb']:.1f} MB")

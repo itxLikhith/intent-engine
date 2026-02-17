@@ -11,30 +11,17 @@ This module provides an efficient URL ranking system with:
 
 import asyncio
 import logging
-import re
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
-
-import numpy as np
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_url_analysis_cache
 from core.schema import (
-    Constraint,
-    ConstraintType,
-    DeclaredIntent,
     EthicalDimension,
-    Frequency,
-    InferredIntent,
-    Recency,
-    SkillLevel,
-    TemporalHorizon,
     UniversalIntent,
-    UseCase,
 )
 
 logger = logging.getLogger(__name__)

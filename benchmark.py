@@ -5,7 +5,6 @@ This script benchmarks the optimized Intent Engine and compares performance
 before and after optimizations.
 """
 
-import asyncio
 import json
 import statistics
 import time

@@ -102,7 +102,7 @@ def test_performance():
     max_time = max(times)
     min_time = min(times)
 
-    print(f"\nPerformance Results:")
+    print("\nPerformance Results:")
     print(f"Average time: {avg_time:.2f}ms")
     print(f"Max time: {max_time:.2f}ms")
     print(f"Min time: {min_time:.2f}ms")

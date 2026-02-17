@@ -14,11 +14,10 @@ Tests include:
 """
 
 import asyncio
-import json
 import statistics
 import time
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import aiohttp
 
@@ -207,7 +206,7 @@ class SearchEngineStressTest:
                             continue
 
                         intent_data = await intent_response.json()
-                        intent = intent_data.get("intent", {})
+                        intent_data.get("intent", {})
 
                         # Step 2: Basic search (without intent extraction)
                         search_payload = {
@@ -249,7 +248,7 @@ class SearchEngineStressTest:
     async def test_concurrent_search(self, concurrency: int = 30, duration: int = 30):
         """Test search under high concurrent load"""
         print(f"\n{'='*60}")
-        print(f"Concurrent Search Stress Test")
+        print("Concurrent Search Stress Test")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*60}")
 
@@ -366,7 +365,7 @@ class SearchEngineStressTest:
                                 result_data = await response.json()
                                 results["result_counts"].append(len(result_data.get("results", [])))
 
-                    except Exception as e:
+                    except Exception:
                         results["total_requests"] += 1
                         results["failed_requests"] += 1
 
@@ -381,7 +380,7 @@ class SearchEngineStressTest:
     async def test_large_result_handling(self, num_results_list: List[int] = [10, 50, 100]):
         """Test handling of different result set sizes"""
         print(f"\n{'='*60}")
-        print(f"Large Result Set Handling Test")
+        print("Large Result Set Handling Test")
         print(f"{'='*60}")
 
         results_by_size = {}
@@ -416,7 +415,7 @@ class SearchEngineStressTest:
                                 result_data = await response.json()
                                 results["actual_results"].append(len(result_data.get("results", [])))
 
-                    except Exception as e:
+                    except Exception:
                         results["total_requests"] += 1
 
                 results_by_size[num_results] = results
@@ -479,7 +478,7 @@ class SearchEngineStressTest:
                     print(f"  Error on query {i}: {e}")
 
         # Print quality metrics
-        print(f"\n  Quality Metrics:")
+        print("\n  Quality Metrics:")
         if quality_metrics["total_results_returned"]:
             print(f"    Avg results per query: {statistics.mean(quality_metrics['total_results_returned']):.1f}")
         if quality_metrics["results_with_content"]:
@@ -511,7 +510,7 @@ class SearchEngineStressTest:
             print(f"  Throughput: {results['rps']:.2f} requests/second")
 
         if results["response_times"]:
-            print(f"\n  Response Times:")
+            print("\n  Response Times:")
             print(f"    Average: {statistics.mean(results['response_times']):.2f}ms")
             print(f"    Median: {statistics.median(results['response_times']):.2f}ms")
             print(f"    Min: {min(results['response_times']):.2f}ms")

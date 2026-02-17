@@ -8,8 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.orm import Session
 
 # Define Base here to avoid circular import
@@ -180,8 +179,8 @@ class ConsentManager:
     def get_consent_summary(self) -> Dict[str, Any]:
         """Get a summary of all consents in the system"""
         total_consents = self.db.query(UserConsent).count()
-        granted_consents = self.db.query(UserConsent).filter(UserConsent.granted == True).count()
-        denied_consents = self.db.query(UserConsent).filter(UserConsent.granted == False).count()
+        granted_consents = self.db.query(UserConsent).filter(UserConsent.granted is True).count()
+        denied_consents = self.db.query(UserConsent).filter(UserConsent.granted is False).count()
 
         # Count by type
         consent_counts_by_type = {}

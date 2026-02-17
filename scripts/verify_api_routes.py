@@ -7,7 +7,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-import json
 
 from main_api import app
 

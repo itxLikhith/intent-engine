@@ -4,8 +4,6 @@ Script to initialize the database with sample data for the advertising system
 
 from datetime import datetime, timedelta
 
-from sqlalchemy.orm import Session
-
 from database import Ad, AdGroup, AdMetric, Advertiser, Campaign, CreativeAsset, db_manager
 
 
@@ -111,7 +109,7 @@ def init_sample_data():
         print(f"- 1 Ad Group: {ad_group.name}")
         print(f"- 1 Ad: {ad.title}")
         print(f"- 1 Creative Asset: {creative.asset_type}")
-        print(f"- 1 Metric record")
+        print("- 1 Metric record")
 
     except Exception as e:
         print(f"Error initializing sample data: {str(e)}")

@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -358,7 +358,7 @@ class AdvancedAnalytics:
         """
         Analyze trends for a specific metric over time.
         """
-        from database import Ad, AdGroup, AdMetric, Campaign
+        from database import Ad, AdGroup, AdMetric
 
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=days)
@@ -456,7 +456,7 @@ class AdvancedAnalytics:
         """
         Get top performing ads by specified metric.
         """
-        from database import Ad, AdGroup, AdMetric, Campaign
+        from database import Ad, AdGroup, AdMetric
 
         # Build query
         query = self.db.query(

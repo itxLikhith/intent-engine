@@ -5,9 +5,8 @@ This module implements privacy and compliance features for the Intent Engine,
 ensuring user data is handled appropriately and in compliance with regulations.
 """
 
-import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from ads.matcher import AdMetadata
 from core.schema import UniversalIntent

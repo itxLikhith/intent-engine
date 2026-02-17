@@ -7,24 +7,18 @@ This module implements Algorithms 2 and 3 for constraint satisfaction and intent
 import logging
 import re
 from dataclasses import dataclass
-from datetime import timezone
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from core.schema import (
-    Complexity,
     Constraint,
     ConstraintType,
     EthicalDimension,
-    Frequency,
     Recency,
-    ResultType,
     SkillLevel,
     TemporalHorizon,
     UniversalIntent,
-    UseCase,
 )
 
 # Configure logging

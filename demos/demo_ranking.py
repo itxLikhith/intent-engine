@@ -17,7 +17,7 @@ from core.schema import (
     UniversalIntent,
     UseCase,
 )
-from ranking.ranker import RankedResult, RankingRequest, SearchResult, rank_results
+from ranking.ranker import RankingRequest, SearchResult, rank_results
 
 
 def create_sample_intent():

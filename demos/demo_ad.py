@@ -57,7 +57,7 @@ def demo_ad_matching():
     # Create demo intent
     intent = create_demo_intent()
     print(f"User Query: {intent.declared.query}\n")
-    print(f"Declared Constraints:")
+    print("Declared Constraints:")
     for constraint in intent.declared.constraints:
         print(
             f"  - {constraint.type.value} {constraint.dimension}: {constraint.value} (hard filter: {constraint.hardFilter})"

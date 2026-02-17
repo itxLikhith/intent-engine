@@ -7,9 +7,8 @@ This module contains shared utilities used across all components of the Intent E
 import logging
 import re
 from collections import OrderedDict
-from datetime import datetime, timezone
-from functools import lru_cache
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional
 
 import numpy as np
 

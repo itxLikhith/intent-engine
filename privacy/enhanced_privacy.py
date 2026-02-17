@@ -6,11 +6,9 @@ This module implements additional privacy controls beyond the basic compliance c
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from sqlalchemy.orm import Session
-
-from models import Ad, AdMetric, ClickTracking, ConversionTracking
 
 
 class DataRetentionPeriod(Enum):

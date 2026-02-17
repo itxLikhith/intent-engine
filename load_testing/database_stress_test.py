@@ -9,11 +9,10 @@ This module tests database connection pool behavior under load:
 """
 
 import asyncio
-import os
 import statistics
 import time
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Dict
 
 import aiohttp
 
@@ -30,7 +29,7 @@ class DatabaseStressTest:
     async def test_campaign_crud_operations(self, iterations: int = 100):
         """Test create, read, update, delete operations on campaigns"""
         print(f"\n{'='*60}")
-        print(f"Database Stress Test: Campaign CRUD Operations")
+        print("Database Stress Test: Campaign CRUD Operations")
         print(f"Iterations: {iterations}")
         print(f"{'='*60}")
 
@@ -69,7 +68,7 @@ class DatabaseStressTest:
                         else:
                             results["creates"]["failed"] += 1
                         results["creates"]["times"].append(elapsed)
-                except Exception as e:
+                except Exception:
                     results["creates"]["failed"] += 1
                     results["creates"]["times"].append((time.time() - start) * 1000)
 
@@ -87,7 +86,7 @@ class DatabaseStressTest:
                         else:
                             results["reads"]["failed"] += 1
                         results["reads"]["times"].append(elapsed)
-                except Exception as e:
+                except Exception:
                     results["reads"]["failed"] += 1
                     results["reads"]["times"].append((time.time() - start) * 1000)
 
@@ -109,7 +108,7 @@ class DatabaseStressTest:
                         else:
                             results["updates"]["failed"] += 1
                         results["updates"]["times"].append(elapsed)
-                except Exception as e:
+                except Exception:
                     results["updates"]["failed"] += 1
                     results["updates"]["times"].append((time.time() - start) * 1000)
 
@@ -127,7 +126,7 @@ class DatabaseStressTest:
                         else:
                             results["deletes"]["failed"] += 1
                         results["deletes"]["times"].append(elapsed)
-                except Exception as e:
+                except Exception:
                     results["deletes"]["failed"] += 1
                     results["deletes"]["times"].append((time.time() - start) * 1000)
 
@@ -138,7 +137,7 @@ class DatabaseStressTest:
     async def test_concurrent_database_access(self, concurrency: int = 50, duration: int = 30):
         """Test concurrent database read/write operations"""
         print(f"\n{'='*60}")
-        print(f"Database Stress Test: Concurrent Database Access")
+        print("Database Stress Test: Concurrent Database Access")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
         print(f"{'='*60}")
 
@@ -201,7 +200,7 @@ class DatabaseStressTest:
     async def test_connection_cleanup(self, iterations: int = 200):
         """Test that database connections are properly cleaned up"""
         print(f"\n{'='*60}")
-        print(f"Database Stress Test: Connection Cleanup")
+        print("Database Stress Test: Connection Cleanup")
         print(f"Iterations: {iterations}")
         print(f"{'='*60}")
 
@@ -223,20 +222,20 @@ class DatabaseStressTest:
                             results["success"] += 1
                         else:
                             results["failed"] += 1
-                except Exception as e:
+                except Exception:
                     results["total"] += 1
                     results["failed"] += 1
                     results["times"].append((time.time() - start) * 1000)
 
         # Analyze connection cleanup
-        print(f"\nConnection Cleanup Results:")
+        print("\nConnection Cleanup Results:")
         print(f"  Total requests: {results['total']}")
         print(f"  Successful: {results['success']}")
         print(f"  Failed: {results['failed']}")
         print(f"  Success rate: {(results['success']/results['total']*100):.1f}%")
 
         if results["times"]:
-            print(f"\n  Response Times:")
+            print("\n  Response Times:")
             print(f"    Average: {statistics.mean(results['times']):.2f}ms")
             print(f"    Median: {statistics.median(results['times']):.2f}ms")
             print(f"    Max: {max(results['times']):.2f}ms")
@@ -248,16 +247,16 @@ class DatabaseStressTest:
 
             if last_quarter_avg > first_quarter_avg * 2:
                 print(f"\n  [WARN] Response times increased {last_quarter_avg/first_quarter_avg:.1f}x")
-                print(f"  [WARN] Possible connection pool exhaustion detected!")
+                print("  [WARN] Possible connection pool exhaustion detected!")
             else:
-                print(f"\n  [OK] Connection pool stable (no exhaustion detected)")
+                print("\n  [OK] Connection pool stable (no exhaustion detected)")
 
         return results
 
     async def test_transaction_rollback(self):
         """Test transaction rollback behavior"""
         print(f"\n{'='*60}")
-        print(f"Database Stress Test: Transaction Rollback")
+        print("Database Stress Test: Transaction Rollback")
         print(f"{'='*60}")
 
         # Note: This test requires API endpoints that support transactions
@@ -286,15 +285,15 @@ class DatabaseStressTest:
                     except Exception:
                         results["invalid_requests"] += 1
 
-        print(f"\nTransaction Rollback Results:")
+        print("\nTransaction Rollback Results:")
         print(f"  Invalid requests: {results['invalid_requests']}")
         print(f"  Proper validation errors (400/422): {results['proper_errors']}")
         print(f"  Server errors (500): {results['server_errors']}")
 
         if results["server_errors"] > 0:
-            print(f"\n  [WARN] Server errors detected during invalid input!")
+            print("\n  [WARN] Server errors detected during invalid input!")
         else:
-            print(f"\n  [OK] Proper error handling (no server errors)")
+            print("\n  [OK] Proper error handling (no server errors)")
 
         return results
 
@@ -328,7 +327,7 @@ class DatabaseStressTest:
         print(f"  RPS: {results['rps']:.2f}")
 
         if results.get("response_times"):
-            print(f"\n  Response Times:")
+            print("\n  Response Times:")
             print(f"    Average: {results['avg_response_time']:.2f}ms")
             print(f"    Median: {results['median_response_time']:.2f}ms")
             print(f"    95th percentile: {results['p95_response_time']:.2f}ms")

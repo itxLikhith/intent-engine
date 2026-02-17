@@ -4,7 +4,6 @@ API Integration Test Script for Intent Engine Docker Container
 Tests all major endpoints of the running API
 """
 
-import json
 import sys
 from datetime import datetime
 
@@ -183,7 +182,7 @@ def main():
 
     # Test 7: Ad Matching
     print("\n7. Testing Ad Matching (POST /match-ads)")
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     future_time = (datetime.utcnow() + timedelta(hours=8)).isoformat() + "Z"
     ad_matching_payload = {

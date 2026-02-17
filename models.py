@@ -5,12 +5,11 @@ This module defines Pydantic models for all entities and requests used in the AP
 """
 
 from datetime import date, datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from core.schema import IntentExtractionRequest, UniversalIntent
+from core.schema import UniversalIntent
 
 
 # Database entity models

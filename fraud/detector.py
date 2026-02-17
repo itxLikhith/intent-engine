@@ -8,13 +8,12 @@ This module implements comprehensive fraud detection algorithms including:
 - Bot detection using behavioral patterns
 """
 
-import hashlib
 import re
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session

@@ -11,10 +11,8 @@ from core.schema import (
     Frequency,
     IntentGoal,
     Recency,
-    ResultType,
     SkillLevel,
     TemporalHorizon,
-    UseCase,
 )
 from extraction.extractor import (
     IntentExtractionRequest,
