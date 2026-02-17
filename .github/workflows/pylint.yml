@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install black ruff mypy pytest
+
+    # --------------------
+    # AUTO FIX SECTION
+    # --------------------
+
+    - name: Run Ruff (auto-fix)
+      run: ruff check . --fix
+
+    - name: Run Black
+      run: black .
+
+    - name: Commit changes if needed
+      run: |
+        if [[ -n $(git status --porcelain) ]]; then
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add .
+          git commit -m "CI: auto-fix lint + formatting"
+          git push
+        fi
+
+    # --------------------
+    # VALIDATION
+    # --------------------
+
+    - name: Type check
+      run: mypy .
+
+    - name: Run tests
+      run: pytest

@@ -11,8 +11,6 @@ import time
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from arq import create_pool
-from arq.connections import RedisSettings
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocket
@@ -32,18 +30,13 @@ from database import Ad as DbAd
 from database import AdGroup as DbAdGroup
 from database import AdMetric as DbAdMetric
 from database import Advertiser as DbAdvertiser
-from database import (
-    Base,
-)
+from database import Base
 from database import Campaign as DbCampaign
 from database import ClickTracking as DbClickTracking
 from database import ConversionTracking as DbConversionTracking
 from database import CreativeAsset as DbCreativeAsset
 from database import FraudDetection as DbFraudDetection
-from database import (
-    db_manager,
-    engine,
-)
+from database import db_manager, engine
 from extraction.extractor import extract_intent
 from models import (
     ABTestCreate,
@@ -387,7 +380,6 @@ async def metrics_middleware(request, call_next):
 async def startup_event():
     """Initialize resources on startup"""
     logger.info("Starting up Intent Engine API...")
-    app.state.redis = await create_pool(RedisSettings(host="redis", port=6379))
 
     # Import all modules that define database tables to ensure they're registered with Base.metadata
     # We need to explicitly access the model classes to ensure they're registered with Base.metadata
@@ -423,13 +415,6 @@ async def startup_event():
     get_url_ranker()
 
     logger.info("Models loaded and API ready!")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up resources on shutdown"""
-    logger.info("Shutting down Intent Engine API...")
-    await app.state.redis.close()
 
 
 @app.get("/", response_model=HealthCheckResponse)
@@ -699,21 +684,590 @@ async def recommend_services_endpoint(request: ServiceRecommendationRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/match-ads", response_model=Dict[str, str])
-async def match_ads_endpoint(request: AdMatchingRequest, http_request: Request):
+@app.post("/match-ads", response_model=AdMatchingResponse)
+async def match_ads_endpoint(request: AdMatchingRequest, background_tasks: BackgroundTasks):
     """
-    Match ads to user intent with fairness validation (async)
+    Match ads to user intent with fairness validation
     """
-    job = await http_request.app.state.redis.enqueue_job("find_matching_ads_background", request.to_dict())
-    return {"job_id": job.job_id}
+    db = None
+    try:
+        # Convert intent dict to UniversalIntent dataclass
+        intent = convert_dict_to_universal_intent(request.intent)
+
+        # Check if intent has expired
+        if is_intent_expired(intent):
+            raise HTTPException(status_code=400, detail="Intent has expired")
+
+        # Anonymize intent data for privacy
+        anonymized_intent = anonymize_intent_data(intent)
+
+        # Fetch ad inventory from database
+        db = next(db_manager.get_db())
+
+        # Get all ads from the database
+        db_ads = db.query(DbAd).all()
+
+        # Convert database ads to internal AdMetadata format
+        from ads.matcher import AdMetadata
+
+        ad_inventory = []
+        for db_ad in db_ads:
+            ad_metadata = AdMetadata(
+                id=str(db_ad.id),
+                title=db_ad.title,
+                description=db_ad.description,
+                targetingConstraints=db_ad.targeting_constraints or {},
+                forbiddenDimensions=[],  # This would come from ad validation
+                qualityScore=db_ad.quality_score,
+                ethicalTags=db_ad.ethical_tags or [],
+                advertiser=f"advertiser_{db_ad.advertiser_id}",
+                creative_format=db_ad.creative_format,
+            )
+
+            # Validate ad for privacy compliance
+            compliance_report = validate_advertiser_constraints(ad_metadata)
+            if not compliance_report["is_compliant"]:
+                # Log violations but still include ad (would be filtered in production)
+                logger.warning(f"Ad {db_ad.id} has compliance violations: {compliance_report['violations']}")
+                fairness_violations.inc(len(compliance_report["violations"]))
+
+            ad_inventory.append(ad_metadata)
+
+        # Add any ads from the request as well
+        for req_ad in request.ad_inventory:
+            ad_metadata = AdMetadata(
+                id=req_ad.get("id", ""),
+                title=req_ad.get("title", ""),
+                description=req_ad.get("description", ""),
+                targetingConstraints=req_ad.get("targetingConstraints", {}),
+                forbiddenDimensions=req_ad.get("forbiddenDimensions", []),
+                qualityScore=req_ad.get("qualityScore", 0.5),
+                ethicalTags=req_ad.get("ethicalTags", []),
+                advertiser=req_ad.get("advertiser"),
+                category=req_ad.get("category"),
+                creative_format=req_ad.get("creative_format"),
+            )
+
+            # Validate ad for privacy compliance
+            compliance_report = validate_advertiser_constraints(ad_metadata)
+            if not compliance_report["is_compliant"]:
+                # Log violations but still include ad (would be filtered in production)
+                logger.warning(
+                    f"Ad {req_ad.get('id', 'unknown')} has compliance violations: {compliance_report['violations']}"
+                )
+                fairness_violations.inc(len(compliance_report["violations"]))
+
+            ad_inventory.append(ad_metadata)
+
+        # Prepare internal request
+        from ads.matcher import AdMatchingRequest as InternalAdRequest
+
+        internal_request = InternalAdRequest(intent=anonymized_intent, adInventory=ad_inventory, config=request.config)
+
+        # Perform ad matching
+        response = match_ads(internal_request)
+
+        # Log metrics to database in background
+        background_tasks.add_task(log_ad_metrics, anonymized_intent, response.matchedAds)
+
+        # Convert response to dict format
+        matched_ads = []
+        for matched_ad in response.matchedAds:
+            matched_ads.append(
+                {
+                    "ad": {
+                        "id": matched_ad.ad.id,
+                        "title": matched_ad.ad.title,
+                        "description": matched_ad.ad.description,
+                        "targetingConstraints": matched_ad.ad.targetingConstraints,
+                        "forbiddenDimensions": matched_ad.ad.forbiddenDimensions,
+                        "qualityScore": matched_ad.ad.qualityScore,
+                        "ethicalTags": matched_ad.ad.ethicalTags,
+                        "advertiser": matched_ad.ad.advertiser,
+                        "category": matched_ad.ad.category,
+                        "creative_format": matched_ad.ad.creative_format,
+                    },
+                    "adRelevanceScore": matched_ad.adRelevanceScore,
+                    "matchReasons": matched_ad.matchReasons,
+                }
+            )
+
+        return AdMatchingResponse(matched_ads=matched_ads, metrics=response.metrics)
+
+    except HTTPException:
+        # Re-raise HTTPException to preserve status code (400, 404, etc.)
+        raise
+    except Exception as e:
+        logger.error(f"Error in ad matching: {str(e)}")
+        import traceback
+
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e) or "Internal server error")
+    finally:
+        if db:
+            db.close()
 
 
-@app.post("/match-ads-advanced", response_model=Dict[str, str])
-async def match_ads_advanced(
-    request: AdMatchingWithCampaignRequest, http_request: Request, db: Session = Depends(get_db)
+# Campaign Management Endpoints
+@app.post("/campaigns", response_model=Campaign)
+async def create_campaign(campaign: CampaignCreate, db: Session = Depends(get_db)):
+    """
+    Create new campaign
+    """
+    db_campaign = DbCampaign(
+        advertiser_id=campaign.advertiser_id,
+        name=campaign.name,
+        start_date=campaign.start_date,
+        end_date=campaign.end_date,
+        budget=campaign.budget,
+        daily_budget=campaign.daily_budget,
+        status=campaign.status,
+    )
+    db.add(db_campaign)
+    db.commit()
+    db.refresh(db_campaign)
+    return db_campaign
+
+
+@app.get("/campaigns/{campaign_id}", response_model=Campaign)
+async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
+    """
+    Get campaign details
+    """
+    campaign = db.query(DbCampaign).filter(DbCampaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    return campaign
+
+
+@app.put("/campaigns/{campaign_id}", response_model=Campaign)
+async def update_campaign(campaign_id: int, campaign_update: CampaignUpdate, db: Session = Depends(get_db)):
+    """
+    Update campaign
+    """
+    campaign = db.query(DbCampaign).filter(DbCampaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    update_data = campaign_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(campaign, field, value)
+
+    db.commit()
+    db.refresh(campaign)
+    return campaign
+
+
+@app.delete("/campaigns/{campaign_id}")
+async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
+    """
+    Delete campaign
+    """
+    campaign = db.query(DbCampaign).filter(DbCampaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    # First delete associated ad groups and ads
+    ad_groups = db.query(DbAdGroup).filter(DbAdGroup.campaign_id == campaign_id).all()
+    for ad_group in ad_groups:
+        ads = db.query(DbAd).filter(DbAd.ad_group_id == ad_group.id).all()
+        for ad in ads:
+            # Delete creative assets first
+            creative_assets = db.query(DbCreativeAsset).filter(DbCreativeAsset.ad_id == ad.id).all()
+            for asset in creative_assets:
+                db.delete(asset)
+            # Then delete the ad
+            db.delete(ad)
+        # Then delete the ad group
+        db.delete(ad_group)
+
+    # Finally delete the campaign
+    db.delete(campaign)
+    db.commit()
+    return {"message": "Campaign deleted successfully"}
+
+
+@app.get("/campaigns", response_model=List[Campaign])
+async def list_campaigns(
+    advertiser_id: Optional[int] = None,
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
 ):
     """
-    Advanced matching with campaign context (async)
+    List campaigns with filters
+    """
+    query = db.query(DbCampaign)
+
+    if advertiser_id:
+        query = query.filter(DbCampaign.advertiser_id == advertiser_id)
+
+    if status:
+        query = query.filter(DbCampaign.status == status)
+
+    campaigns = query.offset(skip).limit(limit).all()
+    return campaigns
+
+
+# Ad Group Management Endpoints
+@app.post("/adgroups", response_model=AdGroup)
+async def create_ad_group(ad_group: AdGroupCreate, db: Session = Depends(get_db)):
+    """
+    Create ad group
+    """
+    db_ad_group = DbAdGroup(
+        campaign_id=ad_group.campaign_id,
+        name=ad_group.name,
+        targeting_settings=ad_group.targeting_settings,
+        bid_strategy=ad_group.bid_strategy,
+    )
+    db.add(db_ad_group)
+    db.commit()
+    db.refresh(db_ad_group)
+    return db_ad_group
+
+
+@app.get("/adgroups/{ad_group_id}", response_model=AdGroup)
+async def get_ad_group(ad_group_id: int, db: Session = Depends(get_db)):
+    """
+    Get ad group details
+    """
+    ad_group = db.query(DbAdGroup).filter(DbAdGroup.id == ad_group_id).first()
+    if not ad_group:
+        raise HTTPException(status_code=404, detail="Ad group not found")
+    return ad_group
+
+
+@app.put("/adgroups/{ad_group_id}", response_model=AdGroup)
+async def update_ad_group(ad_group_id: int, ad_group_update: AdGroupUpdate, db: Session = Depends(get_db)):
+    """
+    Update ad group
+    """
+    ad_group = db.query(DbAdGroup).filter(DbAdGroup.id == ad_group_id).first()
+    if not ad_group:
+        raise HTTPException(status_code=404, detail="Ad group not found")
+
+    update_data = ad_group_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(ad_group, field, value)
+
+    db.commit()
+    db.refresh(ad_group)
+    return ad_group
+
+
+@app.get("/adgroups", response_model=List[AdGroup])
+async def list_ad_groups(
+    campaign_id: Optional[int] = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+):
+    """
+    List ad groups
+    """
+    query = db.query(DbAdGroup)
+
+    if campaign_id:
+        query = query.filter(DbAdGroup.campaign_id == campaign_id)
+
+    ad_groups = query.offset(skip).limit(limit).all()
+    return ad_groups
+
+
+# Ads Management Endpoints
+@app.post("/ads", response_model=Ad)
+async def create_ad(ad: AdCreate, db: Session = Depends(get_db)):
+    """
+    Create a new ad
+    """
+    # Verify advertiser exists
+    advertiser = db.query(DbAdvertiser).filter(DbAdvertiser.id == ad.advertiser_id).first()
+    if not advertiser:
+        raise HTTPException(status_code=404, detail="Advertiser not found")
+
+    # Verify ad group exists if provided
+    if ad.ad_group_id:
+        ad_group = db.query(DbAdGroup).filter(DbAdGroup.id == ad.ad_group_id).first()
+        if not ad_group:
+            raise HTTPException(status_code=404, detail="Ad group not found")
+
+    db_ad = DbAd(
+        advertiser_id=ad.advertiser_id,
+        ad_group_id=ad.ad_group_id,
+        title=ad.title,
+        description=ad.description,
+        url=ad.url,
+        targeting_constraints=ad.targeting_constraints,
+        ethical_tags=ad.ethical_tags,
+        quality_score=ad.quality_score,
+        creative_format=ad.creative_format,
+        bid_amount=ad.bid_amount,
+        status=ad.status,
+        approval_status=ad.approval_status,
+    )
+    db.add(db_ad)
+    db.commit()
+    db.refresh(db_ad)
+    return db_ad
+
+
+@app.get("/ads/{ad_id}", response_model=Ad)
+async def get_ad(ad_id: int, db: Session = Depends(get_db)):
+    """
+    Get ad details
+    """
+    ad = db.query(DbAd).filter(DbAd.id == ad_id).first()
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+    return ad
+
+
+@app.put("/ads/{ad_id}", response_model=Ad)
+async def update_ad(ad_id: int, ad_update: AdUpdate, db: Session = Depends(get_db)):
+    """
+    Update an ad
+    """
+    ad = db.query(DbAd).filter(DbAd.id == ad_id).first()
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    update_data = ad_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        if value is not None:
+            setattr(ad, field, value)
+
+    db.commit()
+    db.refresh(ad)
+    return ad
+
+
+@app.delete("/ads/{ad_id}")
+async def delete_ad(ad_id: int, db: Session = Depends(get_db)):
+    """
+    Delete an ad
+    """
+    ad = db.query(DbAd).filter(DbAd.id == ad_id).first()
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    # Delete associated click tracking and conversions first
+    clicks = db.query(DbClickTracking).filter(DbClickTracking.ad_id == ad_id).all()
+    for click in clicks:
+        db.query(DbConversionTracking).filter(DbConversionTracking.click_id == click.id).delete()
+    db.query(DbClickTracking).filter(DbClickTracking.ad_id == ad_id).delete()
+
+    # Delete associated fraud detection records
+    db.query(DbFraudDetection).filter(DbFraudDetection.ad_id == ad_id).delete()
+
+    # Delete associated creative assets
+    db.query(DbCreativeAsset).filter(DbCreativeAsset.ad_id == ad_id).delete()
+
+    # Delete associated metrics
+    db.query(DbAdMetric).filter(DbAdMetric.ad_id == ad_id).delete()
+
+    # Delete the ad
+    db.delete(ad)
+    db.commit()
+    return {"message": "Ad deleted successfully"}
+
+
+@app.get("/ads", response_model=List[Ad])
+async def list_ads(
+    advertiser_id: Optional[int] = None,
+    ad_group_id: Optional[int] = None,
+    status: Optional[str] = None,
+    approval_status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    """
+    List ads with optional filters
+    """
+    query = db.query(DbAd)
+
+    if advertiser_id:
+        query = query.filter(DbAd.advertiser_id == advertiser_id)
+
+    if ad_group_id:
+        query = query.filter(DbAd.ad_group_id == ad_group_id)
+
+    if status:
+        query = query.filter(DbAd.status == status)
+
+    if approval_status:
+        query = query.filter(DbAd.approval_status == approval_status)
+
+    ads = query.offset(skip).limit(limit).all()
+    return ads
+
+
+# Advertiser Management Endpoints
+@app.post("/advertisers", response_model=Advertiser)
+async def create_advertiser(advertiser: AdvertiserCreate, db: Session = Depends(get_db)):
+    """
+    Create a new advertiser
+    """
+    db_advertiser = DbAdvertiser(name=advertiser.name, contact_email=advertiser.contact_email)
+    db.add(db_advertiser)
+    db.commit()
+    db.refresh(db_advertiser)
+    return db_advertiser
+
+
+@app.get("/advertisers/{advertiser_id}", response_model=Advertiser)
+async def get_advertiser(advertiser_id: int, db: Session = Depends(get_db)):
+    """
+    Get advertiser details
+    """
+    advertiser = db.query(DbAdvertiser).filter(DbAdvertiser.id == advertiser_id).first()
+    if not advertiser:
+        raise HTTPException(status_code=404, detail="Advertiser not found")
+    return advertiser
+
+
+@app.get("/advertisers", response_model=List[Advertiser])
+async def list_advertisers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    List all advertisers
+    """
+    advertisers = db.query(DbAdvertiser).offset(skip).limit(limit).all()
+    return advertisers
+
+
+# Creative Management Endpoints
+@app.post("/creatives", response_model=CreativeAsset)
+async def upload_creative_asset(creative: CreativeAssetCreate, db: Session = Depends(get_db)):
+    """
+    Upload creative assets
+    """
+    # Verify ad exists
+    ad = db.query(DbAd).filter(DbAd.id == creative.ad_id).first()
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    db_creative = DbCreativeAsset(
+        ad_id=creative.ad_id,
+        asset_type=creative.asset_type,
+        asset_url=creative.asset_url,
+        dimensions=creative.dimensions,
+        checksum=creative.checksum,
+    )
+    db.add(db_creative)
+    db.commit()
+    db.refresh(db_creative)
+    return db_creative
+
+
+@app.get("/creatives/{creative_id}", response_model=CreativeAsset)
+async def get_creative_asset(creative_id: int, db: Session = Depends(get_db)):
+    """
+    Get creative details
+    """
+    creative = db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
+    if not creative:
+        raise HTTPException(status_code=404, detail="Creative asset not found")
+    return creative
+
+
+@app.put("/creatives/{creative_id}", response_model=CreativeAsset)
+async def update_creative_asset(creative_id: int, creative_update: CreativeAssetUpdate, db: Session = Depends(get_db)):
+    """
+    Update creative
+    """
+    creative = db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
+    if not creative:
+        raise HTTPException(status_code=404, detail="Creative asset not found")
+
+    update_data = creative_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(creative, field, value)
+
+    db.commit()
+    db.refresh(creative)
+    return creative
+
+
+@app.delete("/creatives/{creative_id}")
+async def delete_creative_asset(creative_id: int, db: Session = Depends(get_db)):
+    """
+    Delete creative
+    """
+    creative = db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
+    if not creative:
+        raise HTTPException(status_code=404, detail="Creative asset not found")
+
+    db.delete(creative)
+    db.commit()
+    return {"message": "Creative asset deleted successfully"}
+
+
+# Reporting & Analytics Endpoints
+@app.get("/reports/campaign-performance", response_model=List[CampaignPerformanceReport])
+async def get_campaign_performance(
+    campaign_id: Optional[int] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Campaign metrics
+    """
+    # Query to aggregate metrics by campaign
+    query = (
+        db.query(
+            DbCampaign.id.label("campaign_id"),
+            DbCampaign.name.label("campaign_name"),
+            func.sum(DbAdMetric.impression_count).label("impressions"),
+            func.sum(DbAdMetric.click_count).label("clicks"),
+            func.sum(DbAdMetric.conversion_count).label("conversions"),
+            func.avg(DbAdMetric.ctr).label("ctr"),
+            func.avg(DbAdMetric.cpc).label("cpc"),
+            func.sum(DbAdMetric.impression_count * DbAd.bid_amount).label("cost"),
+            func.avg(DbAdMetric.roas).label("roas"),
+        )
+        .select_from(DbCampaign)
+        .join(DbAdGroup, DbCampaign.id == DbAdGroup.campaign_id)
+        .join(DbAd, DbAdGroup.id == DbAd.ad_group_id)
+        .join(DbAdMetric, DbAd.id == DbAdMetric.ad_id)
+    )
+
+    if campaign_id:
+        query = query.filter(DbCampaign.id == campaign_id)
+
+    if start_date:
+        query = query.filter(DbAdMetric.date >= start_date)
+
+    if end_date:
+        query = query.filter(DbAdMetric.date <= end_date)
+
+    results = query.group_by(DbCampaign.id, DbCampaign.name).all()
+
+    reports = []
+    for result in results:
+        reports.append(
+            CampaignPerformanceReport(
+                campaign_id=result.campaign_id,
+                campaign_name=result.campaign_name,
+                impressions=result.impressions or 0,
+                clicks=result.clicks or 0,
+                conversions=result.conversions or 0,
+                ctr=result.ctr or 0.0,
+                cpc=result.cpc or 0.0,
+                cost=result.cost or 0.0,
+                roas=result.roas or 0.0,
+            )
+        )
+
+    return reports
+
+
+# Enhanced Ad Matching Endpoint with Campaign Context
+@app.post("/match-ads-advanced", response_model=AdMatchingResponse)
+async def match_ads_advanced(
+    request: AdMatchingWithCampaignRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
+    """
+    Advanced matching with campaign context
     """
     try:
         # Convert intent dict to UniversalIntent dataclass
@@ -733,6 +1287,55 @@ async def match_ads_advanced(
         if request.campaign_context:
             if "campaign_ids" in request.campaign_context:
                 query = query.filter(DbCampaign.id.in_(request.campaign_context["campaign_ids"]))
+
+            if "budget_constraint" in request.campaign_context:
+                # Only include campaigns with budget remaining
+                # Calculate spent budget per campaign by joining with AdMetrics
+                try:
+                    # Get all active campaigns
+                    active_campaigns = db.query(DbCampaign).filter(DbCampaign.status == "active").all()
+
+                    # If there are no active campaigns, skip the budget constraint
+                    if not active_campaigns:
+                        pass  # Skip budget constraint if no active campaigns
+                    else:
+                        eligible_campaign_ids = []
+                        for campaign in active_campaigns:
+                            try:
+                                # Calculate total spent for this campaign using a subquery approach
+                                campaign_spent = (
+                                    db.query(func.coalesce(func.sum(DbAdMetric.impression_count * DbAd.bid_amount), 0))
+                                    .select_from(DbAdMetric)
+                                    .join(DbAd, DbAdMetric.ad_id == DbAd.id)
+                                    .join(DbAdGroup, DbAd.ad_group_id == DbAdGroup.id)
+                                    .filter(DbAdGroup.campaign_id == campaign.id)
+                                    .scalar()
+                                    or 0
+                                )
+
+                                # If campaign has remaining budget, add to eligible list
+                                if campaign_spent < campaign.budget:
+                                    eligible_campaign_ids.append(campaign.id)
+                            except Exception as inner_e:
+                                # If there's an issue calculating spend for a specific campaign, log it and continue
+                                logger.warning(f"Could not calculate spend for campaign {campaign.id}: {str(inner_e)}")
+                                # Add the campaign anyway to avoid excluding it due to calculation error
+                                eligible_campaign_ids.append(campaign.id)
+
+                        # If there are eligible campaigns, filter the main query
+                        if eligible_campaign_ids:
+                            query = query.filter(DbCampaign.id.in_(eligible_campaign_ids))
+                        else:
+                            # If no campaigns have budget left, we might want to return no results
+                            # Or we could skip the budget constraint in this case
+                            # For now, let's skip the constraint to avoid returning no results
+                            pass
+
+                except Exception as e:
+                    # If there's an issue with the budget constraint query, log it and continue without the constraint
+                    logger.error(f"Budget constraint query failed: {str(e)}")
+                    # Continue without applying the budget constraint
+                    pass
 
         # Get eligible ads from active campaigns
         db_ads = query.filter(
@@ -755,6 +1358,14 @@ async def match_ads_advanced(
                 advertiser=f"advertiser_{db_ad.advertiser_id}",
                 creative_format=db_ad.creative_format,
             )
+
+            # Validate ad for privacy compliance
+            compliance_report = validate_advertiser_constraints(ad_metadata)
+            if not compliance_report["is_compliant"]:
+                # Log violations but still include ad (would be filtered in production)
+                logger.warning(f"Ad {db_ad.id} has compliance violations: {compliance_report['violations']}")
+                fairness_violations.inc(len(compliance_report["violations"]))
+
             ad_inventory.append(ad_metadata)
 
         # Add any ads from the request as well
@@ -770,6 +1381,16 @@ async def match_ads_advanced(
                 advertiser=req_ad.get("advertiser"),
                 creative_format=req_ad.get("creative_format"),
             )
+
+            # Validate ad for privacy compliance
+            compliance_report = validate_advertiser_constraints(ad_metadata)
+            if not compliance_report["is_compliant"]:
+                # Log violations but still include ad (would be filtered in production)
+                logger.warning(
+                    f"Ad {req_ad.get('id', 'unknown')} has compliance violations: {compliance_report['violations']}"
+                )
+                fairness_violations.inc(len(compliance_report["violations"]))
+
             ad_inventory.append(ad_metadata)
 
         # Prepare internal request
@@ -777,38 +1398,62 @@ async def match_ads_advanced(
 
         internal_request = InternalAdRequest(intent=anonymized_intent, adInventory=ad_inventory, config=request.config)
 
-        job = await http_request.app.state.redis.enqueue_job("find_matching_ads_background", internal_request.to_dict())
-        return {"job_id": job.job_id}
+        # Perform ad matching
+        response = match_ads(internal_request)
+
+        # Log metrics to database in background
+        background_tasks.add_task(log_ad_metrics, anonymized_intent, response.matchedAds)
+
+        # Convert response to dict format
+        matched_ads = []
+        for matched_ad in response.matchedAds:
+            matched_ads.append(
+                {
+                    "ad": {
+                        "id": matched_ad.ad.id,
+                        "title": matched_ad.ad.title,
+                        "description": matched_ad.ad.description,
+                        "targetingConstraints": matched_ad.ad.targetingConstraints,
+                        "forbiddenDimensions": matched_ad.ad.forbiddenDimensions,
+                        "qualityScore": matched_ad.ad.qualityScore,
+                        "ethicalTags": matched_ad.ad.ethicalTags,
+                        "advertiser": matched_ad.ad.advertiser,
+                        "creative_format": matched_ad.ad.creative_format,
+                    },
+                    "adRelevanceScore": matched_ad.adRelevanceScore,
+                    "matchReasons": matched_ad.matchReasons,
+                }
+            )
+
+        return AdMatchingResponse(matched_ads=matched_ads, metrics=response.metrics)
 
     except Exception as e:
         logger.error(f"Error in advanced ad matching: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/jobs/{job_id}")
-async def get_job_status(job_id: str, request: Request):
-    """
-    Get the status and result of a job
-    """
-    job = await request.app.state.redis.job(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    status = await job.status()
-    result = None
-    if status == "complete":
-        result = await job.result()
-
-    return {"job_id": job_id, "status": status, "result": result}
-
-
 # Click Tracking Endpoints
 @app.post("/click-tracking", response_model=ClickTracking)
 async def track_click(click_data: ClickTrackingCreate, db: Session = Depends(get_db)):
     """
-    Track a click on an ad
+    Record an ad click
     """
-    pass
+    # Verify ad exists
+    ad = db.query(DbAd).filter(DbAd.id == click_data.ad_id).first()
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+
+    db_click = DbClickTracking(
+        ad_id=click_data.ad_id,
+        session_id=click_data.session_id,
+        ip_hash=click_data.ip_hash,
+        user_agent_hash=click_data.user_agent_hash,
+        referring_url=click_data.referring_url,
+    )
+    db.add(db_click)
+    db.commit()
+    db.refresh(db_click)
+    return db_click
 
 
 @app.get("/click-tracking/{click_id}", response_model=ClickTracking)

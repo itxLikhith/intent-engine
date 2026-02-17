@@ -20,9 +20,9 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urlparse
 
 import numpy as np
-
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_url_analysis_cache
+
 from core.schema import (
     Constraint,
     ConstraintType,

@@ -17,7 +17,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import JSON, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
 
 logger = logging.getLogger(__name__)
@@ -31,29 +30,20 @@ POOL_SIZE = int(os.getenv("DATABASE_POOL_SIZE", "10"))
 POOL_MAX_OVERFLOW = int(os.getenv("DATABASE_MAX_OVERFLOW", "20"))
 POOL_TIMEOUT = int(os.getenv("DATABASE_POOL_TIMEOUT", "30"))
 POOL_RECYCLE = int(os.getenv("DATABASE_POOL_RECYCLE", "1800"))
-PGBOUNCER_ENABLED = os.getenv("PGBOUNCER_ENABLED", "false").lower() in ("true", "1", "t")
 
 # Configure engine based on database type
 if "postgresql" in DATABASE_URL:
-    if PGBOUNCER_ENABLED:
-        engine = create_engine(
-            DATABASE_URL,
-            poolclass=NullPool,
-            echo=False,
-        )
-        logger.info("PostgreSQL engine initialized with PgBouncer (NullPool)")
-    else:
-        # PostgreSQL configuration with connection pooling
-        engine = create_engine(
-            DATABASE_URL,
-            pool_size=POOL_SIZE,
-            max_overflow=POOL_MAX_OVERFLOW,
-            pool_timeout=POOL_TIMEOUT,
-            pool_recycle=POOL_RECYCLE,
-            pool_pre_ping=True,
-            echo=False,
-        )
-        logger.info(f"PostgreSQL engine initialized with pool_size={POOL_SIZE}, max_overflow={POOL_MAX_OVERFLOW}")
+    # PostgreSQL configuration with connection pooling
+    engine = create_engine(
+        DATABASE_URL,
+        pool_size=POOL_SIZE,
+        max_overflow=POOL_MAX_OVERFLOW,
+        pool_timeout=POOL_TIMEOUT,
+        pool_recycle=POOL_RECYCLE,
+        pool_pre_ping=True,
+        echo=False,
+    )
+    logger.info(f"PostgreSQL engine initialized with pool_size={POOL_SIZE}, max_overflow={POOL_MAX_OVERFLOW}")
 elif "sqlite" in DATABASE_URL:
     # SQLite configuration (for local development only)
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, pool_pre_ping=True, echo=False)

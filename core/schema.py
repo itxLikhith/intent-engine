@@ -13,8 +13,6 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from dataclasses_json import DataClassJsonMixin
-
 
 # Define enums matching the TypeScript definitions from the docs
 class IntentGoal(Enum):
@@ -124,7 +122,7 @@ class ContentType(Enum):
 
 
 @dataclass
-class Constraint(DataClassJsonMixin):
+class Constraint:
     """Represents a constraint extracted from user input"""
 
     type: ConstraintType
@@ -134,7 +132,7 @@ class Constraint(DataClassJsonMixin):
 
 
 @dataclass
-class TemporalIntent(DataClassJsonMixin):
+class TemporalIntent:
     """Temporal aspects of user intent"""
 
     horizon: TemporalHorizon
@@ -143,7 +141,7 @@ class TemporalIntent(DataClassJsonMixin):
 
 
 @dataclass
-class DocumentContext(DataClassJsonMixin):
+class DocumentContext:
     """Context from open documents"""
 
     docId: Optional[str] = None
@@ -154,7 +152,7 @@ class DocumentContext(DataClassJsonMixin):
 
 
 @dataclass
-class MeetingContext(DataClassJsonMixin):
+class MeetingContext:
     """Context from calendar/meetings"""
 
     meetingId: Optional[str] = None
@@ -165,7 +163,7 @@ class MeetingContext(DataClassJsonMixin):
 
 
 @dataclass
-class EthicalSignal(DataClassJsonMixin):
+class EthicalSignal:
     """Ethical preferences extracted from intent"""
 
     dimension: EthicalDimension
@@ -173,7 +171,7 @@ class EthicalSignal(DataClassJsonMixin):
 
 
 @dataclass
-class DeclaredIntent(DataClassJsonMixin):
+class DeclaredIntent:
     """User-declared intent components"""
 
     query: Optional[str] = None  # Free-form text
@@ -186,7 +184,7 @@ class DeclaredIntent(DataClassJsonMixin):
 
 
 @dataclass
-class InferredIntent(DataClassJsonMixin):
+class InferredIntent:
     """Inferred intent components"""
 
     useCases: List[UseCase] = field(default_factory=list)  # [comparison, learning, troubleshooting, ...]
@@ -199,7 +197,7 @@ class InferredIntent(DataClassJsonMixin):
 
 
 @dataclass
-class SessionFeedback(DataClassJsonMixin):
+class SessionFeedback:
     """Feedback captured during the session"""
 
     clicked: Optional[List[str]] = None  # URLs clicked
@@ -209,7 +207,7 @@ class SessionFeedback(DataClassJsonMixin):
 
 
 @dataclass
-class UniversalIntent(DataClassJsonMixin):
+class UniversalIntent:
     """Main intent object matching the schema from the whitepaper"""
 
     # Unique session-scoped ID (not persistent)
@@ -232,7 +230,7 @@ class UniversalIntent(DataClassJsonMixin):
 
 
 @dataclass
-class IntentExtractionRequest(DataClassJsonMixin):
+class IntentExtractionRequest:
     """Request object for intent extraction API"""
 
     product: str  # 'search' | 'docs' | 'mail' | 'calendar' | 'meet' | 'forms' | 'diary' | 'sites'
@@ -242,7 +240,7 @@ class IntentExtractionRequest(DataClassJsonMixin):
 
 
 @dataclass
-class IntentExtractionResponse(DataClassJsonMixin):
+class IntentExtractionResponse:
     """Response object for intent extraction API"""
 
     intent: UniversalIntent

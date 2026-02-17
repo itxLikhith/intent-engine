@@ -20,9 +20,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
-
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_ranking_cache
+
 from core.schema import (
     Complexity,
     Constraint,

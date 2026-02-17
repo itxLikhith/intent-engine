@@ -72,3 +72,26 @@ module = [
     "numpy.*",
 ]
 ignore_missing_imports = true
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+]
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+
