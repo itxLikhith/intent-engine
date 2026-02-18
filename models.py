@@ -7,7 +7,7 @@ This module defines Pydantic models for all entities and requests used in the AP
 from datetime import date, datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from core.schema import UniversalIntent
 

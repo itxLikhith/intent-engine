@@ -12,11 +12,8 @@ import hashlib
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Session, relationship
-from sqlalchemy.sql import func
+from sqlalchemy.orm import Session
 
 from database import ABTest, ABTestAssignment, ABTestStatus, ABTestVariant
 
