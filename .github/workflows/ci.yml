@@ -211,7 +211,7 @@ jobs:
 
       - name: Start services
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker compose -f docker-compose.yml up -d
           sleep 60
 
       - name: Wait for API to be ready
@@ -236,11 +236,11 @@ jobs:
 
       - name: Show logs on failure
         if: failure()
-        run: docker-compose logs
+        run: docker compose logs
 
       - name: Cleanup
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # ============================================================================
   # Job 5: Build & Push Docker Image (on tags or main)
@@ -360,7 +360,7 @@ jobs:
             
             ## 📦 Installation
             ```bash
-            docker-compose up -d
+            docker compose up -d
             ```
           draft: false
           prerelease: false
