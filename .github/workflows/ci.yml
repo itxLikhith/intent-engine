@@ -21,6 +21,8 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,9 +54,9 @@ jobs:
           if [[ -n $(git status --porcelain) ]]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
-            git pull --rebase --no-verify || true
             git add -A
             git commit -m "style: auto-fix linting issues [skip ci]" || exit 0
+            git pull --rebase --no-verify || true
             git push
           fi
 
