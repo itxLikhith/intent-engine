@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_url_analysis_cache
+
 from core.schema import EthicalDimension, UniversalIntent
 
 logger = logging.getLogger(__name__)
@@ -412,9 +413,7 @@ class URLRanker:
         cache_hit_rate = cache_hits / len(url_results) if url_results else 0
 
         # Filter URLs
-        filtered_results = self._filter_urls(
-            url_results, min_privacy_score, exclude_big_tech
-        )
+        filtered_results = self._filter_urls(url_results, min_privacy_score, exclude_big_tech)
         filtered_count = len(url_results) - len(filtered_results)
 
         # Calculate relevance scores
@@ -442,10 +441,7 @@ class URLRanker:
         """Analyze multiple URLs in parallel"""
         # Create tasks for parallel execution
         tasks = [
-            asyncio.get_running_loop().run_in_executor(
-                self.executor, self.analyzer.analyze_url, url
-            )
-            for url in urls
+            asyncio.get_running_loop().run_in_executor(self.executor, self.analyzer.analyze_url, url) for url in urls
         ]
 
         # Wait for all tasks
@@ -471,10 +467,7 @@ class URLRanker:
 
         for result in results:
             # Check minimum privacy score (handle None case)
-            if (
-                result.privacy_score is not None
-                and result.privacy_score < min_privacy_score
-            ):
+            if result.privacy_score is not None and result.privacy_score < min_privacy_score:
                 continue
 
             # Check Big Tech exclusion
@@ -485,9 +478,7 @@ class URLRanker:
 
         return filtered
 
-    async def _calculate_relevance_scores(
-        self, results: list[URLResult], query: str
-    ) -> None:
+    async def _calculate_relevance_scores(self, results: list[URLResult], query: str) -> None:
         """Calculate semantic relevance scores for all URLs"""
         if not results or not query:
             return
@@ -501,21 +492,15 @@ class URLRanker:
             return
 
         # Prepare content texts
-        contents = [
-            f"{result.title} {result.description} {result.domain}" for result in results
-        ]
+        contents = [f"{result.title} {result.description} {result.domain}" for result in results]
 
         # Get embeddings in batch
         content_embs = self.embedding_cache.encode_batch(contents)
 
         # Calculate similarities
-        for i, (result, content_emb) in enumerate(
-            zip(results, content_embs, strict=False)
-        ):
+        for i, (result, content_emb) in enumerate(zip(results, content_embs, strict=False)):
             if content_emb is not None:
-                similarity = self.embedding_cache.cosine_similarity(
-                    query_emb, content_emb
-                )
+                similarity = self.embedding_cache.cosine_similarity(query_emb, content_emb)
                 result.relevance_score = (similarity + 1) / 2  # Normalize to 0-1
             else:
                 result.relevance_score = self._keyword_relevance(query, result)
@@ -554,9 +539,7 @@ class URLRanker:
             # Calculate weighted average
             total_weight = sum(weights.values())
             result.final_score = (
-                sum(scores[key] * weights.get(key, 0) for key in scores) / total_weight
-                if total_weight > 0
-                else 0
+                sum(scores[key] * weights.get(key, 0) for key in scores) / total_weight if total_weight > 0 else 0
             )
 
     def _calculate_ethics_score(self, result: URLResult) -> float:

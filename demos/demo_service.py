@@ -46,12 +46,8 @@ def create_demo_intent():
                 frequency=Frequency.RECURRING,
             ),
             ethicalSignals=[
-                EthicalSignal(
-                    dimension=EthicalDimension.OPENNESS, preference="open_format"
-                ),
-                EthicalSignal(
-                    dimension=EthicalDimension.PRIVACY, preference="privacy_first"
-                ),
+                EthicalSignal(dimension=EthicalDimension.OPENNESS, preference="open_format"),
+                EthicalSignal(dimension=EthicalDimension.PRIVACY, preference="privacy_first"),
             ],
         ),
     )
@@ -66,9 +62,7 @@ def demo_service_recommendation():
     print(f"Input Intent Query: {intent.declared.query}\n")
     print(f"Declared Goal: {intent.declared.goal.value}")
     print(f"Use Cases: {[uc.value for uc in intent.inferred.useCases]}")
-    print(
-        f"Ethical Signals: {[(es.dimension.value, es.preference) for es in intent.inferred.ethicalSignals]}\n"
-    )
+    print(f"Ethical Signals: {[(es.dimension.value, es.preference) for es in intent.inferred.ethicalSignals]}\n")
 
     # Define available services
     services = [
@@ -132,9 +126,7 @@ def demo_service_recommendation():
 
     print("Available Services:")
     for service in services:
-        print(
-            f"  - {service.name} ({service.id}): Supports {service.supportedGoals[:3]}..."
-        )
+        print(f"  - {service.name} ({service.id}): Supports {service.supportedGoals[:3]}...")
     print()
 
     # Create recommendation request
@@ -150,9 +142,7 @@ def demo_service_recommendation():
         print(f"     Reasons: {', '.join(recommendation.matchReasons)}")
         print()
 
-    print(
-        f"Summary: {len(services)} services were evaluated, {len(response.recommendations)} were recommended."
-    )
+    print(f"Summary: {len(services)} services were evaluated, {len(response.recommendations)} were recommended.")
 
 
 if __name__ == "__main__":

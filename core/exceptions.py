@@ -41,9 +41,7 @@ class InvalidIntentError(IntentEngineException):
 class IntentExpiredError(IntentEngineException):
     """Intent has expired"""
 
-    def __init__(
-        self, message: str = "Intent has expired", details: dict[str, Any] | None = None
-    ):
+    def __init__(self, message: str = "Intent has expired", details: dict[str, Any] | None = None):
         super().__init__(message, status_code=400, details=details)
 
 
@@ -107,9 +105,7 @@ class DatabaseError(IntentEngineException):
 class NotFoundError(IntentEngineException):
     """Requested resource not found"""
 
-    def __init__(
-        self, resource: str, resource_id: Any, details: dict[str, Any] | None = None
-    ):
+    def __init__(self, resource: str, resource_id: Any, details: dict[str, Any] | None = None):
         message = f"{resource} with ID {resource_id} not found"
         super().__init__(
             message,
@@ -137,9 +133,7 @@ class ValidationError(IntentEngineException):
 class ExternalServiceError(IntentEngineException):
     """External service (Redis, SearXNG) failed"""
 
-    def __init__(
-        self, service: str, message: str, details: dict[str, Any] | None = None
-    ):
+    def __init__(self, service: str, message: str, details: dict[str, Any] | None = None):
         details = details or {}
         details["service"] = service
         super().__init__(message, status_code=503, details=details)
@@ -166,18 +160,14 @@ class ConsentRequiredError(IntentEngineException):
 
     def __init__(self, consent_type: str, details: dict[str, Any] | None = None):
         message = f"Consent required for: {consent_type}"
-        super().__init__(
-            message, status_code=403, details=details or {"consent_type": consent_type}
-        )
+        super().__init__(message, status_code=403, details=details or {"consent_type": consent_type})
 
 
 # Fraud Detection Exceptions
 class FraudDetectedError(IntentEngineException):
     """Fraudulent activity detected"""
 
-    def __init__(
-        self, reason: str, severity: str = "high", details: dict[str, Any] | None = None
-    ):
+    def __init__(self, reason: str, severity: str = "high", details: dict[str, Any] | None = None):
         details = details or {}
         details["reason"] = reason
         details["severity"] = severity
@@ -226,9 +216,7 @@ def register_exception_handlers(app):
     from fastapi.responses import JSONResponse
 
     @app.exception_handler(IntentEngineException)
-    async def intent_engine_exception_handler(
-        request: Request, exc: IntentEngineException
-    ):
+    async def intent_engine_exception_handler(request: Request, exc: IntentEngineException):
         """Handle all Intent Engine exceptions"""
         return JSONResponse(
             status_code=exc.status_code,

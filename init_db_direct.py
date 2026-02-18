@@ -2,7 +2,10 @@
 """Initialize database tables directly without PgBouncer"""
 
 import os
-os.environ['DATABASE_URL'] = 'postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine'
+
+os.environ["DATABASE_URL"] = (
+    "postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine"
+)
 
 from database import Base, engine
 

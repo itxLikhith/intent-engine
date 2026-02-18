@@ -94,9 +94,7 @@ class PrivacyComplianceEngine:
         anonymized_intent.sessionFeedback = None
 
         # Ensure expiresAt is set correctly (8 hours from creation)
-        anonymized_intent.expiresAt = (
-            datetime.utcnow() + timedelta(hours=8)
-        ).isoformat() + "Z"
+        anonymized_intent.expiresAt = (datetime.utcnow() + timedelta(hours=8)).isoformat() + "Z"
 
         return anonymized_intent
 

@@ -38,9 +38,7 @@ class AdMetadata:
     ethicalTags: list[str]  # Privacy, open_source, no_tracking, etc.
     advertiser: str | None = None  # Name of advertiser
     category: str | None = None  # Category of the ad
-    creative_format: str | None = (
-        None  # Creative format of the ad (banner, native, video, etc.)
-    )
+    creative_format: str | None = None  # Creative format of the ad (banner, native, video, etc.)
 
 
 @dataclass
@@ -131,9 +129,7 @@ class AdConstraintMatcher:
     def __init__(self):
         pass
 
-    def satisfies_user_constraints(
-        self, ad: AdMetadata, constraints: list[Constraint]
-    ) -> tuple[bool, list[str]]:
+    def satisfies_user_constraints(self, ad: AdMetadata, constraints: list[Constraint]) -> tuple[bool, list[str]]:
         """
         Check if an ad satisfies user constraints
         Returns (satisfies, list_of_reasons)
@@ -156,17 +152,13 @@ class AdConstraintMatcher:
                     # Ad must include at least one of the allowed values
                     if isinstance(value, str):
                         if value not in ad_values:
-                            return False, [
-                                f"Ad does not target required {dimension}: {value}"
-                            ]
+                            return False, [f"Ad does not target required {dimension}: {value}"]
                         else:
                             reasons.append(f"{dimension}={value} satisfied")
                     elif isinstance(value, list):
                         # At least one value from the constraint must be in ad's targets
                         if not any(v in ad_values for v in value):
-                            return False, [
-                                f"Ad does not target any of required {dimension}s: {value}"
-                            ]
+                            return False, [f"Ad does not target any of required {dimension}s: {value}"]
                         else:
                             reasons.append(f"{dimension} satisfied: {value}")
 
@@ -183,13 +175,9 @@ class AdConstraintMatcher:
                 # If ad doesn't specify targeting for this dimension,
                 # inclusion constraints fail, exclusion constraints pass
                 if constraint_type == ConstraintType.INCLUSION:
-                    return False, [
-                        f"Ad does not specify targeting for required dimension: {dimension}"
-                    ]
+                    return False, [f"Ad does not specify targeting for required dimension: {dimension}"]
                 elif constraint_type == ConstraintType.EXCLUSION:
-                    reasons.append(
-                        f"Excluded {dimension} constraint satisfied (not targeted)"
-                    )
+                    reasons.append(f"Excluded {dimension} constraint satisfied (not targeted)")
 
         return True, reasons
 
@@ -200,9 +188,7 @@ class AdRelevanceScorer:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def compute_ad_relevance(
-        self, ad: AdMetadata, intent: UniversalIntent
-    ) -> tuple[float, list[str]]:
+    def compute_ad_relevance(self, ad: AdMetadata, intent: UniversalIntent) -> tuple[float, list[str]]:
         """
         Compute relevance score between ad and user intent
         Returns (relevance_score, list_of_reasons)
@@ -215,16 +201,12 @@ class AdRelevanceScorer:
         inferred = intent.inferred if intent.inferred else InferredIntent()
 
         # 1. Semantic similarity between ad and query
-        semantic_score, semantic_reasons = self._compute_semantic_similarity(
-            ad, intent, declared
-        )
+        semantic_score, semantic_reasons = self._compute_semantic_similarity(ad, intent, declared)
         scores.append(semantic_score)
         reasons.extend(semantic_reasons)
 
         # 2. Ethical signal alignment
-        ethical_score, ethical_reasons = self._compute_ethical_alignment(
-            ad, intent, inferred
-        )
+        ethical_score, ethical_reasons = self._compute_ethical_alignment(ad, intent, inferred)
         scores.append(ethical_score)
         reasons.extend(ethical_reasons)
 
@@ -250,9 +232,7 @@ class AdRelevanceScorer:
                 adjusted_weights = [remaining_weight]
             weights = adjusted_weights
 
-        relevance_score = sum(
-            score * weight for score, weight in zip(scores, weights, strict=False)
-        )
+        relevance_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
 
         # Clamp the score between 0 and 1
         relevance_score = max(0.0, min(1.0, relevance_score))
@@ -281,9 +261,7 @@ class AdRelevanceScorer:
         ad_embedding = self.embedding_cache.encode_text(ad_content)
 
         if query_embedding is not None and ad_embedding is not None:
-            similarity = self.embedding_cache.cosine_similarity(
-                query_embedding, ad_embedding
-            )
+            similarity = self.embedding_cache.cosine_similarity(query_embedding, ad_embedding)
             # Normalize to 0-1 range
             score = (similarity + 1) / 2  # Cosine similarity is -1 to 1, convert to 0-1
 
@@ -329,10 +307,7 @@ class AdRelevanceScorer:
 
             # Look for matches in ad ethical tags
             for eth_tag in ad.ethicalTags:
-                if (
-                    signal_dimension.lower() in eth_tag.lower()
-                    or signal_preference.lower() in eth_tag.lower()
-                ):
+                if signal_dimension.lower() in eth_tag.lower() or signal_preference.lower() in eth_tag.lower():
                     score += 0.5
                     matches_found += 1
                     reasons.append(f"ethical alignment: {eth_tag}")
@@ -395,9 +370,7 @@ class AdRelevanceScorer:
             matches = [indicator for indicator in indicators if indicator in ad_content]
             if matches:
                 score = min(1.0, len(matches) * 0.3)  # Boost for each match
-                reasons.append(
-                    f"goal alignment: {goal_value.lower()} related terms found"
-                )
+                reasons.append(f"goal alignment: {goal_value.lower()} related terms found")
                 return score, reasons
 
         # Fallback: use embedding similarity between goal and ad
@@ -405,9 +378,7 @@ class AdRelevanceScorer:
         ad_embedding = self.embedding_cache.encode_text(ad_content)
 
         if goal_embedding is not None and ad_embedding is not None:
-            similarity = self.embedding_cache.cosine_similarity(
-                goal_embedding, ad_embedding
-            )
+            similarity = self.embedding_cache.cosine_similarity(goal_embedding, ad_embedding)
             # Normalize to 0-1 range
             score = (similarity + 1) / 2
             if score > 0.2:
@@ -437,51 +408,35 @@ class AdMatcher:
         ads_passed_relevance = 0
 
         # FIX: Initialize min_threshold before the loop
-        min_threshold = (
-            request.config.get("minThreshold", 0.3) if request.config else 0.3
-        )
+        min_threshold = request.config.get("minThreshold", 0.3) if request.config else 0.3
 
         # Log intent summary for debugging
-        declared = (
-            request.intent.declared if request.intent.declared else DeclaredIntent()
-        )
+        declared = request.intent.declared if request.intent.declared else DeclaredIntent()
         query_preview = declared.query[:50] if declared.query else "N/A"
-        logger.info(
-            f"Ad matching started: {total_ads_evaluated} ads, query='{query_preview}...'"
-        )
+        logger.info(f"Ad matching started: {total_ads_evaluated} ads, query='{query_preview}...'")
 
         for idx, ad in enumerate(request.adInventory):
             # Filter 1: Fairness check (NO discriminatory targeting)
-            is_valid, fairness_reason = (
-                self.fairness_checker.validate_advertiser_constraints(ad)
-            )
+            is_valid, fairness_reason = self.fairness_checker.validate_advertiser_constraints(ad)
             if not is_valid:
-                logger.debug(
-                    f"Ad {idx} ({ad.id}) rejected at fairness check: {fairness_reason}"
-                )
+                logger.debug(f"Ad {idx} ({ad.id}) rejected at fairness check: {fairness_reason}")
                 continue
             ads_passed_fairness += 1
 
             # Filter 2: User constraints
             # FIX: Add null safety for intent.declared.constraints
-            declared = (
-                request.intent.declared if request.intent.declared else DeclaredIntent()
-            )
+            declared = request.intent.declared if request.intent.declared else DeclaredIntent()
             constraints = declared.constraints if declared else []
-            satisfies_constraints, constraint_reasons = (
-                self.constraint_matcher.satisfies_user_constraints(ad, constraints)
+            satisfies_constraints, constraint_reasons = self.constraint_matcher.satisfies_user_constraints(
+                ad, constraints
             )
             if not satisfies_constraints:
-                logger.debug(
-                    f"Ad {idx} ({ad.id}) rejected at constraint check: {constraint_reasons[:2]}"
-                )
+                logger.debug(f"Ad {idx} ({ad.id}) rejected at constraint check: {constraint_reasons[:2]}")
                 continue
             ads_passed_constraints += 1
 
             # Filter 3: Relevance scoring
-            relevance_score, relevance_reasons = (
-                self.relevance_scorer.compute_ad_relevance(ad, request.intent)
-            )
+            relevance_score, relevance_reasons = self.relevance_scorer.compute_ad_relevance(ad, request.intent)
 
             # Log relevance scores for debugging
             logger.debug(f"Ad {idx} ({ad.id}) relevance score: {relevance_score:.3f}")
@@ -492,14 +447,10 @@ class AdMatcher:
                 # Combine all reasons
                 all_reasons = constraint_reasons + relevance_reasons
 
-                matched_ad = MatchedAd(
-                    ad=ad, adRelevanceScore=relevance_score, matchReasons=all_reasons
-                )
+                matched_ad = MatchedAd(ad=ad, adRelevanceScore=relevance_score, matchReasons=all_reasons)
                 matched.append(matched_ad)
             else:
-                logger.debug(
-                    f"Ad {idx} ({ad.id}) below threshold {min_threshold}: {relevance_score:.3f}"
-                )
+                logger.debug(f"Ad {idx} ({ad.id}) below threshold {min_threshold}: {relevance_score:.3f}")
 
         # Sort by relevance (descending)
         matched.sort(key=lambda x: x.adRelevanceScore, reverse=True)

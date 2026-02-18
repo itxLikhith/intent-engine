@@ -80,9 +80,7 @@ class ServiceScoringEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def compute_service_match(
-        self, intent: UniversalIntent, service: ServiceMetadata
-    ) -> tuple[float, list[str]]:
+    def compute_service_match(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """
         Compute match score between intent and service
         """
@@ -95,16 +93,12 @@ class ServiceScoringEngine:
         reasons.extend(goal_reasons)
 
         # 2. Use case matching (semantic similarity)
-        use_case_score, use_case_reasons = self._compute_use_case_matching(
-            intent, service
-        )
+        use_case_score, use_case_reasons = self._compute_use_case_matching(intent, service)
         scores.append(use_case_score)
         reasons.extend(use_case_reasons)
 
         # 3. Temporal pattern matching
-        temporal_score, temporal_reasons = self._compute_temporal_matching(
-            intent, service
-        )
+        temporal_score, temporal_reasons = self._compute_temporal_matching(intent, service)
         scores.append(temporal_score)
         reasons.extend(temporal_reasons)
 
@@ -127,18 +121,14 @@ class ServiceScoringEngine:
                 adjusted_weights = [remaining_weight]
             weights = adjusted_weights
 
-        service_score = sum(
-            score * weight for score, weight in zip(scores, weights, strict=False)
-        )
+        service_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
 
         # Clamp the score between 0 and 1
         service_score = max(0.0, min(1.0, service_score))
 
         return service_score, reasons
 
-    def _compute_goal_matching(
-        self, intent: UniversalIntent, service: ServiceMetadata
-    ) -> tuple[float, list[str]]:
+    def _compute_goal_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on goal matching"""
         reasons = []
 
@@ -153,18 +143,12 @@ class ServiceScoringEngine:
             return score, reasons
         else:
             # Check for semantic similarity with supported goals
-            goal_embedding = self.embedding_cache.encode_text(
-                goal_value.replace("_", " ")
-            )
+            goal_embedding = self.embedding_cache.encode_text(goal_value.replace("_", " "))
             service_goals_text = " ".join(service.supportedGoals).replace("_", " ")
-            service_goals_embedding = self.embedding_cache.encode_text(
-                service_goals_text
-            )
+            service_goals_embedding = self.embedding_cache.encode_text(service_goals_text)
 
             if goal_embedding is not None and service_goals_embedding is not None:
-                similarity = self.embedding_cache.cosine_similarity(
-                    goal_embedding, service_goals_embedding
-                )
+                similarity = self.embedding_cache.cosine_similarity(goal_embedding, service_goals_embedding)
                 # Normalize to 0-1 range
                 score = (similarity + 1) / 2
                 if score > 0.3:  # Threshold for relevance
@@ -183,9 +167,7 @@ class ServiceScoringEngine:
 
                 return 0.1, reasons  # Low score if no match
 
-    def _compute_use_case_matching(
-        self, intent: UniversalIntent, service: ServiceMetadata
-    ) -> tuple[float, list[str]]:
+    def _compute_use_case_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on use case matching"""
         reasons = []
 
@@ -204,10 +186,7 @@ class ServiceScoringEngine:
             # Check for direct matches
             direct_match = False
             for service_use_case in service.primaryUseCases:
-                if (
-                    service_use_case.lower() in use_case_str.lower()
-                    or use_case_str.lower() in service_use_case.lower()
-                ):
+                if service_use_case.lower() in use_case_str.lower() or use_case_str.lower() in service_use_case.lower():
                     total_score += 1.0
                     matches_found += 1
                     reasons.append(f"use case '{service_use_case}' matched")
@@ -217,25 +196,16 @@ class ServiceScoringEngine:
             if not direct_match:
                 # Use semantic similarity as fallback
                 use_case_embedding = self.embedding_cache.encode_text(use_case_str)
-                service_use_cases_embedding = self.embedding_cache.encode_text(
-                    " ".join(service.primaryUseCases)
-                )
+                service_use_cases_embedding = self.embedding_cache.encode_text(" ".join(service.primaryUseCases))
 
-                if (
-                    use_case_embedding is not None
-                    and service_use_cases_embedding is not None
-                ):
-                    similarity = self.embedding_cache.cosine_similarity(
-                        use_case_embedding, service_use_cases_embedding
-                    )
+                if use_case_embedding is not None and service_use_cases_embedding is not None:
+                    similarity = self.embedding_cache.cosine_similarity(use_case_embedding, service_use_cases_embedding)
                     # Normalize to 0-1 range
                     similarity_score = (similarity + 1) / 2
                     total_score += similarity_score
                     matches_found += 1
                     if similarity_score > 0.3:
-                        reasons.append(
-                            f"use case semantically matched '{use_case_str}'"
-                        )
+                        reasons.append(f"use case semantically matched '{use_case_str}'")
 
         # Normalize score based on number of use cases
         if matches_found > 0:
@@ -244,9 +214,7 @@ class ServiceScoringEngine:
         else:
             return 0.0, reasons
 
-    def _compute_temporal_matching(
-        self, intent: UniversalIntent, service: ServiceMetadata
-    ) -> tuple[float, list[str]]:
+    def _compute_temporal_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on temporal pattern matching"""
         reasons = []
 
@@ -258,45 +226,30 @@ class ServiceScoringEngine:
 
         # Check horizon matching
         if temporal_intent.horizon == TemporalHorizon.TODAY:
-            if (
-                "short_session" in service.temporalPatterns
-                or "quick_access" in service.temporalPatterns
-            ):
+            if "short_session" in service.temporalPatterns or "quick_access" in service.temporalPatterns:
                 score += 0.2
                 reasons.append("temporal-horizon-today-matched")
         elif temporal_intent.horizon in [
             TemporalHorizon.WEEK,
             TemporalHorizon.LONGTERM,
         ]:
-            if (
-                "long_session" in service.temporalPatterns
-                or "extended_work" in service.temporalPatterns
-            ):
+            if "long_session" in service.temporalPatterns or "extended_work" in service.temporalPatterns:
                 score += 0.2
                 reasons.append("temporal-horizon-longterm-matched")
 
         # Check frequency matching
         if temporal_intent.frequency == Frequency.RECURRING:
-            if (
-                "recurring_edit" in service.temporalPatterns
-                or "regular_updates" in service.temporalPatterns
-            ):
+            if "recurring_edit" in service.temporalPatterns or "regular_updates" in service.temporalPatterns:
                 score += 0.15
                 reasons.append("temporal-frequency-recurring-matched")
         elif temporal_intent.frequency == Frequency.ONEOFF:
-            if (
-                "one_time_task" in service.temporalPatterns
-                or "quick_completion" in service.temporalPatterns
-            ):
+            if "one_time_task" in service.temporalPatterns or "quick_completion" in service.temporalPatterns:
                 score += 0.15
                 reasons.append("temporal-frequency-oneoff-matched")
 
         # Check recency matching
         if temporal_intent.recency == Recency.RECENT:
-            if (
-                "real_time" in service.temporalPatterns
-                or "live_updates" in service.temporalPatterns
-            ):
+            if "real_time" in service.temporalPatterns or "live_updates" in service.temporalPatterns:
                 score += 0.1
                 reasons.append("temporal-recency-recent-matched")
 
@@ -305,9 +258,7 @@ class ServiceScoringEngine:
 
         return score, reasons
 
-    def _compute_ethical_matching(
-        self, intent: UniversalIntent, service: ServiceMetadata
-    ) -> tuple[float, list[str]]:
+    def _compute_ethical_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on ethical alignment matching"""
         reasons = []
 
@@ -324,10 +275,7 @@ class ServiceScoringEngine:
 
             # Look for matches in service ethical alignment
             for eth_align in service.ethicalAlignment:
-                if (
-                    signal_dimension.lower() in eth_align.lower()
-                    or signal_preference.lower() in eth_align.lower()
-                ):
+                if signal_dimension.lower() in eth_align.lower() or signal_preference.lower() in eth_align.lower():
                     score += 0.5
                     matches_found += 1
                     reasons.append(f"ethical alignment: {eth_align}")
@@ -347,18 +295,14 @@ class ServiceRecommender:
     def __init__(self):
         self.scoring_engine = ServiceScoringEngine()
 
-    def recommend_services(
-        self, request: ServiceRecommendationRequest
-    ) -> ServiceRecommendationResponse:
+    def recommend_services(self, request: ServiceRecommendationRequest) -> ServiceRecommendationResponse:
         """
         Main function to recommend services based on user intent
         """
         recommendations = []
 
         for service in request.availableServices:
-            service_score, match_reasons = self.scoring_engine.compute_service_match(
-                request.intent, service
-            )
+            service_score, match_reasons = self.scoring_engine.compute_service_match(request.intent, service)
 
             # Only include recommendations above a minimum threshold
             if service_score > 0.1:  # Minimum relevance threshold

@@ -64,9 +64,7 @@ def create_sample_intent():
             ),
             resultType=None,
             ethicalSignals=[
-                EthicalSignal(
-                    dimension=EthicalDimension.PRIVACY, preference="privacy-first"
-                ),
+                EthicalSignal(dimension=EthicalDimension.PRIVACY, preference="privacy-first"),
                 EthicalSignal(
                     dimension=EthicalDimension.OPENNESS,
                     preference="open-source_preferred",
@@ -176,9 +174,7 @@ def demo_ranking():
         print(f"  {i}. Title: {ranked_result.result.title}")
         print(f"     Score: {ranked_result.alignmentScore:.3f}")
         print(f"     Reasons: {', '.join(ranked_result.matchReasons)}")
-        print(
-            f"     Platform: {ranked_result.result.platform}, Provider: {ranked_result.result.provider}"
-        )
+        print(f"     Platform: {ranked_result.result.platform}, Provider: {ranked_result.result.provider}")
         print()
 
     print(

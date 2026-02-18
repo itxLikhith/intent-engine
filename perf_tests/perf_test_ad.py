@@ -57,11 +57,7 @@ def create_test_intent():
         ),
         inferred=InferredIntent(
             useCases=[UseCase.LEARNING, UseCase.TROUBLESHOOTING],
-            ethicalSignals=[
-                EthicalSignal(
-                    dimension=EthicalDimension.PRIVACY, preference="privacy-first"
-                )
-            ],
+            ethicalSignals=[EthicalSignal(dimension=EthicalDimension.PRIVACY, preference="privacy-first")],
         ),
     )
 
@@ -75,30 +71,20 @@ def create_test_ads(count=20):
                 id=f"ad_{i + 1}",
                 title=f"Email Service {i + 1}",
                 description=(
-                    "Secure, open-source email for Android devices"
-                    if i % 2 == 0
-                    else "General service description"
+                    "Secure, open-source email for Android devices" if i % 2 == 0 else "General service description"
                 ),
                 targetingConstraints=(
                     {
                         "platform": ["Android"] if i % 3 != 2 else ["iOS"],
                         "license": ["open_source"] if i % 4 != 3 else ["proprietary"],
-                        "provider": (
-                            ["ProtonMail", "Tutanota"]
-                            if i % 5 != 4
-                            else ["Google", "Microsoft"]
-                        ),
+                        "provider": (["ProtonMail", "Tutanota"] if i % 5 != 4 else ["Google", "Microsoft"]),
                     }
                     if i % 6 != 5
                     else {"platform": ["Android"]}
                 ),
-                forbiddenDimensions=(
-                    [] if i % 7 != 0 else ["age", "location"]
-                ),  # Some ads have forbidden dims
+                forbiddenDimensions=([] if i % 7 != 0 else ["age", "location"]),  # Some ads have forbidden dims
                 qualityScore=0.7 + (i % 4) * 0.1,
-                ethicalTags=(
-                    ["privacy", "open_source"] if i % 2 == 0 else ["basic_service"]
-                ),
+                ethicalTags=(["privacy", "open_source"] if i % 2 == 0 else ["basic_service"]),
                 advertiser=f"Advertiser_{i + 1}",
             )
         )
@@ -111,25 +97,19 @@ def test_performance():
     ads = create_test_ads(20)  # 20 ads as specified in requirements
 
     # Warm up the model
-    request = AdMatchingRequest(
-        intent=intent, adInventory=ads[:1], config={"topK": 5, "minThreshold": 0.4}
-    )
+    request = AdMatchingRequest(intent=intent, adInventory=ads[:1], config={"topK": 5, "minThreshold": 0.4})
     match_ads(request)
 
     # Measure performance
     times = []
     for _ in range(10):  # Run 10 iterations
         start_time = time.time()
-        request = AdMatchingRequest(
-            intent=intent, adInventory=ads, config={"topK": 5, "minThreshold": 0.4}
-        )
+        request = AdMatchingRequest(intent=intent, adInventory=ads, config={"topK": 5, "minThreshold": 0.4})
         response = match_ads(request)
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000
         times.append(elapsed_ms)
-        print(
-            f"Iteration - Time: {elapsed_ms:.2f}ms, Matched Ads: {len(response.matchedAds)}"
-        )
+        print(f"Iteration - Time: {elapsed_ms:.2f}ms, Matched Ads: {len(response.matchedAds)}")
 
     avg_time = sum(times) / len(times)
     max_time = max(times)

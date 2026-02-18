@@ -31,13 +31,12 @@ from database import Ad as DbAd
 from database import AdGroup as DbAdGroup
 from database import AdMetric as DbAdMetric
 from database import Advertiser as DbAdvertiser
-from database import Base
+from database import Base, db_manager, engine
 from database import Campaign as DbCampaign
 from database import ClickTracking as DbClickTracking
 from database import ConversionTracking as DbConversionTracking
 from database import CreativeAsset as DbCreativeAsset
 from database import FraudDetection as DbFraudDetection
-from database import db_manager, engine
 from extraction.extractor import extract_intent
 from models import (
     ABTestCreate,
@@ -150,9 +149,7 @@ def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIn
     for c in intent_dict.get("declared", {}).get("constraints", []):
         if isinstance(c, dict):
             constraint_type = c.get("type")
-            if isinstance(constraint_type, str) and constraint_type in [
-                ct.value for ct in ConstraintType
-            ]:
+            if isinstance(constraint_type, str) and constraint_type in [ct.value for ct in ConstraintType]:
                 constraint_type = ConstraintType(constraint_type)
             constraints.append(
                 Constraint(
@@ -182,11 +179,7 @@ def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIn
         negativePreferences=declared_dict.get("negativePreferences", []) or [],
         urgency=urgency if isinstance(urgency, Urgency) else Urgency.FLEXIBLE,
         budget=declared_dict.get("budget"),
-        skillLevel=(
-            skill_level
-            if isinstance(skill_level, SkillLevel)
-            else SkillLevel.INTERMEDIATE
-        ),
+        skillLevel=(skill_level if isinstance(skill_level, SkillLevel) else SkillLevel.INTERMEDIATE),
     )
 
     # Convert inferred intent
@@ -208,15 +201,11 @@ def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIn
     for es in inferred_dict.get("ethicalSignals", []) or []:
         if isinstance(es, dict):
             dimension = es.get("dimension")
-            if isinstance(dimension, str) and dimension in [
-                d.value for d in EthicalDimension
-            ]:
+            if isinstance(dimension, str) and dimension in [d.value for d in EthicalDimension]:
                 dimension = EthicalDimension(dimension)
             ethical_signals.append(
                 EthicalSignal(
-                    dimension=(
-                        dimension if isinstance(dimension, EthicalDimension) else None
-                    ),
+                    dimension=(dimension if isinstance(dimension, EthicalDimension) else None),
                     preference=es.get("preference", "") or "",
                 )
             )
@@ -235,15 +224,9 @@ def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIn
         if isinstance(frequency, str) and frequency in [f.value for f in Frequency]:
             frequency = Frequency(frequency)
         temporal_intent = TemporalIntent(
-            horizon=(
-                horizon
-                if isinstance(horizon, TemporalHorizon)
-                else TemporalHorizon.FLEXIBLE
-            ),
+            horizon=(horizon if isinstance(horizon, TemporalHorizon) else TemporalHorizon.FLEXIBLE),
             recency=recency if isinstance(recency, Recency) else Recency.EVERGREEN,
-            frequency=(
-                frequency if isinstance(frequency, Frequency) else Frequency.FLEXIBLE
-            ),
+            frequency=(frequency if isinstance(frequency, Frequency) else Frequency.FLEXIBLE),
         )
 
     inferred = InferredIntent(
@@ -252,9 +235,7 @@ def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIn
         documentContext=inferred_dict.get("documentContext"),
         meetingContext=inferred_dict.get("meetingContext"),
         resultType=result_type if isinstance(result_type, ResultType) else None,
-        complexity=(
-            complexity if isinstance(complexity, Complexity) else Complexity.MODERATE
-        ),
+        complexity=(complexity if isinstance(complexity, Complexity) else Complexity.MODERATE),
         ethicalSignals=ethical_signals,
     )
 
@@ -285,34 +266,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Prometheus metrics
-extraction_latency = Histogram(
-    "intent_extraction_latency_seconds", "Time spent in intent extraction"
-)
-ranking_throughput = Counter(
-    "ranking_throughput_total", "Number of ranking requests processed"
-)
-ad_matching_success_rate = Counter(
-    "ad_matching_success_total", "Number of successful ad matches"
-)
-fairness_violations = Counter(
-    "fairness_violations_total", "Number of fairness violations detected"
-)
+extraction_latency = Histogram("intent_extraction_latency_seconds", "Time spent in intent extraction")
+ranking_throughput = Counter("ranking_throughput_total", "Number of ranking requests processed")
+ad_matching_success_rate = Counter("ad_matching_success_total", "Number of successful ad matches")
+fairness_violations = Counter("fairness_violations_total", "Number of fairness violations detected")
 active_sessions = Gauge("active_sessions", "Number of active user sessions")
-extraction_requests = Counter(
-    "intent_extraction_requests_total", "Number of intent extraction requests"
-)
-ranking_requests_counter = Counter(
-    "ranking_requests_processed_total", "Number of ranking requests processed"
-)
+extraction_requests = Counter("intent_extraction_requests_total", "Number of intent extraction requests")
+ranking_requests_counter = Counter("ranking_requests_processed_total", "Number of ranking requests processed")
 service_recommendation_requests = Counter(
     "service_recommendation_requests_total", "Number of service recommendation requests"
 )
-url_ranking_requests = Counter(
-    "url_ranking_requests_total", "Number of URL ranking requests"
-)
-unified_search_requests = Counter(
-    "unified_search_requests_total", "Number of unified search requests"
-)
+url_ranking_requests = Counter("url_ranking_requests_total", "Number of URL ranking requests")
+unified_search_requests = Counter("unified_search_requests_total", "Number of unified search requests")
 
 
 # Rate limiting configuration
@@ -388,9 +353,7 @@ def get_cors_allow_headers() -> list[str]:
     """
     Get allowed CORS headers from environment variable.
     """
-    headers_str = os.getenv(
-        "CORS_ALLOW_HEADERS", "Authorization,Content-Type,X-Requested-With"
-    )
+    headers_str = os.getenv("CORS_ALLOW_HEADERS", "Authorization,Content-Type,X-Requested-With")
     return [header.strip() for header in headers_str.split(",")]
 
 
@@ -446,8 +409,7 @@ async def request_logging_middleware(request, call_next):
 
         # Log request/response details
         logger.info(
-            f"[{request_id[:8]}] {request.method} {request.url.path} "
-            f"{response.status_code} {process_time:.2f}ms"
+            f"[{request_id[:8]}] {request.method} {request.url.path} {response.status_code} {process_time:.2f}ms"
         )
 
         # Track response times for specific endpoints
@@ -486,9 +448,7 @@ async def startup_event():
     except Exception as e:
         # This can happen if multiple workers try to create tables simultaneously
         # or if tables already exist - this is safe to ignore
-        logger.warning(
-            f"Table creation warning (safe to ignore if tables exist): {str(e)}"
-        )
+        logger.warning(f"Table creation warning (safe to ignore if tables exist): {str(e)}")
 
     # Pre-load models to avoid cold start
     from ads.matcher import get_ad_matcher
@@ -520,9 +480,7 @@ async def shutdown_event():
 @app.get("/", response_model=HealthCheckResponse)
 async def root_health_check():
     """Root health check endpoint"""
-    return HealthCheckResponse(
-        status="healthy", timestamp=datetime.now(UTC), version="1.0.0"
-    )
+    return HealthCheckResponse(status="healthy", timestamp=datetime.now(UTC), version="1.0.0")
 
 
 @app.get("/health", response_model=HealthCheckResponse)
@@ -576,19 +534,13 @@ async def health_check(db: Session = Depends(get_db)):
     try:
         import aiohttp
 
-        async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=5)
-        ) as session:
-            async with session.get(
-                f"{searxng_url}/healthz", raise_for_status=False
-            ) as response:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
+            async with session.get(f"{searxng_url}/healthz", raise_for_status=False) as response:
                 if response.status == 200:
                     logger.debug("SearXNG health check: OK")
                 else:
                     checks["searxng"] = False
-                    logger.warning(
-                        f"SearXNG health check returned status: {response.status}"
-                    )
+                    logger.warning(f"SearXNG health check returned status: {response.status}")
                     if overall_status == "healthy":
                         overall_status = "degraded"
     except ImportError:
@@ -745,9 +697,7 @@ async def rank_results_endpoint(request: RankingRequest):
             )
             search_results.append(search_result)
 
-        internal_request = InternalRankingRequest(
-            intent=intent, candidates=search_results, options=request.options
-        )
+        internal_request = InternalRankingRequest(intent=intent, candidates=search_results, options=request.options)
 
         response = rank_results(internal_request)
 
@@ -911,9 +861,7 @@ async def recommend_services_endpoint(request: ServiceRecommendationRequest):
 
 
 @app.post("/match-ads", response_model=AdMatchingResponse)
-async def match_ads_endpoint(
-    request: AdMatchingRequest, background_tasks: BackgroundTasks
-):
+async def match_ads_endpoint(request: AdMatchingRequest, background_tasks: BackgroundTasks):
     """
     Match ads to user intent with fairness validation
     """
@@ -956,9 +904,7 @@ async def match_ads_endpoint(
             compliance_report = validate_advertiser_constraints(ad_metadata)
             if not compliance_report["is_compliant"]:
                 # Log violations but still include ad (would be filtered in production)
-                logger.warning(
-                    f"Ad {db_ad.id} has compliance violations: {compliance_report['violations']}"
-                )
+                logger.warning(f"Ad {db_ad.id} has compliance violations: {compliance_report['violations']}")
                 fairness_violations.inc(len(compliance_report["violations"]))
 
             ad_inventory.append(ad_metadata)
@@ -992,17 +938,13 @@ async def match_ads_endpoint(
         # Prepare internal request
         from ads.matcher import AdMatchingRequest as InternalAdRequest
 
-        internal_request = InternalAdRequest(
-            intent=anonymized_intent, adInventory=ad_inventory, config=request.config
-        )
+        internal_request = InternalAdRequest(intent=anonymized_intent, adInventory=ad_inventory, config=request.config)
 
         # Perform ad matching
         response = match_ads(internal_request)
 
         # Log metrics to database in background
-        background_tasks.add_task(
-            log_ad_metrics, anonymized_intent, response.matchedAds
-        )
+        background_tasks.add_task(log_ad_metrics, anonymized_intent, response.matchedAds)
 
         # Convert response to dict format
         matched_ads = []
@@ -1075,9 +1017,7 @@ async def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/campaigns/{campaign_id}", response_model=Campaign)
-async def update_campaign(
-    campaign_id: int, campaign_update: CampaignUpdate, db: Session = Depends(get_db)
-):
+async def update_campaign(campaign_id: int, campaign_update: CampaignUpdate, db: Session = Depends(get_db)):
     """
     Update campaign
     """
@@ -1109,9 +1049,7 @@ async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
         ads = db.query(DbAd).filter(DbAd.ad_group_id == ad_group.id).all()
         for ad in ads:
             # Delete creative assets first
-            creative_assets = (
-                db.query(DbCreativeAsset).filter(DbCreativeAsset.ad_id == ad.id).all()
-            )
+            creative_assets = db.query(DbCreativeAsset).filter(DbCreativeAsset.ad_id == ad.id).all()
             for asset in creative_assets:
                 db.delete(asset)
             # Then delete the ad
@@ -1190,9 +1128,7 @@ async def get_ad_group(ad_group_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/adgroups/{ad_group_id}", response_model=AdGroup)
-async def update_ad_group(
-    ad_group_id: int, ad_group_update: AdGroupUpdate, db: Session = Depends(get_db)
-):
+async def update_ad_group(ad_group_id: int, ad_group_update: AdGroupUpdate, db: Session = Depends(get_db)):
     """
     Update ad group
     """
@@ -1247,9 +1183,7 @@ async def create_ad(ad: AdCreate, db: Session = Depends(get_db)):
     Create a new ad
     """
     # Verify advertiser exists
-    advertiser = (
-        db.query(DbAdvertiser).filter(DbAdvertiser.id == ad.advertiser_id).first()
-    )
+    advertiser = db.query(DbAdvertiser).filter(DbAdvertiser.id == ad.advertiser_id).first()
     if not advertiser:
         raise HTTPException(status_code=404, detail="Advertiser not found")
 
@@ -1321,9 +1255,7 @@ async def delete_ad(ad_id: int, db: Session = Depends(get_db)):
     # Delete associated click tracking and conversions first
     clicks = db.query(DbClickTracking).filter(DbClickTracking.ad_id == ad_id).all()
     for click in clicks:
-        db.query(DbConversionTracking).filter(
-            DbConversionTracking.click_id == click.id
-        ).delete()
+        db.query(DbConversionTracking).filter(DbConversionTracking.click_id == click.id).delete()
     db.query(DbClickTracking).filter(DbClickTracking.ad_id == ad_id).delete()
 
     # Delete associated fraud detection records
@@ -1386,15 +1318,11 @@ async def list_ads(
 
 # Advertiser Management Endpoints
 @app.post("/advertisers", response_model=Advertiser)
-async def create_advertiser(
-    advertiser: AdvertiserCreate, db: Session = Depends(get_db)
-):
+async def create_advertiser(advertiser: AdvertiserCreate, db: Session = Depends(get_db)):
     """
     Create a new advertiser
     """
-    db_advertiser = DbAdvertiser(
-        name=advertiser.name, contact_email=advertiser.contact_email
-    )
+    db_advertiser = DbAdvertiser(name=advertiser.name, contact_email=advertiser.contact_email)
     db.add(db_advertiser)
     db.commit()
     db.refresh(db_advertiser)
@@ -1439,9 +1367,7 @@ async def list_advertisers(
 
 # Creative Management Endpoints
 @app.post("/creatives", response_model=CreativeAsset)
-async def upload_creative_asset(
-    creative: CreativeAssetCreate, db: Session = Depends(get_db)
-):
+async def upload_creative_asset(creative: CreativeAssetCreate, db: Session = Depends(get_db)):
     """
     Upload creative assets
     """
@@ -1468,9 +1394,7 @@ async def get_creative_asset(creative_id: int, db: Session = Depends(get_db)):
     """
     Get creative details
     """
-    creative = (
-        db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
-    )
+    creative = db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
     if not creative:
         raise HTTPException(status_code=404, detail="Creative asset not found")
     return creative
@@ -1485,9 +1409,7 @@ async def update_creative_asset(
     """
     Update creative
     """
-    creative = (
-        db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
-    )
+    creative = db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
     if not creative:
         raise HTTPException(status_code=404, detail="Creative asset not found")
 
@@ -1505,9 +1427,7 @@ async def delete_creative_asset(creative_id: int, db: Session = Depends(get_db))
     """
     Delete creative
     """
-    creative = (
-        db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
-    )
+    creative = db.query(DbCreativeAsset).filter(DbCreativeAsset.id == creative_id).first()
     if not creative:
         raise HTTPException(status_code=404, detail="Creative asset not found")
 
@@ -1517,9 +1437,7 @@ async def delete_creative_asset(creative_id: int, db: Session = Depends(get_db))
 
 
 # Reporting & Analytics Endpoints
-@app.get(
-    "/reports/campaign-performance", response_model=list[CampaignPerformanceReport]
-)
+@app.get("/reports/campaign-performance", response_model=list[CampaignPerformanceReport])
 async def get_campaign_performance(
     campaign_id: int | None = None,
     start_date: date | None = None,
@@ -1605,18 +1523,14 @@ async def match_ads_advanced(
         # Apply campaign filters based on context
         if request.campaign_context:
             if "campaign_ids" in request.campaign_context:
-                query = query.filter(
-                    DbCampaign.id.in_(request.campaign_context["campaign_ids"])
-                )
+                query = query.filter(DbCampaign.id.in_(request.campaign_context["campaign_ids"]))
 
             if "budget_constraint" in request.campaign_context:
                 # Only include campaigns with budget remaining
                 # Calculate spent budget per campaign by joining with AdMetrics
                 try:
                     # Get all active campaigns
-                    active_campaigns = (
-                        db.query(DbCampaign).filter(DbCampaign.status == "active").all()
-                    )
+                    active_campaigns = db.query(DbCampaign).filter(DbCampaign.status == "active").all()
 
                     # If there are no active campaigns, skip the budget constraint
                     if not active_campaigns:
@@ -1629,10 +1543,7 @@ async def match_ads_advanced(
                                 campaign_spent = (
                                     db.query(
                                         func.coalesce(
-                                            func.sum(
-                                                DbAdMetric.impression_count
-                                                * DbAd.bid_amount
-                                            ),
+                                            func.sum(DbAdMetric.impression_count * DbAd.bid_amount),
                                             0,
                                         )
                                     )
@@ -1649,17 +1560,13 @@ async def match_ads_advanced(
                                     eligible_campaign_ids.append(campaign.id)
                             except Exception as inner_e:
                                 # If there's an issue calculating spend for a specific campaign, log it and continue
-                                logger.warning(
-                                    f"Could not calculate spend for campaign {campaign.id}: {str(inner_e)}"
-                                )
+                                logger.warning(f"Could not calculate spend for campaign {campaign.id}: {str(inner_e)}")
                                 # Add the campaign anyway to avoid excluding it due to calculation error
                                 eligible_campaign_ids.append(campaign.id)
 
                         # If there are eligible campaigns, filter the main query
                         if eligible_campaign_ids:
-                            query = query.filter(
-                                DbCampaign.id.in_(eligible_campaign_ids)
-                            )
+                            query = query.filter(DbCampaign.id.in_(eligible_campaign_ids))
                         else:
                             # If no campaigns have budget left, we might want to return no results
                             # Or we could skip the budget constraint in this case
@@ -1700,9 +1607,7 @@ async def match_ads_advanced(
             compliance_report = validate_advertiser_constraints(ad_metadata)
             if not compliance_report["is_compliant"]:
                 # Log violations but still include ad (would be filtered in production)
-                logger.warning(
-                    f"Ad {db_ad.id} has compliance violations: {compliance_report['violations']}"
-                )
+                logger.warning(f"Ad {db_ad.id} has compliance violations: {compliance_report['violations']}")
                 fairness_violations.inc(len(compliance_report["violations"]))
 
             ad_inventory.append(ad_metadata)
@@ -1735,17 +1640,13 @@ async def match_ads_advanced(
         # Prepare internal request
         from ads.matcher import AdMatchingRequest as InternalAdRequest
 
-        internal_request = InternalAdRequest(
-            intent=anonymized_intent, adInventory=ad_inventory, config=request.config
-        )
+        internal_request = InternalAdRequest(intent=anonymized_intent, adInventory=ad_inventory, config=request.config)
 
         # Perform ad matching
         response = match_ads(internal_request)
 
         # Log metrics to database in background
-        background_tasks.add_task(
-            log_ad_metrics, anonymized_intent, response.matchedAds
-        )
+        background_tasks.add_task(log_ad_metrics, anonymized_intent, response.matchedAds)
 
         # Convert response to dict format
         matched_ads = []
@@ -1787,13 +1688,14 @@ async def track_click(click_data: ClickTrackingCreate, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Ad not found")
 
     from datetime import datetime, timezone
+
     db_click = DbClickTracking(
         ad_id=click_data.ad_id,
         session_id=click_data.session_id,
         ip_hash=click_data.ip_hash,
         user_agent_hash=click_data.user_agent_hash,
         referring_url=click_data.referring_url,
-        timestamp=datetime.now(timezone.utc)
+        timestamp=datetime.now(timezone.utc),
     )
     db.add(db_click)
     db.commit()
@@ -1837,18 +1739,12 @@ async def list_clicks(
 
 # Conversion Tracking Endpoints
 @app.post("/conversion-tracking", response_model=ConversionTracking)
-async def track_conversion(
-    conversion_data: ConversionTrackingCreate, db: Session = Depends(get_db)
-):
+async def track_conversion(conversion_data: ConversionTrackingCreate, db: Session = Depends(get_db)):
     """
     Record a conversion
     """
     # Verify click exists
-    click = (
-        db.query(DbClickTracking)
-        .filter(DbClickTracking.id == conversion_data.click_id)
-        .first()
-    )
+    click = db.query(DbClickTracking).filter(DbClickTracking.id == conversion_data.click_id).first()
     if not click:
         raise HTTPException(status_code=404, detail="Click not found")
 
@@ -1869,11 +1765,7 @@ async def get_conversion(conversion_id: int, db: Session = Depends(get_db)):
     """
     Get conversion details
     """
-    conversion = (
-        db.query(DbConversionTracking)
-        .filter(DbConversionTracking.id == conversion_id)
-        .first()
-    )
+    conversion = db.query(DbConversionTracking).filter(DbConversionTracking.id == conversion_id).first()
     if not conversion:
         raise HTTPException(status_code=404, detail="Conversion not found")
     return conversion
@@ -1937,24 +1829,18 @@ async def get_fraud_report(fraud_id: int, db: Session = Depends(get_db)):
     """
     Get fraud report details
     """
-    fraud_report = (
-        db.query(DbFraudDetection).filter(DbFraudDetection.id == fraud_id).first()
-    )
+    fraud_report = db.query(DbFraudDetection).filter(DbFraudDetection.id == fraud_id).first()
     if not fraud_report:
         raise HTTPException(status_code=404, detail="Fraud report not found")
     return fraud_report
 
 
 @app.put("/fraud-detection/{fraud_id}", response_model=FraudDetection)
-async def update_fraud_report(
-    fraud_id: int, fraud_update: FraudDetectionCreate, db: Session = Depends(get_db)
-):
+async def update_fraud_report(fraud_id: int, fraud_update: FraudDetectionCreate, db: Session = Depends(get_db)):
     """
     Update fraud report status
     """
-    fraud_report = (
-        db.query(DbFraudDetection).filter(DbFraudDetection.id == fraud_id).first()
-    )
+    fraud_report = db.query(DbFraudDetection).filter(DbFraudDetection.id == fraud_id).first()
     if not fraud_report:
         raise HTTPException(status_code=404, detail="Fraud report not found")
 
@@ -2009,18 +1895,10 @@ def log_ad_metrics(intent: UniversalIntent, matched_ads: list[Any]):
         for matched_ad in matched_ads:
             # Create a metric record for each matched ad
             metric = DbAdMetric(
-                ad_id=(
-                    int(matched_ad.ad.id) if matched_ad.ad.id.isdigit() else 0
-                ),  # Simplified for demo
+                ad_id=(int(matched_ad.ad.id) if matched_ad.ad.id.isdigit() else 0),  # Simplified for demo
                 date=datetime.utcnow().date(),
-                intent_goal=(
-                    intent.declared.goal.value if intent.declared.goal else None
-                ),
-                intent_use_case=(
-                    intent.inferred.useCases[0].value
-                    if intent.inferred.useCases
-                    else None
-                ),
+                intent_goal=(intent.declared.goal.value if intent.declared.goal else None),
+                intent_use_case=(intent.inferred.useCases[0].value if intent.inferred.useCases else None),
                 impression_count=1,  # For now, count each match as an impression
                 click_count=0,  # Would be incremented separately
                 conversion_count=0,  # Would be incremented separately
@@ -2059,9 +1937,7 @@ async def websocket_analytics(websocket: WebSocket):
 
 
 # Enhanced Privacy Controls Endpoints
-@app.post(
-    "/privacy-controls/apply-retention-policy", response_model=DataRetentionPolicy
-)
+@app.post("/privacy-controls/apply-retention-policy", response_model=DataRetentionPolicy)
 async def apply_data_retention_policy(
     data_type: str, retention_period: DataRetentionPeriod, db: Session = Depends(get_db)
 ):
@@ -2113,19 +1989,13 @@ async def record_user_consent(
 ):
     """Record user consent"""
     consent_manager = get_consent_manager(db)
-    consent_record = consent_manager.record_consent(
-        user_id, consent_type, granted, consent_details, expires_in_days
-    )
+    consent_record = consent_manager.record_consent(user_id, consent_type, granted, consent_details, expires_in_days)
 
     # Log the action
     audit_manager = get_audit_trail_manager(db)
     audit_manager.log_event(
         user_id=user_id,
-        event_type=(
-            AuditEventType.CONSENT_GIVEN
-            if granted
-            else AuditEventType.CONSENT_WITHDRAWN
-        ),
+        event_type=(AuditEventType.CONSENT_GIVEN if granted else AuditEventType.CONSENT_WITHDRAWN),
         resource_type="consent",
         resource_id=consent_record.id,
         action_description=f"User {'granted' if granted else 'denied'} consent for {consent_type.value}",
@@ -2136,9 +2006,7 @@ async def record_user_consent(
 
 
 @app.get("/consent/{user_id}/{consent_type}", response_model=Optional[ConsentRecord])
-async def get_user_consent(
-    user_id: str, consent_type: ConsentType, db: Session = Depends(get_db)
-):
+async def get_user_consent(user_id: str, consent_type: ConsentType, db: Session = Depends(get_db)):
     """Get user consent for specific type"""
     consent_manager = get_consent_manager(db)
     consent = consent_manager.get_user_consent(user_id, consent_type)
@@ -2157,9 +2025,7 @@ async def get_user_consent(
 
 
 @app.post("/consent/withdraw/{user_id}/{consent_type}")
-async def withdraw_user_consent(
-    user_id: str, consent_type: ConsentType, db: Session = Depends(get_db)
-):
+async def withdraw_user_consent(user_id: str, consent_type: ConsentType, db: Session = Depends(get_db)):
     """Withdraw user consent"""
     consent_manager = get_consent_manager(db)
     success = consent_manager.withdraw_consent(user_id, consent_type)
@@ -2246,9 +2112,7 @@ async def get_audit_events(
         try:
             event_type_enum = AuditEventType(event_type)
         except ValueError:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid event type: {event_type}"
-            )
+            raise HTTPException(status_code=400, detail=f"Invalid event type: {event_type}")
 
     # Convert end_date string to datetime if provided
     end_date_dt = None
@@ -2258,9 +2122,7 @@ async def get_audit_events(
 
             end_date_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
         except ValueError:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid date format: {end_date}"
-            )
+            raise HTTPException(status_code=400, detail=f"Invalid date format: {end_date}")
 
     events = audit_manager.get_audit_events(
         user_id, event_type_enum, resource_type, start_date, end_date_dt, limit, offset
@@ -2293,9 +2155,7 @@ async def get_status():
 
 
 @app.post("/fraud/analyze-click", response_model=FraudAnalysisResponse)
-async def analyze_click_fraud(
-    click_data: dict[str, Any], db: Session = Depends(get_db)
-):
+async def analyze_click_fraud(click_data: dict[str, Any], db: Session = Depends(get_db)):
     """Analyze a click for potential fraud"""
     from fraud.detector import get_fraud_detector
 
@@ -2320,9 +2180,7 @@ async def analyze_click_fraud(
 
 
 @app.post("/fraud/analyze-conversion", response_model=FraudAnalysisResponse)
-async def analyze_conversion_fraud(
-    conversion_data: dict[str, Any], db: Session = Depends(get_db)
-):
+async def analyze_conversion_fraud(conversion_data: dict[str, Any], db: Session = Depends(get_db)):
     """Analyze a conversion for potential fraud"""
     from fraud.detector import get_fraud_detector
 
@@ -2435,9 +2293,7 @@ async def pause_ab_test(test_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/ab-tests/{test_id}/complete", response_model=ABTestResponse)
-async def complete_ab_test(
-    test_id: int, winner_variant_id: int | None = None, db: Session = Depends(get_db)
-):
+async def complete_ab_test(test_id: int, winner_variant_id: int | None = None, db: Session = Depends(get_db)):
     """Complete an A/B test"""
     from abtesting.service import get_ab_test_service
 
@@ -2500,9 +2356,7 @@ async def delete_ab_test(test_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/ab-tests/{test_id}/variants", response_model=ABTestVariantResponse)
-async def add_ab_test_variant(
-    test_id: int, variant_data: ABTestVariantCreate, db: Session = Depends(get_db)
-):
+async def add_ab_test_variant(test_id: int, variant_data: ABTestVariantCreate, db: Session = Depends(get_db)):
     """Add a variant to an A/B test"""
     from abtesting.service import get_ab_test_service
 
@@ -2519,9 +2373,7 @@ async def add_ab_test_variant(
 
 
 @app.post("/ab-tests/{test_id}/assign")
-async def assign_ab_test_variant(
-    test_id: int, user_identifier: str, db: Session = Depends(get_db)
-):
+async def assign_ab_test_variant(test_id: int, user_identifier: str, db: Session = Depends(get_db)):
     """Assign a user to an A/B test variant"""
     from abtesting.service import get_ab_test_service
 
@@ -2541,12 +2393,8 @@ async def assign_ab_test_variant(
 # ===== ADVANCED ANALYTICS ENDPOINTS =====
 
 
-@app.get(
-    "/analytics/attribution/{conversion_id}", response_model=AttributionResultResponse
-)
-async def get_conversion_attribution(
-    conversion_id: int, model: str = "last_touch", db: Session = Depends(get_db)
-):
+@app.get("/analytics/attribution/{conversion_id}", response_model=AttributionResultResponse)
+async def get_conversion_attribution(conversion_id: int, model: str = "last_touch", db: Session = Depends(get_db)):
     """Get attribution analysis for a conversion"""
     from analytics.advanced import AttributionModel, get_advanced_analytics
 
@@ -2555,18 +2403,14 @@ async def get_conversion_attribution(
     try:
         attr_model = AttributionModel(model)
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail=f"Invalid attribution model: {model}"
-        )
+        raise HTTPException(status_code=400, detail=f"Invalid attribution model: {model}")
 
     try:
         result = analytics.attribute_conversion(conversion_id, attr_model)
         return AttributionResultResponse(
             conversion_id=result.conversion_id,
             touchpoints=result.touchpoints,
-            attribution_weights={
-                str(k): v for k, v in result.attribution_weights.items()
-            },
+            attribution_weights={str(k): v for k, v in result.attribution_weights.items()},
             total_value=result.total_value,
             attributed_values={str(k): v for k, v in result.attributed_values.items()},
         )

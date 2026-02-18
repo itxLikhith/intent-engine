@@ -24,9 +24,7 @@ def init_sample_data():
 
     try:
         # Create sample advertiser
-        advertiser = Advertiser(
-            name="Sample Advertiser Inc.", contact_email="contact@sample-advertiser.com"
-        )
+        advertiser = Advertiser(name="Sample Advertiser Inc.", contact_email="contact@sample-advertiser.com")
         db.add(advertiser)
         db.commit()
         db.refresh(advertiser)

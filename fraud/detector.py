@@ -146,9 +146,7 @@ class FraudDetector:
             recommended_action=recommended_action,
         )
 
-    def analyze_conversion(
-        self, conversion_data: dict[str, Any]
-    ) -> FraudAnalysisResult:
+    def analyze_conversion(self, conversion_data: dict[str, Any]) -> FraudAnalysisResult:
         """
         Analyze a conversion event for potential fraud.
         """
@@ -172,9 +170,7 @@ class FraudDetector:
             recommended_action=recommended_action,
         )
 
-    def analyze_impression(
-        self, impression_data: dict[str, Any]
-    ) -> FraudAnalysisResult:
+    def analyze_impression(self, impression_data: dict[str, Any]) -> FraudAnalysisResult:
         """
         Analyze an impression event for potential fraud.
         """
@@ -275,10 +271,7 @@ class FraudDetector:
                 .count()
             )
 
-            if (
-                session_clicks_per_minute
-                >= self.config["max_clicks_per_session_per_minute"]
-            ):
+            if session_clicks_per_minute >= self.config["max_clicks_per_session_per_minute"]:
                 signals.append(
                     FraudSignal(
                         fraud_type=FraudType.CLICK_FRAUD,
@@ -440,17 +433,13 @@ class FraudDetector:
                 intervals = []
                 for i in range(len(timestamps) - 1):
                     if timestamps[i] and timestamps[i + 1]:
-                        interval = abs(
-                            (timestamps[i] - timestamps[i + 1]).total_seconds()
-                        )
+                        interval = abs((timestamps[i] - timestamps[i + 1]).total_seconds())
                         intervals.append(interval)
 
                 if intervals:
                     # Check if intervals are suspiciously similar (machine-like)
                     avg_interval = sum(intervals) / len(intervals)
-                    variance = sum((i - avg_interval) ** 2 for i in intervals) / len(
-                        intervals
-                    )
+                    variance = sum((i - avg_interval) ** 2 for i in intervals) / len(intervals)
 
                     # Low variance in intervals suggests automated clicking
                     if variance < 0.1 and avg_interval < 1.0:
@@ -466,9 +455,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_device_fingerprint(
-        self, click_data: dict[str, Any]
-    ) -> list[FraudSignal]:
+    def _check_device_fingerprint(self, click_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for device fingerprint anomalies.
         """
@@ -478,9 +465,7 @@ class FraudDetector:
         user_agent = click_data.get("user_agent", "")
         if user_agent:
             # Check for desktop browser claiming to be mobile or vice versa
-            is_mobile_ua = any(
-                m in user_agent.lower() for m in ["mobile", "android", "iphone", "ipad"]
-            )
+            is_mobile_ua = any(m in user_agent.lower() for m in ["mobile", "android", "iphone", "ipad"])
             screen_width = click_data.get("screen_width", 0)
 
             if screen_width:
@@ -501,23 +486,17 @@ class FraudDetector:
 
         return signals
 
-    def _check_conversion_timing(
-        self, conversion_data: dict[str, Any]
-    ) -> list[FraudSignal]:
+    def _check_conversion_timing(self, conversion_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for suspicious conversion timing.
         """
         signals = []
 
         click_timestamp = conversion_data.get("click_timestamp")
-        conversion_timestamp = (
-            conversion_data.get("conversion_timestamp") or datetime.utcnow()
-        )
+        conversion_timestamp = conversion_data.get("conversion_timestamp") or datetime.utcnow()
 
         if click_timestamp:
-            time_to_conversion = (
-                conversion_timestamp - click_timestamp
-            ).total_seconds()
+            time_to_conversion = (conversion_timestamp - click_timestamp).total_seconds()
 
             # Too fast conversion is suspicious
             if time_to_conversion < self.config["min_time_to_conversion_seconds"]:
@@ -533,9 +512,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_conversion_patterns(
-        self, conversion_data: dict[str, Any]
-    ) -> list[FraudSignal]:
+    def _check_conversion_patterns(self, conversion_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for suspicious conversion patterns.
         """
@@ -549,9 +526,7 @@ class FraudDetector:
 
         # Check for duplicate conversions from same click
         existing_conversions = (
-            self.db.query(DbConversionTracking)
-            .filter(DbConversionTracking.click_id == click_id)
-            .count()
+            self.db.query(DbConversionTracking).filter(DbConversionTracking.click_id == click_id).count()
         )
 
         if existing_conversions > 1:
@@ -570,9 +545,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_impression_velocity(
-        self, impression_data: dict[str, Any]
-    ) -> list[FraudSignal]:
+    def _check_impression_velocity(self, impression_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for abnormal impression velocity.
         """
@@ -609,9 +582,7 @@ class FraudDetector:
 
         return min(max_score + multiple_signal_bonus, 1.0)
 
-    def _get_recommended_action(
-        self, risk_score: float, signals: list[FraudSignal]
-    ) -> str:
+    def _get_recommended_action(self, risk_score: float, signals: list[FraudSignal]) -> str:
         """
         Get recommended action based on risk score and signals.
         """
@@ -635,11 +606,7 @@ class FraudDetector:
         start_time = datetime.utcnow() - timedelta(hours=hours)
 
         # Analyze recent clicks
-        recent_clicks = (
-            self.db.query(DbClickTracking)
-            .filter(DbClickTracking.timestamp >= start_time)
-            .all()
-        )
+        recent_clicks = self.db.query(DbClickTracking).filter(DbClickTracking.timestamp >= start_time).all()
 
         fraud_summary = {
             "total_analyzed": len(recent_clicks),

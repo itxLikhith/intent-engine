@@ -94,9 +94,7 @@ class AdBase(BaseModel):
     title: str
     description: str | None = None
     url: str
-    targeting_constraints: dict[str, Any] | None = (
-        None  # e.g., [{"dimension": "device_type", "value": "mobile"}]
-    )
+    targeting_constraints: dict[str, Any] | None = None  # e.g., [{"dimension": "device_type", "value": "mobile"}]
     ethical_tags: list[str] | None = None  # e.g., ["privacy", "open_source"]
     quality_score: float = 0.5
     creative_format: str | None = None  # Banner, native, video, etc.
@@ -258,35 +256,19 @@ class IntentExtractionInput(BaseModel):
 class IntentExtractionContext(BaseModel):
     """Validated context for intent extraction"""
 
-    session_id: str | None = Field(
-        None, max_length=128, description="Session identifier"
-    )
-    user_locale: str | None = Field(
-        None, pattern=r"^[a-z]{2}(-[A-Z]{2})?$", description="User locale (e.g., en-US)"
-    )
-    product_context: str | None = Field(
-        None, max_length=50, description="Product context (search, docs, mail, etc.)"
-    )
-    additional_context: dict[str, Any] | None = Field(
-        None, description="Additional context data"
-    )
+    session_id: str | None = Field(None, max_length=128, description="Session identifier")
+    user_locale: str | None = Field(None, pattern=r"^[a-z]{2}(-[A-Z]{2})?$", description="User locale (e.g., en-US)")
+    product_context: str | None = Field(None, max_length=50, description="Product context (search, docs, mail, etc.)")
+    additional_context: dict[str, Any] | None = Field(None, description="Additional context data")
 
 
 class IntentExtractionOptions(BaseModel):
     """Validated options for intent extraction"""
 
-    extract_constraints: bool = Field(
-        True, description="Whether to extract constraints"
-    )
-    extract_ethical_signals: bool = Field(
-        True, description="Whether to extract ethical signals"
-    )
-    extract_temporal: bool = Field(
-        True, description="Whether to extract temporal intent"
-    )
-    confidence_threshold: float = Field(
-        0.5, ge=0.0, le=1.0, description="Minimum confidence threshold"
-    )
+    extract_constraints: bool = Field(True, description="Whether to extract constraints")
+    extract_ethical_signals: bool = Field(True, description="Whether to extract ethical signals")
+    extract_temporal: bool = Field(True, description="Whether to extract temporal intent")
+    confidence_threshold: float = Field(0.5, ge=0.0, le=1.0, description="Minimum confidence threshold")
 
 
 class IntentExtractionRequest(BaseModel):
@@ -304,12 +286,8 @@ class IntentExtractionRequest(BaseModel):
         description="Product type (search, docs, mail, calendar, meet, forms, sites, diary)",
     )
     input: IntentExtractionInput = Field(..., description="User input data")
-    context: IntentExtractionContext = Field(
-        default_factory=IntentExtractionContext, description="Extraction context"
-    )
-    options: IntentExtractionOptions | None = Field(
-        None, description="Extraction options"
-    )
+    context: IntentExtractionContext = Field(default_factory=IntentExtractionContext, description="Extraction context")
+    options: IntentExtractionOptions | None = Field(None, description="Extraction options")
 
     class Config:
         json_schema_extra = {
@@ -353,9 +331,7 @@ class AdMatchingRequest(BaseModel):
 
 
 class AdMatchingWithCampaignRequest(AdMatchingRequest):
-    campaign_context: dict[str, Any] | None = (
-        None  # Additional campaign-specific context
-    )
+    campaign_context: dict[str, Any] | None = None  # Additional campaign-specific context
 
 
 # Response models for API endpoints

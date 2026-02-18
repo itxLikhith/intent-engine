@@ -66,9 +66,7 @@ def create_test_intent():
             ),
             resultType=None,
             ethicalSignals=[
-                EthicalSignal(
-                    dimension=EthicalDimension.PRIVACY, preference="privacy-first"
-                ),
+                EthicalSignal(dimension=EthicalDimension.PRIVACY, preference="privacy-first"),
                 EthicalSignal(
                     dimension=EthicalDimension.OPENNESS,
                     preference="open-source_preferred",
@@ -88,9 +86,7 @@ def create_test_candidates(count=10):
                 title=f"Email Setup Guide {i + 1}",
                 description="Guide to setting up encrypted email on Android devices",
                 platform="Android",
-                provider=(
-                    "ProtonMail" if i % 2 == 0 else "Tutanota"
-                ),  # Alternate providers
+                provider=("ProtonMail" if i % 2 == 0 else "Tutanota"),  # Alternate providers
                 license="open-source",
                 tags=["Android", "Email", "Encryption", "Setup", "Guide", "Privacy"],
                 qualityScore=0.8,
@@ -121,9 +117,7 @@ def test_performance():
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000
         times.append(elapsed_ms)
-        print(
-            f"Iteration - Time: {elapsed_ms:.2f}ms, Results: {len(response.rankedResults)}"
-        )
+        print(f"Iteration - Time: {elapsed_ms:.2f}ms, Results: {len(response.rankedResults)}")
 
     avg_time = sum(times) / len(times)
     max_time = max(times)

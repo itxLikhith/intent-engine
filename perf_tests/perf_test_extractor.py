@@ -29,9 +29,7 @@ def test_performance():
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000
         times.append(elapsed_ms)
-        print(
-            f"Query: '{query[:30]}...' | Time: {elapsed_ms:.2f}ms | Goal: {intent.declared.goal}"
-        )
+        print(f"Query: '{query[:30]}...' | Time: {elapsed_ms:.2f}ms | Goal: {intent.declared.goal}")
 
     avg_time = sum(times) / len(times)
     max_time = max(times)

@@ -174,9 +174,7 @@ class ConstraintExtractor:
         # Look for common negative preference patterns
         if re.search(r"\b(no\s+big\s+tech|no\s+big\s+corporations?)\b", text_lower):
             negative_prefs.append("no big tech")
-        if re.search(
-            r"\b(no\s+proprietary|no\s+closed\s+source|open\s+source)\b", text_lower
-        ):
+        if re.search(r"\b(no\s+proprietary|no\s+closed\s+source|open\s+source)\b", text_lower):
             negative_prefs.append("no proprietary")
         if re.search(r"\b(privacy[-\s]*first|privacy\s+focused)\b", text_lower):
             negative_prefs.append("privacy-focused")

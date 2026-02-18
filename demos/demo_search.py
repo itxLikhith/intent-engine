@@ -30,21 +30,15 @@ def test_basic_functionality():
 
     print("\nConstraints:")
     for constraint in intent.declared.constraints:
-        print(
-            f"  - Type: {constraint.type.value}, Dimension: {constraint.dimension}, Value: {constraint.value}"
-        )
+        print(f"  - Type: {constraint.type.value}, Dimension: {constraint.dimension}, Value: {constraint.value}")
 
     print(f"\nInferred Use Cases: {[uc.value for uc in intent.inferred.useCases]}")
-    print(
-        f"Result Type: {intent.inferred.resultType.value if intent.inferred.resultType else None}"
-    )
+    print(f"Result Type: {intent.inferred.resultType.value if intent.inferred.resultType else None}")
     print(f"Complexity: {intent.inferred.complexity.value}")
 
     print("\nEthical Signals:")
     for signal in intent.inferred.ethicalSignals:
-        print(
-            f"  - Dimension: {signal.dimension.value}, Preference: {signal.preference}"
-        )
+        print(f"  - Dimension: {signal.dimension.value}, Preference: {signal.preference}")
 
     print("\nTemporal Intent:")
     if intent.inferred.temporalIntent:

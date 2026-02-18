@@ -86,13 +86,9 @@ class EmbeddingService:
             )
             # Test connection
             self.redis.ping()
-            logger.info(
-                f"EmbeddingService connected to Redis at {redis_host}:{redis_port}"
-            )
+            logger.info(f"EmbeddingService connected to Redis at {redis_host}:{redis_port}")
         except Exception as e:
-            logger.warning(
-                f"Redis not available for embeddings, using in-memory only: {e}"
-            )
+            logger.warning(f"Redis not available for embeddings, using in-memory only: {e}")
             self.redis = None
 
     def _load_model(self, model_name: str):
@@ -190,9 +186,7 @@ class EmbeddingService:
             import torch
 
             # Tokenize the input
-            inputs = self.tokenizer(
-                text, return_tensors="pt", padding=True, truncation=True, max_length=512
-            )
+            inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
 
             # Move inputs to the same device as the model
             device = next(self.model.parameters()).device

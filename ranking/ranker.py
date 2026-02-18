@@ -4,7 +4,6 @@ Intent Engine - Phase 2: Constraint Satisfaction and Result Ranking
 This module implements Algorithms 2 and 3 for constraint satisfaction and intent-aligned ranking.
 """
 
-import hashlib
 import logging
 import re
 import threading
@@ -103,9 +102,7 @@ class ConstraintSatisfactionEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def satisfies_constraints(
-        self, result: SearchResult, constraints: list[Constraint]
-    ) -> bool:
+    def satisfies_constraints(self, result: SearchResult, constraints: list[Constraint]) -> bool:
         """
         Check if a result satisfies all hard constraints
         Implements Algorithm 2: satisfiesConstraints()
@@ -119,9 +116,7 @@ class ConstraintSatisfactionEngine:
 
         return True
 
-    def _satisfies_single_constraint(
-        self, result: SearchResult, constraint: Constraint
-    ) -> bool:
+    def _satisfies_single_constraint(self, result: SearchResult, constraint: Constraint) -> bool:
         """Check if a result satisfies a single constraint"""
         dimension = constraint.dimension
         value = constraint.value
@@ -180,29 +175,13 @@ class ConstraintSatisfactionEngine:
                     if constraint_type == ConstraintType.RANGE:
                         # Check price constraints
                         violates = False
-                        if (
-                            operator == "<="
-                            and result.price
-                            and result.price > price_limit
-                        ):
+                        if operator == "<=" and result.price and result.price > price_limit:
                             violates = True
-                        elif (
-                            operator == ">="
-                            and result.price
-                            and result.price < price_limit
-                        ):
+                        elif operator == ">=" and result.price and result.price < price_limit:
                             violates = True
-                        elif (
-                            operator == "<"
-                            and result.price
-                            and result.price >= price_limit
-                        ):
+                        elif operator == "<" and result.price and result.price >= price_limit:
                             violates = True
-                        elif (
-                            operator == ">"
-                            and result.price
-                            and result.price <= price_limit
-                        ):
+                        elif operator == ">" and result.price and result.price <= price_limit:
                             violates = True
                         if violates:
                             return False
@@ -236,10 +215,7 @@ class ConstraintSatisfactionEngine:
             # Try to infer format from tags if not explicitly set
             if result_format is None and result.tags:
                 format_tags = [
-                    t
-                    for t in result.tags
-                    if t.lower()
-                    in ["pdf", "doc", "video", "audio", "interactive", "text"]
+                    t for t in result.tags if t.lower() in ["pdf", "doc", "video", "audio", "interactive", "text"]
                 ]
                 if format_tags:
                     result_format = format_tags[0].lower()
@@ -278,24 +254,18 @@ class ConstraintSatisfactionEngine:
                 else:  # EXCLUSION
                     return True
 
-            from datetime import datetime, timedelta
+            from datetime import datetime
 
             try:
                 # Parse result recency
                 recency_str = result.recency
                 if recency_str.endswith("Z"):
-                    result_date = datetime.fromisoformat(
-                        recency_str.replace("Z", "+00:00")
-                    )
-                elif (
-                    "+" in recency_str or recency_str.count("-") > 2
-                ):  # Has timezone info
+                    result_date = datetime.fromisoformat(recency_str.replace("Z", "+00:00"))
+                elif "+" in recency_str or recency_str.count("-") > 2:  # Has timezone info
                     result_date = datetime.fromisoformat(recency_str)
                 else:
                     # Naive datetime, treat as UTC
-                    result_date = datetime.fromisoformat(recency_str).replace(
-                        tzinfo=UTC
-                    )
+                    result_date = datetime.fromisoformat(recency_str).replace(tzinfo=UTC)
 
                 now = datetime.now(UTC)
                 days_old = (now - result_date).days
@@ -305,9 +275,7 @@ class ConstraintSatisfactionEngine:
                     value_lower = value.lower()
 
                     # Parse recency constraints like "last_7_days", "last_30_days", "this_year", etc.
-                    if value_lower.startswith("last_") and value_lower.endswith(
-                        "_days"
-                    ):
+                    if value_lower.startswith("last_") and value_lower.endswith("_days"):
                         try:
                             days_limit = int(value_lower.split("_")[1])
                             if days_old > days_limit:
@@ -365,9 +333,7 @@ class IntentAlignmentEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def compute_intent_alignment(
-        self, result: SearchResult, intent: UniversalIntent
-    ) -> tuple[float, list[str]]:
+    def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """
         Compute alignment score between a result and user intent
         Implements Algorithm 3: computeIntentAlignment()
@@ -376,16 +342,12 @@ class IntentAlignmentEngine:
         reasons = []
 
         # 1. Query-content alignment (semantic similarity)
-        query_content_score, query_reasons = self._compute_query_content_alignment(
-            result, intent
-        )
+        query_content_score, query_reasons = self._compute_query_content_alignment(result, intent)
         scores.append(query_content_score)
         reasons.extend(query_reasons)
 
         # 2. Use case alignment (semantic similarity)
-        use_case_score, use_case_reasons = self._compute_use_case_alignment(
-            result, intent
-        )
+        use_case_score, use_case_reasons = self._compute_use_case_alignment(result, intent)
         scores.append(use_case_score)
         reasons.extend(use_case_reasons)
 
@@ -400,9 +362,7 @@ class IntentAlignmentEngine:
         reasons.extend(skill_reasons)
 
         # 5. Temporal intent alignment
-        temporal_score, temporal_reasons = self._compute_temporal_alignment(
-            result, intent
-        )
+        temporal_score, temporal_reasons = self._compute_temporal_alignment(result, intent)
         scores.append(temporal_score)
         reasons.extend(temporal_reasons)
 
@@ -424,9 +384,7 @@ class IntentAlignmentEngine:
                 adjusted_weights = [remaining_weight]
             weights = adjusted_weights
 
-        alignment_score = sum(
-            score * weight for score, weight in zip(scores, weights, strict=False)
-        )
+        alignment_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
 
         # Clamp the score between 0 and 1
         alignment_score = max(0.0, min(1.0, alignment_score))
@@ -453,9 +411,7 @@ class IntentAlignmentEngine:
         content_embedding = self.embedding_cache.encode_text(content)
 
         if query_embedding is not None and content_embedding is not None:
-            similarity = self.embedding_cache.cosine_similarity(
-                query_embedding, content_embedding
-            )
+            similarity = self.embedding_cache.cosine_similarity(query_embedding, content_embedding)
             # Normalize to 0-1 range
             score = (similarity + 1) / 2  # Cosine similarity is -1 to 1, convert to 0-1
 
@@ -481,9 +437,7 @@ class IntentAlignmentEngine:
             else:
                 return 0.5, reasons  # Neutral if no query words
 
-    def _compute_use_case_alignment(
-        self, result: SearchResult, intent: UniversalIntent
-    ) -> tuple[float, list[str]]:
+    def _compute_use_case_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on use case similarity"""
         reasons = []
 
@@ -509,9 +463,7 @@ class IntentAlignmentEngine:
                 tag_embedding = self.embedding_cache.encode_text(tag_text)
 
                 if use_case_embedding is not None and tag_embedding is not None:
-                    similarity = self.embedding_cache.cosine_similarity(
-                        use_case_embedding, tag_embedding
-                    )
+                    similarity = self.embedding_cache.cosine_similarity(use_case_embedding, tag_embedding)
                     # Normalize to 0-1 range and add to score
                     similarity_score = (similarity + 1) / 2
                     score += similarity_score * 0.3  # Smaller weight for semantic match
@@ -522,9 +474,7 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_ethical_alignment(
-        self, result: SearchResult, intent: UniversalIntent
-    ) -> tuple[float, list[str]]:
+    def _compute_ethical_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on ethical signals"""
         reasons = []
 
@@ -558,9 +508,7 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_skill_alignment(
-        self, result: SearchResult, intent: UniversalIntent
-    ) -> tuple[float, list[str]]:
+    def _compute_skill_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on skill level"""
         reasons = []
 
@@ -600,8 +548,7 @@ class IntentAlignmentEngine:
                 )
                 or (
                     declared_skill == SkillLevel.ADVANCED
-                    and result_skill
-                    in [SkillLevel.INTERMEDIATE, SkillLevel.ADVANCED, SkillLevel.EXPERT]
+                    and result_skill in [SkillLevel.INTERMEDIATE, SkillLevel.ADVANCED, SkillLevel.EXPERT]
                 )
             ):
                 # Allow some flexibility in skill matching
@@ -615,9 +562,7 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_temporal_alignment(
-        self, result: SearchResult, intent: UniversalIntent
-    ) -> tuple[float, list[str]]:
+    def _compute_temporal_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on temporal intent"""
         reasons = []
 
@@ -635,18 +580,12 @@ class IntentAlignmentEngine:
             try:
                 # Assume result.recency is in ISO format or similar
                 if result.recency.endswith("Z"):
-                    result_date = datetime.fromisoformat(
-                        result.recency.replace("Z", "+00:00")
-                    )
-                elif (
-                    "+" in result.recency or result.recency.count("-") > 2
-                ):  # Has timezone info
+                    result_date = datetime.fromisoformat(result.recency.replace("Z", "+00:00"))
+                elif "+" in result.recency or result.recency.count("-") > 2:  # Has timezone info
                     result_date = datetime.fromisoformat(result.recency)
                 else:
                     # Naive datetime, treat as UTC
-                    result_date = datetime.fromisoformat(result.recency).replace(
-                        tzinfo=UTC
-                    )
+                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=UTC)
 
                 # Make sure both datetimes have timezone info
                 now = datetime.now(UTC)
@@ -669,18 +608,12 @@ class IntentAlignmentEngine:
             try:
                 # Same date parsing logic as above
                 if result.recency.endswith("Z"):
-                    result_date = datetime.fromisoformat(
-                        result.recency.replace("Z", "+00:00")
-                    )
-                elif (
-                    "+" in result.recency or result.recency.count("-") > 2
-                ):  # Has timezone info
+                    result_date = datetime.fromisoformat(result.recency.replace("Z", "+00:00"))
+                elif "+" in result.recency or result.recency.count("-") > 2:  # Has timezone info
                     result_date = datetime.fromisoformat(result.recency)
                 else:
                     # Naive datetime, treat as UTC
-                    result_date = datetime.fromisoformat(result.recency).replace(
-                        tzinfo=UTC
-                    )
+                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=UTC)
 
                 # Make sure both datetimes have timezone info
                 now = datetime.now(UTC)
@@ -722,10 +655,8 @@ class IntentRanker:
         # Step 2: Compute intent alignment for each candidate
         ranked_results = []
         for candidate in filtered_candidates:
-            alignment_score, match_reasons = (
-                self.intent_alignment_engine.compute_intent_alignment(
-                    candidate, request.intent
-                )
+            alignment_score, match_reasons = self.intent_alignment_engine.compute_intent_alignment(
+                candidate, request.intent
             )
 
             ranked_result = RankedResult(

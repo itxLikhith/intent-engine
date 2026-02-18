@@ -12,17 +12,15 @@ from datetime import datetime, timedelta
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from database import db_manager, engine, Base
-from sqlalchemy.orm import Session
-
 # Import models
 from database import (
+    Ad,
+    AdGroup,
+    AdMetric,
     Advertiser,
     Campaign,
-    AdGroup,
-    Ad,
     CreativeAsset,
-    AdMetric,
+    db_manager,
 )
 
 
@@ -31,48 +29,36 @@ def seed_data():
     print("=" * 60)
     print("Intent Engine - Seeding Sample Data")
     print("=" * 60)
-    
+
     db = next(db_manager.get_db())
-    
+
     try:
         # Check if data already exists
         existing_advertisers = db.query(Advertiser).count()
         if existing_advertisers > 0:
             print("Database already has data. Skipping seed.")
             return
-        
+
         print("\n[1/6] Creating advertisers...")
-        
+
         # Create advertisers
         advertisers = [
-            Advertiser(
-                name="TechGadgets Inc.",
-                contact_email="ads@techgadgets.com"
-            ),
-            Advertiser(
-                name="Privacy Solutions Ltd.",
-                contact_email="marketing@privacysolutions.io"
-            ),
-            Advertiser(
-                name="EcoFriendly Products",
-                contact_email="hello@ecofriendly.shop"
-            ),
-            Advertiser(
-                name="OpenSource Tools",
-                contact_email="community@opensource.tools"
-            ),
+            Advertiser(name="TechGadgets Inc.", contact_email="ads@techgadgets.com"),
+            Advertiser(name="Privacy Solutions Ltd.", contact_email="marketing@privacysolutions.io"),
+            Advertiser(name="EcoFriendly Products", contact_email="hello@ecofriendly.shop"),
+            Advertiser(name="OpenSource Tools", contact_email="community@opensource.tools"),
         ]
-        
+
         for adv in advertisers:
             db.add(adv)
         db.commit()
-        
+
         for adv in advertisers:
             db.refresh(adv)
             print(f"  ✓ Created advertiser: {adv.name} (ID: {adv.id})")
-        
+
         print("\n[2/6] Creating campaigns...")
-        
+
         # Create campaigns
         today = datetime.now()
         campaigns = [
@@ -83,7 +69,7 @@ def seed_data():
                 end_date=today + timedelta(days=60),
                 budget=10000.0,
                 daily_budget=200.0,
-                status="active"
+                status="active",
             ),
             Campaign(
                 advertiser_id=advertisers[1].id,
@@ -92,7 +78,7 @@ def seed_data():
                 end_date=today + timedelta(days=90),
                 budget=15000.0,
                 daily_budget=150.0,
-                status="active"
+                status="active",
             ),
             Campaign(
                 advertiser_id=advertisers[2].id,
@@ -101,7 +87,7 @@ def seed_data():
                 end_date=today + timedelta(days=45),
                 budget=5000.0,
                 daily_budget=100.0,
-                status="active"
+                status="active",
             ),
             Campaign(
                 advertiser_id=advertisers[3].id,
@@ -110,20 +96,20 @@ def seed_data():
                 end_date=today + timedelta(days=30),
                 budget=8000.0,
                 daily_budget=250.0,
-                status="active"
+                status="active",
             ),
         ]
-        
+
         for camp in campaigns:
             db.add(camp)
         db.commit()
-        
+
         for camp in campaigns:
             db.refresh(camp)
             print(f"  ✓ Created campaign: {camp.name} (ID: {camp.id})")
-        
+
         print("\n[3/6] Creating ad groups...")
-        
+
         # Create ad groups
         ad_groups = [
             AdGroup(
@@ -132,59 +118,52 @@ def seed_data():
                 targeting_settings={
                     "device_type": ["desktop", "laptop"],
                     "interests": ["programming", "software development"],
-                    "location": ["US", "UK", "CA", "IN"]
+                    "location": ["US", "UK", "CA", "IN"],
                 },
-                bid_strategy="automatic"
+                bid_strategy="automatic",
             ),
             AdGroup(
                 campaign_id=campaigns[0].id,
                 name="Budget Laptops",
-                targeting_settings={
-                    "device_type": ["laptop"],
-                    "price_range": ["budget"],
-                    "location": ["US", "IN"]
-                },
-                bid_strategy="manual"
+                targeting_settings={"device_type": ["laptop"], "price_range": ["budget"], "location": ["US", "IN"]},
+                bid_strategy="manual",
             ),
             AdGroup(
                 campaign_id=campaigns[1].id,
                 name="Privacy Conscious Users",
-                targeting_settings={
-                    "interests": ["privacy", "security", "vpn"],
-                    "location": ["US", "UK", "DE", "FR"]
-                },
-                bid_strategy="automatic"
+                targeting_settings={"interests": ["privacy", "security", "vpn"], "location": ["US", "UK", "DE", "FR"]},
+                bid_strategy="automatic",
             ),
             AdGroup(
                 campaign_id=campaigns[2].id,
                 name="Eco Products",
                 targeting_settings={
                     "interests": ["sustainability", "eco-friendly", "green living"],
-                    "location": ["US", "UK", "CA"]
+                    "location": ["US", "UK", "CA"],
                 },
-                bid_strategy="automatic"
+                bid_strategy="automatic",
             ),
             AdGroup(
                 campaign_id=campaigns[3].id,
                 name="Developer Tools",
                 targeting_settings={
                     "interests": ["software development", "devops", "cloud"],
-                    "location": ["US", "UK", "IN", "DE"]
+                    "location": ["US", "UK", "IN", "DE"],
                 },
-                bid_strategy="automatic"
+                bid_strategy="automatic",
             ),
         ]
-        
+
         for ag in ad_groups:
             db.add(ag)
         db.commit()
-        
+
         for ag in ad_groups:
             db.refresh(ag)
             print(f"  ✓ Created ad group: {ag.name} (ID: {ag.id})")
-        
+
         print("\n[4/6] Creating ads...")
-        
+
         # Create ads
         ads = [
             Ad(
@@ -199,7 +178,7 @@ def seed_data():
                 creative_format="native",
                 bid_amount=2.50,
                 status="active",
-                approval_status="approved"
+                approval_status="approved",
             ),
             Ad(
                 advertiser_id=advertisers[0].id,
@@ -213,7 +192,7 @@ def seed_data():
                 creative_format="banner",
                 bid_amount=1.50,
                 status="active",
-                approval_status="approved"
+                approval_status="approved",
             ),
             Ad(
                 advertiser_id=advertisers[1].id,
@@ -227,7 +206,7 @@ def seed_data():
                 creative_format="native",
                 bid_amount=3.00,
                 status="active",
-                approval_status="approved"
+                approval_status="approved",
             ),
             Ad(
                 advertiser_id=advertisers[2].id,
@@ -241,7 +220,7 @@ def seed_data():
                 creative_format="banner",
                 bid_amount=2.00,
                 status="active",
-                approval_status="approved"
+                approval_status="approved",
             ),
             Ad(
                 advertiser_id=advertisers[3].id,
@@ -255,20 +234,20 @@ def seed_data():
                 creative_format="native",
                 bid_amount=1.80,
                 status="active",
-                approval_status="approved"
+                approval_status="approved",
             ),
         ]
-        
+
         for ad in ads:
             db.add(ad)
         db.commit()
-        
+
         for ad in ads:
             db.refresh(ad)
             print(f"  ✓ Created ad: {ad.title} (ID: {ad.id})")
-        
+
         print("\n[5/6] Creating creative assets...")
-        
+
         # Create creative assets
         creatives = [
             CreativeAsset(
@@ -276,48 +255,48 @@ def seed_data():
                 asset_type="image",
                 asset_url="https://techgadgets.com/assets/laptop-programming-banner.jpg",
                 dimensions={"width": 728, "height": 90},
-                checksum="abc123def456"
+                checksum="abc123def456",
             ),
             CreativeAsset(
                 ad_id=ads[1].id,
                 asset_type="image",
                 asset_url="https://techgadgets.com/assets/budget-laptop-banner.jpg",
                 dimensions={"width": 300, "height": 250},
-                checksum="def456ghi789"
+                checksum="def456ghi789",
             ),
             CreativeAsset(
                 ad_id=ads[2].id,
                 asset_type="video",
                 asset_url="https://privacysolutions.io/assets/vpn-promo.mp4",
                 dimensions={"width": 640, "height": 480},
-                checksum="ghi789jkl012"
+                checksum="ghi789jkl012",
             ),
             CreativeAsset(
                 ad_id=ads[3].id,
                 asset_type="image",
                 asset_url="https://ecofriendly.shop/assets/eco-products.jpg",
                 dimensions={"width": 728, "height": 90},
-                checksum="jkl012mno345"
+                checksum="jkl012mno345",
             ),
             CreativeAsset(
                 ad_id=ads[4].id,
                 asset_type="image",
                 asset_url="https://opensource.tools/assets/dev-tools-banner.png",
                 dimensions={"width": 970, "height": 250},
-                checksum="mno345pqr678"
+                checksum="mno345pqr678",
             ),
         ]
-        
+
         for creative in creatives:
             db.add(creative)
         db.commit()
-        
+
         for creative in creatives:
             db.refresh(creative)
             print(f"  ✓ Created creative asset (ID: {creative.id})")
-        
+
         print("\n[6/6] Creating sample metrics...")
-        
+
         # Create sample metrics for the past 7 days
         for ad in ads:
             for i in range(7):
@@ -334,17 +313,17 @@ def seed_data():
                     cpc=1.50 - (i * 0.1),
                     roas=3.5 - (i * 0.2),
                     engagement_rate=0.12 + (i * 0.01),
-                    expires_at=today + timedelta(days=90)
+                    expires_at=today + timedelta(days=90),
                 )
                 db.add(metric)
-        
+
         db.commit()
         print("  ✓ Created metrics for past 7 days")
-        
+
         print("\n" + "=" * 60)
         print("Seed data completed successfully!")
         print("=" * 60)
-        print(f"\nSummary:")
+        print("\nSummary:")
         print(f"  - {len(advertisers)} advertisers")
         print(f"  - {len(campaigns)} campaigns")
         print(f"  - {len(ad_groups)} ad groups")
@@ -352,11 +331,12 @@ def seed_data():
         print(f"  - {len(creatives)} creative assets")
         print(f"  - {len(ads) * 7} metric records")
         print("=" * 60)
-        
+
     except Exception as e:
         db.rollback()
         print(f"Error seeding data: {e}")
         import traceback
+
         traceback.print_exc()
         raise
     finally:

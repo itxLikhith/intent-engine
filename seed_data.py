@@ -298,9 +298,7 @@ def seed_ad_groups(db: Session, campaigns: list[Campaign]) -> list[AdGroup]:
     return ad_groups
 
 
-def seed_ads(
-    db: Session, advertisers: list[Advertiser], ad_groups: list[AdGroup]
-) -> list[Ad]:
+def seed_ads(db: Session, advertisers: list[Advertiser], ad_groups: list[AdGroup]) -> list[Ad]:
     """Create sample ads"""
     logger.info("Seeding ads...")
 
@@ -352,9 +350,7 @@ def seed_ads(
             "quality_score": 0.78,
             "creative_format": "native",
             "ethical_tags": ["sustainability", "transportation"],
-            "targeting_constraints": {
-                "interests": ["electric_vehicles", "sustainability"]
-            },
+            "targeting_constraints": {"interests": ["electric_vehicles", "sustainability"]},
         },
         # EduLearn ads
         {
@@ -517,9 +513,7 @@ def main():
     """Main function to seed all data"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Seed Intent Engine database with sample data"
-    )
+    parser = argparse.ArgumentParser(description="Seed Intent Engine database with sample data")
     parser.add_argument(
         "--reset",
         action="store_true",
