@@ -83,7 +83,9 @@ jobs:
         run: ruff check . --output-format=github
 
       - name: Type check with mypy
-        run: mypy . --ignore-missing-imports
+        run: |
+          # Run mypy using pyproject.toml configuration
+          mypy .
 
   # Job 3: Security Scanning
   security:
