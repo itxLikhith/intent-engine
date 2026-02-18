@@ -7,6 +7,7 @@ This module implements the FastAPI service with all required endpoints for the I
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, timedelta
 from typing import Any, Optional
 
