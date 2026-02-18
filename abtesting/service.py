@@ -14,85 +14,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-)
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql import func
 
-from database import Base
-
-
-class ABTestStatus(Enum):
-    DRAFT = "draft"
-    RUNNING = "running"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-
-
-class ABTest(Base):
-    """A/B Test configuration"""
-
-    __tablename__ = "ab_tests"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    description = Column(Text)
-    campaign_id = Column(Integer, ForeignKey("campaigns.id"))
-    status = Column(String, default=ABTestStatus.DRAFT.value)
-    start_date = Column(DateTime)
-    end_date = Column(DateTime)
-    traffic_allocation = Column(Float, default=1.0)  # Percentage of traffic to include in test
-    min_sample_size = Column(Integer, default=1000)  # Minimum samples before significance
-    confidence_level = Column(Float, default=0.95)  # Statistical confidence level
-    primary_metric = Column(String, default="ctr")  # Primary metric to optimize
-    winner_variant_id = Column(Integer)  # ID of winning variant (if determined)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
-    # Relationships
-    variants = relationship("ABTestVariant", back_populates="test", cascade="all, delete-orphan")
-
-
-class ABTestVariant(Base):
-    """A/B Test variant"""
-
-    __tablename__ = "ab_test_variants"
-
-    id = Column(Integer, primary_key=True, index=True)
-    test_id = Column(Integer, ForeignKey("ab_tests.id"), nullable=False)
-    name = Column(String, nullable=False)  # e.g., "Control", "Variant A"
-    ad_id = Column(Integer, ForeignKey("ads.id"))  # The ad to show for this variant
-    traffic_weight = Column(Float, default=0.5)  # Weight for traffic splitting
-    is_control = Column(Boolean, default=False)  # Is this the control variant
-    impressions = Column(Integer, default=0)
-    clicks = Column(Integer, default=0)
-    conversions = Column(Integer, default=0)
-    revenue = Column(Float, default=0.0)
-    created_at = Column(DateTime, server_default=func.now())
-
-    # Relationships
-    test = relationship("ABTest", back_populates="variants")
-
-
-class ABTestAssignment(Base):
-    """Tracks which variant a user was assigned to"""
-
-    __tablename__ = "ab_test_assignments"
-
-    id = Column(Integer, primary_key=True, index=True)
-    test_id = Column(Integer, ForeignKey("ab_tests.id"), nullable=False)
-    variant_id = Column(Integer, ForeignKey("ab_test_variants.id"), nullable=False)
-    user_hash = Column(String, nullable=False)  # Hashed user/session identifier
-    assigned_at = Column(DateTime, server_default=func.now())
+from database import ABTest, ABTestAssignment, ABTestStatus, ABTestVariant
 
 
 @dataclass

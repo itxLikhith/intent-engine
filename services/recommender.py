@@ -135,6 +135,8 @@ class ServiceScoringEngine:
         if not intent.declared.goal:
             return 0.5, reasons  # Neutral score if no goal
 
+        # IntentGoal enum values are lowercase (e.g., "learn", "purchase")
+        # service.supportedGoals should also use lowercase enum values
         goal_value = intent.declared.goal.value
 
         if goal_value in service.supportedGoals:
@@ -143,6 +145,7 @@ class ServiceScoringEngine:
             return score, reasons
         else:
             # Check for semantic similarity with supported goals
+            # Replace underscores with spaces for better semantic matching
             goal_embedding = self.embedding_cache.encode_text(goal_value.replace("_", " "))
             service_goals_text = " ".join(service.supportedGoals).replace("_", " ")
             service_goals_embedding = self.embedding_cache.encode_text(service_goals_text)
@@ -181,6 +184,7 @@ class ServiceScoringEngine:
         matches_found = 0
 
         for use_case in intent.inferred.useCases:
+            # UseCase enum values are lowercase with underscores (e.g., "comparison", "market_research")
             use_case_str = use_case.value.replace("_", " ")
 
             # Check for direct matches

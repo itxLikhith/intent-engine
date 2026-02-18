@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: anony45/intent-engine-api:latest
     command: ["/app/scripts/run_migrations.sh"]
     environment:
       - POSTGRES_HOST=postgres
@@ -20,7 +19,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: anony45/intent-engine-api:latest
     ports:
       - "8000:8000"
     environment:
@@ -92,7 +90,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: anony45/intent-engine-api:latest # Reusing the same image
     command: arq worker.WorkerSettings --watch .
     environment:
       - DATABASE_URL=postgresql://intent_user:intent_secure_password_change_in_prod@pgbouncer:6543/intent_engine

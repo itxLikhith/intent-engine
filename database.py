@@ -8,11 +8,13 @@ both SQLite (for local development) and PostgreSQL (for production).
 import logging
 import os
 from datetime import UTC, datetime
+from enum import Enum
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import (
     JSON,
+    Boolean,
     Column,
     Date,
     DateTime,
@@ -28,6 +30,15 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy.sql import func
 
 logger = logging.getLogger(__name__)
+
+
+class ABTestStatus(Enum):
+    """A/B Test status options"""
+    DRAFT = "draft"
+    RUNNING = "running"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
 
 
 # Database setup
@@ -321,6 +332,88 @@ class FraudDetection(Base):
     __table_args__ = (
         Index("ix_fraud_detection_event_type_severity", "event_type", "severity"),
         Index("ix_fraud_detection_review_status_created", "review_status", "created_at"),
+    )
+
+
+# A/B Testing Tables
+class ABTest(Base):
+    """
+    A/B Test configuration table
+    """
+
+    __tablename__ = "ab_tests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text)
+    campaign_id = Column(Integer, ForeignKey("campaigns.id"), index=True)
+    status = Column(String, default=ABTestStatus.DRAFT.value, index=True)  # draft, running, paused, completed, cancelled
+    start_date = Column(DateTime(timezone=True), index=True)
+    end_date = Column(DateTime(timezone=True), index=True)
+    traffic_allocation = Column(Float, default=1.0)  # Percentage of traffic to include in test
+    min_sample_size = Column(Integer, default=1000)  # Minimum samples before significance
+    confidence_level = Column(Float, default=0.95)  # Statistical confidence level
+    primary_metric = Column(String, default="ctr")  # Primary metric to optimize
+    winner_variant_id = Column(Integer, nullable=True)  # ID of winning variant (if determined)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), index=True)
+
+    # Relationships
+    variants = relationship("ABTestVariant", back_populates="test", cascade="all, delete-orphan")
+
+    # Composite indexes for common queries
+    __table_args__ = (
+        Index("ix_ab_tests_campaign_id_status", "campaign_id", "status"),
+        Index("ix_ab_tests_status_dates", "status", "start_date", "end_date"),
+    )
+
+
+class ABTestVariant(Base):
+    """
+    A/B Test variant table
+    """
+
+    __tablename__ = "ab_test_variants"
+
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("ab_tests.id"), nullable=False, index=True)
+    name = Column(String, nullable=False, index=True)  # e.g., "Control", "Variant A"
+    ad_id = Column(Integer, ForeignKey("ads.id"), index=True)  # The ad to show for this variant
+    traffic_weight = Column(Float, default=0.5)  # Weight for traffic splitting
+    is_control = Column(Boolean, default=False, index=True)  # Is this the control variant
+    impressions = Column(Integer, default=0)
+    clicks = Column(Integer, default=0)
+    conversions = Column(Integer, default=0)
+    revenue = Column(Float, default=0.0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    # Relationships
+    test = relationship("ABTest", back_populates="variants")
+
+    # Composite indexes for common queries
+    __table_args__ = (
+        Index("ix_ab_test_variants_test_id_ad_id", "test_id", "ad_id"),
+        Index("ix_ab_test_variants_is_control", "is_control"),
+    )
+
+
+class ABTestAssignment(Base):
+    """
+    Tracks which variant a user was assigned to
+    """
+
+    __tablename__ = "ab_test_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("ab_tests.id"), nullable=False, index=True)
+    variant_id = Column(Integer, ForeignKey("ab_test_variants.id"), nullable=False, index=True)
+    user_hash = Column(String, nullable=False, index=True)  # Hashed user/session identifier
+    assigned_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    # Composite indexes for common queries
+    __table_args__ = (
+        Index("ix_ab_test_assignments_test_id_user_hash", "test_id", "user_hash"),
+        Index("ix_ab_test_assignments_variant_id", "variant_id"),
     )
 
 

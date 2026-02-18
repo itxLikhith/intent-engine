@@ -331,11 +331,14 @@ class AdRelevanceScorer:
         if not goal:
             return 0.5, reasons
 
+        # IntentGoal enum values are lowercase (e.g., "learn", "purchase")
+        # Convert to uppercase for matching against goal_indicators dictionary
         goal_value = goal.value.upper()
 
         # Simple heuristic: check if ad content relates to common goals
         ad_content = f"{ad.title} {ad.description}".lower()
 
+        # Goal indicators dictionary with uppercase keys matching goal.value.upper()
         goal_indicators = {
             "LEARN": [
                 "guide",
@@ -363,6 +366,15 @@ class AdRelevanceScorer:
                 "troubleshoot",
                 "error",
             ],
+            "CREATE": ["create", "make", "build", "design", "generate", "produce"],
+            "DRAFT_DOCUMENT": ["document", "doc", "write", "draft", "text"],
+            "COLLABORATE": ["collaborate", "share", "team", "together", "cooperate"],
+            "ORGANIZE": ["organize", "arrange", "structure", "plan", "order"],
+            "ANALYZE": ["analyze", "analysis", "data", "insight", "metric"],
+            "SCHEDULE": ["schedule", "calendar", "meeting", "appointment", "book"],
+            "FIND_INFORMATION": ["find", "search", "look", "discover", "information"],
+            "LOCAL_SERVICE": ["local", "nearby", "service", "near me"],
+            "NAVIGATION": ["navigation", "map", "direction", "route", "location"],
         }
 
         if goal_value in goal_indicators:
