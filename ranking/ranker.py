@@ -4,6 +4,7 @@ Intent Engine - Phase 2: Constraint Satisfaction and Result Ranking
 This module implements Algorithms 2 and 3 for constraint satisfaction and intent-aligned ranking.
 """
 
+import hashlib
 import logging
 import re
 from dataclasses import dataclass
