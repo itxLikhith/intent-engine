@@ -29,7 +29,6 @@ ENV/
 env.bak/
 venv.bak/
 .venv/
-env/
 .ENV/
 
 # IDE
@@ -42,13 +41,11 @@ env/
 *.bak
 *.orig
 *.rej
-*#
 
 # OS
 .DS_Store
 Thumbs.db
 ehthumbs.db
-Icon?
 .directory
 .Trashes
 *.nfs*
@@ -64,11 +61,7 @@ logs/
 # Environment variables
 .env
 .env.local
-.env.production
-.env.development
-.env.test
-.env.staging
-.env.backup
+.env.*
 *.env
 
 # Coverage reports
@@ -106,14 +99,12 @@ torch/
 # Testing
 .pytest_cache/
 .pytest/
-.coverage/
 .nox/
-.coverage.*
+.coverage.xml
 
 # Distribution / packaging
 .python-version
 .tox/
-coverage.xml
 *.cover
 .py-build/
 *.zip
@@ -141,7 +132,6 @@ dmypy.json
 *.temp
 tmp/
 temp/
-.DS_Store?
 
 # Local configuration
 config/local_settings.py
@@ -161,8 +151,6 @@ docker-compose.override.yml
 docker-compose.prod.yml
 docker-compose.stage.yml
 docker-compose.dev.yml
-
-# Docker specific - exclude light version
 Dockerfile.light
 
 # Documentation
@@ -178,13 +166,8 @@ yarn-error.log*
 # Secrets and credentials
 secrets/
 secret.key
-secret_token.rb
-config/secrets.yml
-config/credentials.yml.enc
-credentials.json
 *.pem
 *.key
-*.cer
 *.crt
 *.cert
 *.pub
@@ -226,39 +209,13 @@ id_rsa.pub
 *.pyo
 *.pyd
 __pycache__/
-.coverage
 .idea/
 !.idea/
-.idea/*
-!.idea/shelf/
-!.idea/vcs.xml
-!.idea/modules.xml
-!.idea/workspace.xml
-!.idea/misc.xml
-!.idea/deployment.xml
-!.idea/uiDesigner.xml
-!.idea/inspectionProfiles/Project_Default.xml
-!.idea/inspectionProfiles/profiles_settings.xml
-!.idea/gradle.xml
-!.idea/kotlinc.xml
-!.idea/compiler.xml
-!.idea/jarRepositories.xml
-!.idea/modules.xml
-!.idea/naveditor.xml
 
-# Sublime Text
-*.tmlanguage.cache
-*.tmPreferences.cache
-*.stTheme.cache
-.svn/
-*.sublime-workspace
-*.sublime-project
-
-# Vim
-*.swp
-*.swo
-*~
-.netrwhist
+# Visual Studio Code
+.vscode/
+.history
+*.code-workspace
 
 # Eclipse
 .metadata
@@ -267,7 +224,6 @@ tmp/
 *.tmp
 *.bak
 *.swp
-*~.nib
 local.properties
 .settings/
 .loadpath
@@ -279,54 +235,6 @@ local.properties
 *.iws
 .idea/
 
-# Visual Studio Code
-.vscode/settings.json
-.vscode/tasks.json
-.vscode/launch.json
-.vscode/extensions.json
-.history
-*.code-workspace
-
-# Atom
-.atom/
-
-# NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-.externals/
-.nb-gradle/
-
-# Code::Blocks
-*.depend
-*.layout
-*.cbp
-
-# Qt Creator
-*.pro.user
-*.pro.user.*
-*.qbs.user
-*.qbs.user.*
-*.moc
-*.moc.cpp
-*.qm
-*.prl
-
-# CLion
-cmake-build-*/
-
-# RubyMine
-.idea/scopes/scope_settings.xml
-.idea/RubyMine.xml
-
-# WebStorm
-.idea/jsLibraryMappings.xml
-.idea/watcherTasks.xml
-
-# PhpStorm
-.idea/php.xml
-
 # Android Studio
 *.keystore
 *.jks
@@ -335,11 +243,11 @@ cmake-build-*/
 .gradle/
 build/
 
-# Rust/Cargo (if needed in future)
+# Rust/Cargo
 target/
 Cargo.lock
 
-# Go (if needed in future)
+# Go
 *.o
 *.a
 *.so
@@ -351,7 +259,6 @@ Cargo.lock
 *.gcda
 *.gcno
 *.gcov
-*.gcov.html
 *.profraw
 
 # Java
@@ -371,25 +278,20 @@ replay_pid*
 *.nar
 *.log
 
-# Temporary/Generated Files
+# Test and Report Files (Generated)
 stress_test_results_*.json
 api_logs.txt
-$null
-nul
-
-# Test files (keep in repo but exclude generated)
-test_*.py
-!test_*.py
-
-# Documentation backups
 *_SUMMARY.md
 *_STATUS.md
 *_QUICKSTART.md
+*_REPORT.md
 *.md.bak
 
 # Local scripts
 start.bat
 start.sh
+build_and_push.bat
+build_and_push.sh
 
 # Init scripts (generated)
 init-scripts/
@@ -402,3 +304,18 @@ bridge/
 
 # pgAdmin (local only)
 pgadmin/
+
+# Data directory (local development)
+data/
+
+# Grafana local data
+grafana/dashboards/*.json
+grafana/provisioning/dashboards/*.yml
+grafana/provisioning/datasources/*.yml
+
+# PgBouncer local config
+pgbouncer/pgbouncer.ini
+pgbouncer/userlist.txt
+
+# Local development overrides
+docker-compose.override.yml

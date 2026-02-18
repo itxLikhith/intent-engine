@@ -287,11 +287,22 @@ limiter = Limiter(
     key_func=get_remote_address, default_limits=[get_rate_limit_default()], enabled=get_rate_limit_enabled()
 )
 
+
+# Lifespan context manager for startup and shutdown events
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup and shutdown events"""
+    await startup_event()
+    yield
+    await shutdown_event()
+
+
 # Prometheus metrics
 app = FastAPI(
     title="Intent Engine API",
     description="Privacy-first, intent-driven search, service recommendation, and ad matching system",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -368,7 +379,6 @@ async def metrics_middleware(request, call_next):
     return response
 
 
-@app.on_event("startup")
 async def startup_event():
     """Initialize resources on startup"""
     logger.info("Starting up Intent Engine API...")
@@ -404,6 +414,15 @@ async def startup_event():
     get_url_ranker()
 
     logger.info("Models loaded and API ready!")
+
+
+async def shutdown_event():
+    """Cleanup resources on shutdown"""
+    logger.info("Shutting down Intent Engine API...")
+    # Cleanup scheduler
+    if hasattr(db_manager, "scheduler") and db_manager.scheduler:
+        db_manager.scheduler.shutdown(wait=False)
+    logger.info("Cleanup completed")
 
 
 @app.get("/", response_model=HealthCheckResponse)
@@ -627,6 +646,9 @@ async def recommend_services_endpoint(request: ServiceRecommendationRequest):
         from services.recommender import ServiceMetadata
         from services.recommender import ServiceRecommendationRequest as InternalServiceRequest
 
+        # Convert intent dict to UniversalIntent dataclass
+        intent = convert_dict_to_universal_intent(request.intent)
+
         # Convert the request to internal format
         services_metadata = []
         for service in request.available_services:
@@ -642,7 +664,7 @@ async def recommend_services_endpoint(request: ServiceRecommendationRequest):
             services_metadata.append(service_metadata)
 
         internal_request = InternalServiceRequest(
-            intent=request.intent, availableServices=services_metadata, options=request.options
+            intent=intent, availableServices=services_metadata, options=request.options
         )
 
         response = recommend_services(internal_request)
