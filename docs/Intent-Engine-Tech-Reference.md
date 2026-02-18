@@ -1,8 +1,8 @@
 # INTENT ENGINE: Technical Reference & Implementation Guide
 
-**Version:** 2.0
+**Version:** 1.0.4
 **For:** Senior Engineers & System Architects
-**Date:** February 17, 2026
+**Date:** February 18, 2026
 
 > **Note:** This document provides a high-level technical overview of the Intent Engine. For the most accurate and up-to-date API specifications, data models, and implementation details, please refer to the source code and the live OpenAPI/Swagger documentation available at the `/docs` endpoint when the service is running.
 
@@ -113,10 +113,33 @@ FUNCTION satisfiesConstraints(result: SearchResult, constraints: List[Constraint
       // Numeric comparison (e.g., price range)
       numericValue = extractNumericValue(result, constraint.dimension)
       if numericValue == NULL:
-        RETURN false
-      [minVal, maxVal] = constraint.value
-      if NOT (minVal <= numericValue <= maxVal):
-        RETURN false
+        if constraint.hardFilter:
+          RETURN false  // Hard filter: reject unknown values
+        ELSE:
+          CONTINUE  // Soft filter: skip this constraint
+      
+      // Parse range specification (supports multiple formats)
+      rangeSpec = constraint.value
+      
+      // Format: "0-500" (min-max range)
+      if MATCH(rangeSpec, "(\d+)-(\d+)"):
+        [minVal, maxVal] = PARSE_RANGE(rangeSpec)
+        if NOT (minVal <= numericValue <= maxVal):
+          RETURN false
+      
+      // Format: "<=500", ">=100", "<1000", ">50" (comparisons)
+      ELSE IF MATCH(rangeSpec, "([<>]=?)(\d+)"):
+        [operator, limit] = PARSE_COMPARISON(rangeSpec)
+        if operator == "<=" AND numericValue > limit: RETURN false
+        if operator == ">=" AND numericValue < limit: RETURN false
+        if operator == "<" AND numericValue >= limit: RETURN false
+        if operator == ">" AND numericValue <= limit: RETURN false
+      
+      // Format: "max500", "min50" (keywords)
+      ELSE IF MATCH(rangeSpec, "(max|min)(\d+)"):
+        [type, limit] = PARSE_KEYWORD(rangeSpec)
+        if type == "max" AND numericValue > limit: RETURN false
+        if type == "min" AND numericValue < limit: RETURN false
 
     ELSE IF constraint.type == 'datatype':
       // Type matching (e.g., video, PDF, image)
@@ -129,6 +152,7 @@ END
 TIME COMPLEXITY: O(c * m) where c = number of constraints, m = result metadata size
 EARLY EXIT: First constraint violation returns false immediately
 FILTERING RATE: 20-40% of results typically filtered by hard constraints
+RANGE FORMATS: "0-500", "<=500", ">=100", "max500", "min50", "budget", "free"
 ```
 
 ### Algorithm 3: Intent Alignment Scoring

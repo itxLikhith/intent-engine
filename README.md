@@ -5,6 +5,9 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/itxLikhith/intent-engine)
+
+**Latest Release:** v1.0.4 | **Docker Image:** `anony45/intent-engine-api:latest`
 
 ## Overview
 
@@ -102,9 +105,12 @@ Converts free-form queries into structured intent objects using:
 
 ### Ranking (`ranking/ranker.py`)
 Implements constraint satisfaction and intent-aligned ranking:
-- Filters results based on user constraints
+- Filters results based on user constraints (inclusion, exclusion, range)
+- Supports multiple constraint formats: `0-500`, `<=500`, `max500`, `min50`
 - Computes alignment scores between results and user intent
 - Applies weighted scoring for semantic similarity, ethical alignment, etc.
+- Hard filter constraints exclude non-matching results
+- Soft constraints influence ranking without filtering
 
 ### Service Recommendation (`services/recommender.py`)
 Routes users to the most appropriate service based on intent matching:

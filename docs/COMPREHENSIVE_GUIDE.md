@@ -188,6 +188,37 @@ Response:
 }
 ```
 
+#### 4. Rank Results with Constraints
+```http
+POST /rank-results
+Content-Type: application/json
+
+{
+  "intent": {
+    "declared": {
+      "query": "budget laptop",
+      "goal": "purchase",
+      "constraints": [
+        {"type": "range", "dimension": "price", "value": "0-500", "hardFilter": true}
+      ]
+    },
+    "inferred": {
+      "useCases": ["learning"],
+      "resultType": "marketplace"
+    }
+  },
+  "candidates": [
+    {"id": "1", "title": "Budget Laptop $450", "price": 450},
+    {"id": "2", "title": "Premium Laptop $800", "price": 800}
+  ]
+}
+```
+
+**Constraint Formats Supported:**
+- Range: `"0-500"`, `"100-1000"`
+- Comparison: `"<=500"`, `">=100"`, `"<1000"`, `">50"`
+- Keywords: `"max500"`, `"min50"`, `"budget"`, `"free"`
+
 ---
 
 ## API Usage Examples
@@ -781,5 +812,5 @@ For issues and questions:
 
 ---
 
-**Last Updated:** 2026-02-17
-**Version:** 2.0.0
+**Last Updated:** 2026-02-18
+**Version:** 1.0.4

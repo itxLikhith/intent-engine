@@ -1,8 +1,9 @@
 # Intent Engine Advertising System - Project Overview
 
-**Version:** 2.0.0
-**Last Updated:** February 17, 2026
+**Version:** 1.0.4
+**Last Updated:** February 18, 2026
 **Repository:** intent-ads
+**Docker Image:** `anony45/intent-engine-api:latest`
 
 ---
 
@@ -23,6 +24,7 @@ The Intent Engine Advertising System is a **privacy-first, intent-driven adverti
 - ✅ **Intent Extraction** - Converts free-form queries to structured intent
 - ✅ **Privacy-Focused Search** - SearXNG integration with intent-aware ranking
 - ✅ **URL Ranking** - Privacy-compliant URL scoring and ranking
+- ✅ **Advanced Constraint Handling** - Supports range (`0-500`), comparison (`<=500`), min/max formats
 - ✅ **Service Recommendation** - Routes users to appropriate services
 - ✅ **Ethical Ad Matching** - Fair ad matching with fairness validation
 - ✅ **Campaign Management** - Full advertising campaign lifecycle
