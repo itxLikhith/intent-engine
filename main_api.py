@@ -20,7 +20,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from ads.matcher import match_ads
@@ -92,10 +92,6 @@ from models import (
     URLRankingAPIRequest,
     URLRankingAPIResponse,
 )
-
-# Constants
-MAX_PAGINATION_LIMIT = 1000  # Maximum number of items that can be returned
-DEFAULT_PAGINATION_LIMIT = 100  # Default limit for pagination
 from privacy.consent_manager import ConsentType, get_consent_manager
 from privacy.enhanced_privacy import DataRetentionPeriod, get_enhanced_privacy_controls
 from privacy_core import (
@@ -106,6 +102,10 @@ from privacy_core import (
 from ranking.optimized_ranker import rank_results
 from searxng.unified_search import get_unified_search_service
 from services.recommender import recommend_services
+
+# Constants
+MAX_PAGINATION_LIMIT = 1000  # Maximum number of items that can be returned
+DEFAULT_PAGINATION_LIMIT = 100  # Default limit for pagination
 
 
 # Create the database dependency
