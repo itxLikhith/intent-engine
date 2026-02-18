@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_url_analysis_cache
+
 from core.schema import (
     EthicalDimension,
     UniversalIntent,
