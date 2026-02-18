@@ -169,8 +169,18 @@ class EmbeddingCache:
     def encode_text(self, text: str) -> np.ndarray | None:
         """Encode text to embedding vector using the sentence transformer model with caching"""
         if self.model is None or self.tokenizer is None:
-            # Return random vector for mock implementation
-            return np.random.rand(384).astype(np.float32)
+            # Return deterministic hash-based vector for mock implementation
+            hash_input = text.encode("utf-8")
+            hash_bytes = hashlib.md5(hash_input).digest()
+            # Create a 384-dim vector from hash
+            result = np.zeros(384, dtype=np.float32)
+            for i in range(384):
+                result[i] = (hash_bytes[i % 16] + i * 17) % 100 / 100.0
+            # Normalize the vector
+            norm = np.linalg.norm(result)
+            if norm > 0:
+                result = result / norm
+            return result
 
         # Check local cache first
         if text in self.cache:
@@ -223,8 +233,21 @@ class EmbeddingCache:
             return []
 
         if self.model is None or self.tokenizer is None:
-            # Return random vectors for mock implementation
-            return [np.random.rand(384).astype(np.float32) for _ in texts]
+            # Return deterministic hash-based vectors for mock implementation
+            results = []
+            for text in texts:
+                hash_input = text.encode("utf-8")
+                hash_bytes = hashlib.md5(hash_input).digest()
+                # Create a 384-dim vector from hash
+                result = np.zeros(384, dtype=np.float32)
+                for i in range(384):
+                    result[i] = (hash_bytes[i % 16] + i * 17) % 100 / 100.0
+                # Normalize the vector
+                norm = np.linalg.norm(result)
+                if norm > 0:
+                    result = result / norm
+                results.append(result)
+            return results
 
         # Filter out cached texts (check both local and Redis cache)
         uncached_texts = []
@@ -386,6 +409,27 @@ class ConstraintSatisfactionEngine:
                             violates = True
                         if violates:
                             return False
+
+        elif dimension == "tags":
+            # Handle tags constraints
+            if constraint_type == ConstraintType.INCLUSION:
+                if isinstance(value, str):
+                    # Check if the value is in result tags
+                    if result.tags is None or value not in result.tags:
+                        return False
+                elif isinstance(value, list):
+                    # Check if any of the values are in result tags
+                    if result.tags is None or not any(v in result.tags for v in value):
+                        return False
+            elif constraint_type == ConstraintType.EXCLUSION:
+                if isinstance(value, str):
+                    # Check if the value is NOT in result tags
+                    if result.tags is not None and value in result.tags:
+                        return False
+                elif isinstance(value, list):
+                    # Check if none of the values are in result tags
+                    if result.tags is not None and any(v in result.tags for v in value):
+                        return False
 
         elif dimension == "format":
             # Assuming format could be file format or document type

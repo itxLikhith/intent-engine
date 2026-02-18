@@ -102,7 +102,7 @@ class OptimizedConstraintSatisfactionEngine:
         return True
 
     def _satisfies_single_constraint(self, result: SearchResult, constraint: Constraint) -> bool:
-        """Check if a result satisfies a single constraint with semantic matching"""
+        """Check if a result satisfies a single constraint with fast exact matching"""
         dimension = constraint.dimension
         value = constraint.value
         constraint_type = constraint.type
@@ -111,27 +111,29 @@ class OptimizedConstraintSatisfactionEngine:
 
         if constraint_type == ConstraintType.INCLUSION:
             if isinstance(value, str):
-                if result_value != value:
-                    # Try semantic matching for partial matches
-                    return self._semantic_match(result_value, value)
+                # Fast exact match (case-insensitive)
+                if result_value is None:
+                    return False
+                return result_value.lower() == value.lower()
             elif isinstance(value, list):
-                if result_value not in value:
-                    # Check if any value in the list matches semantically
-                    return any(self._semantic_match(result_value, v) for v in value)
+                if result_value is None:
+                    return False
+                # Check if any value matches (case-insensitive)
+                result_lower = result_value.lower()
+                return any(result_lower == v.lower() for v in value)
 
         elif constraint_type == ConstraintType.EXCLUSION:
             if isinstance(value, str):
-                if result_value == value:
-                    return False
-                # Check semantic exclusion
-                if self._semantic_match(result_value, value):
-                    return False
+                # Fast exact exclusion (case-insensitive)
+                if result_value is None:
+                    return True  # None values don't match exclusion
+                return result_value.lower() != value.lower()
             elif isinstance(value, list):
-                if result_value in value:
-                    return False
-                # Check if any excluded value matches semantically
-                if any(self._semantic_match(result_value, v) for v in value):
-                    return False
+                if result_value is None:
+                    return True  # None values don't match exclusion
+                # Check if none of the excluded values match (case-insensitive)
+                result_lower = result_value.lower()
+                return all(result_lower != v.lower() for v in value)
 
         elif constraint_type == ConstraintType.RANGE:
             if dimension == "price" and result_value is not None:
@@ -170,8 +172,6 @@ class OptimizedConstraintSatisfactionEngine:
 
     def _check_price_range(self, price: float, range_spec: str) -> bool:
         """Check if price satisfies range specification"""
-        # Parse range specification
-        # Formats: "<=100", ">=50", "<100", ">50", "budget"
         range_spec = str(range_spec).lower().strip()
 
         if range_spec == "budget" or range_spec == "free" or range_spec == "0":
@@ -190,6 +190,23 @@ class OptimizedConstraintSatisfactionEngine:
                 return price < limit
             elif operator == ">":
                 return price > limit
+
+        range_match = re.match(r"(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)", range_spec)
+        if range_match:
+            min_price, max_price = range_match.groups()
+            min_price = float(min_price)
+            max_price = float(max_price)
+            return min_price <= price <= max_price
+
+        max_match = re.match(r"max\s*(\d+(?:\.\d+)?)", range_spec)
+        if max_match:
+            max_price = float(max_match.group(1))
+            return price <= max_price
+
+        min_match = re.match(r"min\s*(\d+(?:\.\d+)?)", range_spec)
+        if min_match:
+            min_price = float(min_match.group(1))
+            return price >= min_price
 
         return True
 
