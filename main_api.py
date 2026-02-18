@@ -2073,7 +2073,7 @@ async def log_audit_event(
     action_description: str | None = None,
     ip_address: str | None = None,
     user_agent: str | None = None,
-    metadata: dict[str, Any] | None = None,
+    payload: dict[str, Any] | None = None,
     db: Session = Depends(get_db),
 ):
     """Manually log an audit event"""
@@ -2086,7 +2086,7 @@ async def log_audit_event(
         action_description,
         ip_address,
         user_agent,
-        metadata,
+        payload,
     )
 
     return audit_entry

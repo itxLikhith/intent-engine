@@ -105,6 +105,8 @@ services:
       - redis
       - pgbouncer
     restart: unless-stopped
+    healthcheck:
+      disable: true
 
   searxng:
     image: docker.io/searxng/searxng:latest

@@ -109,10 +109,12 @@ class UnifiedSearchService:
         # Process SearXNG result (last task)
         searxng_result = results[-1]
         if isinstance(searxng_result, Exception):
-            logger.error(f"SearXNG search failed: {searxng_result}")
+            logger.error(f"SearXNG search failed with exception: {type(searxng_result).__name__}: {searxng_result}")
             searxng_results = []
         else:
             searxng_results = searxng_result
+            if not searxng_results:
+                logger.warning(f"SearXNG returned 0 results for query: '{request.query}'")
 
         logger.info(f"SearXNG returned {len(searxng_results)} results")
 

@@ -51,7 +51,7 @@ class AuditTrail(Base):
     action_description = Column(Text)  # Description of the action taken
     ip_address = Column(String)  # IP address of the user
     user_agent = Column(String)  # User agent string
-    event_metadata = Column(JSON)  # Additional metadata about the event
+    payload = Column(JSON)  # Additional metadata about the event
     timestamp = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -82,7 +82,7 @@ class AuditTrailManager:
             action_description=action_description,
             ip_address=ip_address,
             user_agent=user_agent,
-            event_metadata=metadata or {},
+            payload=metadata or {},
         )
 
         self.db.add(audit_entry)

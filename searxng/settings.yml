@@ -1,22 +1,90 @@
+# SearXNG settings
+# See https://docs.searxng.org/admin/settings.yml.html
+
 use_default_settings: true
 
 general:
-  instance_name: "SearXNG - Privacy Search"
+  instance_name: "Intent Engine - Privacy Search"
   debug: false
+  contact_url: false
 
 server:
   port: 8080
   bind_address: "0.0.0.0"
-  # SECURITY: Generate secure key with: openssl rand -hex 32
-  # Or set SEARXNG_SECRET_KEY environment variable
   secret_key: "${SEARXNG_SECRET_KEY:-}"
   limiter: false
   image_proxy: true
+  method: "GET"
 
 search:
   safe_search: 0
-  autocomplete: ""
+  autocomplete: "duckduckgo"
   default_lang: "en"
   formats:
     - html
     - json
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    timeout: 3.0
+    use_http2: true
+  
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    timeout: 3.0
+  
+  - name: brave
+    engine: brave
+    shortcut: b
+    timeout: 3.0
+  
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: w
+    timeout: 2.0
+  
+  - name: bing
+    engine: bing
+    shortcut: bi
+    timeout: 3.0
+
+  - name: startpage
+    engine: startpage
+    shortcut: sp
+    timeout: 4.0
+
+  # Disable problematic or slow engines
+  - name: pubmed
+    disabled: true
+  
+  - name: arxiv
+    disabled: true
+  
+  - name: semantic scholar
+    disabled: true
+  
+  - name: openairedatasets
+    disabled: true
+  
+  - name: openairepublications
+    disabled: true
+  
+  - name: radio browser
+    disabled: true
+
+  - name: ahmia
+    disabled: true
+
+  - name: torch
+    disabled: true
+
+outgoing:
+  # Increase pool size for better concurrency
+  pool_connections: 100
+  pool_maxsize: 20
+  # Set global timeout
+  request_timeout: 10.0
+  max_request_timeout: 15.0

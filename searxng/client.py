@@ -77,8 +77,8 @@ class SearXNGClient:
         """
         # Use environment variable or Docker service name by default for containerized deployments
         self.base_url = (base_url or os.getenv("SEARXNG_BASE_URL", "http://searxng:8080")).rstrip("/")
-        self.timeout = 10.0  # seconds (reduced from 30s for better performance)
-        self.connect_timeout = 3.0  # connection timeout
+        self.timeout = 5.0  # Reduced from 10s for better responsiveness
+        self.connect_timeout = 2.0  # Reduced from 3.0s
         self.cache_ttl = 600  # Cache TTL: 10 minutes
 
         # Initialize Redis cache if available

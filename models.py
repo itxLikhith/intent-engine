@@ -5,9 +5,9 @@ This module defines Pydantic models for all entities and requests used in the AP
 """
 
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from core.schema import UniversalIntent
 
@@ -413,30 +413,29 @@ class ConsentSummary(BaseModel):
 # Models for Audit Trail
 class AuditEvent(BaseModel):
     id: int
-    user_id: str | None = None
+    user_id: Optional[str] = None
     event_type: str
-    resource_type: str | None = None
-    resource_id: int | None = None
-    action_description: str | None = None
-    ip_address: str | None = None
-    user_agent: str | None = None
-    metadata: dict[str, Any] | None = None
+    resource_type: Optional[str] = None
+    resource_id: Optional[int] = None
+    action_description: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    payload: Optional[dict[str, Any]] = None
     timestamp: datetime
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AuditEventRequest(BaseModel):
-    user_id: str | None = None
+    user_id: Optional[str] = None
     event_type: str
-    resource_type: str | None = None
-    resource_id: int | None = None
-    action_description: str | None = None
-    ip_address: str | None = None
-    user_agent: str | None = None
-    metadata: dict[str, Any] | None = None
+    resource_type: Optional[str] = None
+    resource_id: Optional[int] = None
+    action_description: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    payload: Optional[dict[str, Any]] = None
 
 
 class AuditStats(BaseModel):
