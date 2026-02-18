@@ -60,7 +60,8 @@ def demo_ad_matching():
     print("Declared Constraints:")
     for constraint in intent.declared.constraints:
         print(
-            f"  - {constraint.type.value} {constraint.dimension}: {constraint.value} (hard filter: {constraint.hardFilter})"
+            f"  - {constraint.type.value} {constraint.dimension}: {constraint.value} "
+            f"(hard filter: {constraint.hardFilter})"
         )
     print(f"\nEthical Signals: {[(es.dimension.value, es.preference) for es in intent.inferred.ethicalSignals]}\n")
 

@@ -978,9 +978,8 @@ class ComprehensiveStressTestSuite:
         """Print formatted test results"""
         print(f"\n{results.test_name} Results:")
         print(f"  Total Requests: {results.total_requests:,}")
-        print(
-            f"  Successful: {results.successful_requests:,} ({results.successful_requests/results.total_requests*100:.1f}%)"
-        )
+        success_rate = results.successful_requests / results.total_requests * 100
+        print(f"  Successful: {results.successful_requests:,} ({success_rate:.1f}%)")
         print(f"  Failed: {results.failed_requests:,}")
         print(f"  Duration: {results.duration_seconds:.2f}s")
         print(f"  Requests/sec: {results.rps:.2f}")

@@ -51,7 +51,8 @@ class ConstraintExtractor:
 
         # Feature constraints
         self.feature_patterns = {
-            r"\b(end[-\s]*to[-\s]*end[-\s]*encrypt|e2e[-\s]*encrypt|end[-\s]*to[-\s]*end[-\s]*encrypted|e2e[-\s]*encrypted)\b": (
+            r"\b(end[-\s]*to[-\s]*end[-\s]*encrypt|e2e[-\s]*encrypt|"
+            r"end[-\s]*to[-\s]*end[-\s]*encrypted|e2e[-\s]*encrypted)\b": (
                 "feature",
                 "end-to-end_encryption",
             ),

@@ -77,7 +77,6 @@ class EmbeddingCache:
     def _load_model(self):
         """Load the sentence transformer model"""
         try:
-            import torch
             from transformers import AutoModel, AutoTokenizer
 
             # Use a lightweight model optimized for CPU
@@ -445,9 +444,8 @@ class AdMatcher:
 
         # Log intent summary for debugging
         declared = request.intent.declared if request.intent.declared else DeclaredIntent()
-        logger.info(
-            f"Ad matching started: {total_ads_evaluated} ads, query='{declared.query[:50] if declared.query else 'N/A'}...'"
-        )
+        query_preview = declared.query[:50] if declared.query else "N/A"
+        logger.info(f"Ad matching started: {total_ads_evaluated} ads, query='{query_preview}...'")
 
         for idx, ad in enumerate(request.adInventory):
             # Filter 1: Fairness check (NO discriminatory targeting)

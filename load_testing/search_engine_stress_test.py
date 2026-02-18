@@ -150,9 +150,10 @@ class SearchEngineStressTest:
                                 result_data = await response.json()
                                 intent = result_data.get("intent", {})
                                 declared = intent.get("declared", {})
-                                print(
-                                    f"  Sample: goal={declared.get('goal', 'unknown')}, complexity={intent.get('inferred', {}).get('complexity', 'unknown')}"
-                                )
+                                inferred = intent.get("inferred", {})
+                                goal = declared.get("goal", "unknown")
+                                complexity = inferred.get("complexity", "unknown")
+                                print(f"  Sample: goal={goal}, complexity={complexity}")
                         else:
                             results["failed_requests"] += 1
                             results["errors"].append(f"Request {i}: HTTP {response.status}")

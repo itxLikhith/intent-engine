@@ -72,7 +72,6 @@ class EmbeddingCache:
     def _load_model(self):
         """Load the sentence transformer model"""
         try:
-            import torch
             from transformers import AutoModel, AutoTokenizer
 
             # Use a lightweight model optimized for CPU

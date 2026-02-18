@@ -6,6 +6,7 @@ NOT just email-related queries - covers shopping, health, finance, travel, etc.
 """
 
 import json
+import statistics
 import time
 from dataclasses import dataclass
 from enum import Enum

@@ -540,8 +540,6 @@ def main():
 
     # Check if locust is available
     try:
-        import locust
-
         print("[OK] Locust is installed")
     except ImportError:
         print("[WARN] Locust not installed. Install with: pip install locust")

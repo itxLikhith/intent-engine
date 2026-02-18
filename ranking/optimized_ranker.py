@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_ranking_cache
-
 from core.schema import (
     Constraint,
     ConstraintType,
@@ -466,7 +465,7 @@ class OptimizedIntentAlignmentEngine:
                 return datetime.fromisoformat(date_str)
             else:
                 return datetime.fromisoformat(date_str).replace(tzinfo=timezone.utc)
-        except:
+        except Exception:
             return None
 
 

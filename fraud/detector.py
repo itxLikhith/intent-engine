@@ -212,12 +212,13 @@ class FraudDetector:
         )
 
         if clicks_per_minute >= self.config["max_clicks_per_ip_per_minute"]:
+            threshold = self.config["max_clicks_per_ip_per_minute"]
             signals.append(
                 FraudSignal(
                     fraud_type=FraudType.VELOCITY_VIOLATION,
                     severity=FraudSeverity.HIGH,
                     confidence=0.9,
-                    reason=f"Excessive clicks per minute: {clicks_per_minute} (threshold: {self.config['max_clicks_per_ip_per_minute']})",
+                    reason=f"Excessive clicks per minute: {clicks_per_minute} (threshold: {threshold})",
                     metadata={"clicks_per_minute": clicks_per_minute, "ip_hash": ip_hash},
                 )
             )
@@ -230,12 +231,13 @@ class FraudDetector:
         )
 
         if clicks_per_hour >= self.config["max_clicks_per_ip_per_hour"]:
+            threshold = self.config["max_clicks_per_ip_per_hour"]
             signals.append(
                 FraudSignal(
                     fraud_type=FraudType.VELOCITY_VIOLATION,
                     severity=FraudSeverity.MEDIUM,
                     confidence=0.8,
-                    reason=f"Excessive clicks per hour: {clicks_per_hour} (threshold: {self.config['max_clicks_per_ip_per_hour']})",
+                    reason=f"Excessive clicks per hour: {clicks_per_hour} (threshold: {threshold})",
                     metadata={"clicks_per_hour": clicks_per_hour, "ip_hash": ip_hash},
                 )
             )

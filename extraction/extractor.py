@@ -80,7 +80,8 @@ class ConstraintExtractor:
 
         # Feature constraints
         self.feature_patterns = {
-            r"\b(end[-\s]*to[-\s]*end[-\s]*encrypt|e2e[-\s]*encrypt|end[-\s]*to[-\s]*end[-\s]*encrypted|e2e[-\s]*encrypted)\b": (
+            r"\b(end[-\s]*to[-\s]*end[-\s]*encrypt|e2e[-\s]*encrypt|"
+            r"end[-\s]*to[-\s]*end[-\s]*encrypted|e2e[-\s]*encrypted)\b": (
                 "feature",
                 "end-to-end_encryption",
             ),
@@ -183,7 +184,8 @@ class GoalClassifier:
         # Define patterns for different goals
         self.goal_patterns = {
             IntentGoal.LEARN: [
-                r"\b(how to|how do i|guide|tutorial|setup|configure|install|learn|teach me|explain|what is|tell me about)\b",
+                r"\b(how to|how do i|guide|tutorial|setup|configure|install|learn|"
+                r"teach me|explain|what is|tell me about)\b",
                 r"\b(setup|configur|install|learn|tutorial|guide|manual|instructions?)\b",
                 r"\b(explain|understand|know about|find out about)\b",
             ],

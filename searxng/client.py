@@ -8,6 +8,7 @@ It handles search queries, result parsing, and integration with the Intent Engin
 import hashlib
 import json
 import logging
+import os
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
@@ -50,9 +51,6 @@ class SearXNGResponse:
     infoboxes: List[Dict[str, Any]]
     processing_time: float
     engines: List[str]
-
-
-import os
 
 
 class SearXNGClient:
@@ -108,7 +106,8 @@ class SearXNGClient:
         )
 
         logger.info(
-            f"SearXNG client initialized with base URL: {self.base_url}, timeout: {self.timeout}s, connection pooling enabled"
+            f"SearXNG client initialized with base URL: {self.base_url}, "
+            f"timeout: {self.timeout}s, connection pooling enabled"
         )
 
     async def search(
@@ -182,9 +181,8 @@ class SearXNGClient:
             response.raise_for_status()
 
             data = response.json()
-            logger.debug(
-                f"SearXNG response: query={data.get('query')}, results_count={len(data.get('results', [])) if data.get('results') else 'None'}"
-            )
+            results_count = len(data.get("results", [])) if data.get("results") else 0
+            logger.debug(f"SearXNG response: query={data.get('query')}, results_count={results_count}")
 
             # Parse results - handle None case
             raw_results = data.get("results")

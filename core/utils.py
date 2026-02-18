@@ -7,7 +7,7 @@ This module contains shared utilities used across all components of the Intent E
 import logging
 import re
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -32,7 +32,6 @@ class EmbeddingCache:
     def _load_model(self):
         """Load the sentence transformer model"""
         try:
-            import torch
             from transformers import AutoModel, AutoTokenizer
 
             # Use a lightweight model optimized for CPU

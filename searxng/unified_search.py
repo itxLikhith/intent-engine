@@ -62,7 +62,8 @@ class UnifiedSearchService:
 
         start_time = time.time()
         logger.info(
-            f"Unified search: query='{request.query}', extract_intent={request.extract_intent}, rank_results={request.rank_results}"
+            f"Unified search: query='{request.query}', "
+            f"extract_intent={request.extract_intent}, rank_results={request.rank_results}"
         )
 
         # Step 1 & 2: Extract intent and Search SearXNG in PARALLEL

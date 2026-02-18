@@ -71,7 +71,10 @@ def demo_ranking():
         SearchResult(
             id="1",
             title="ProtonMail Android Setup Guide",
-            description="Complete guide to setting up ProtonMail with end-to-end encryption on Android devices. Perfect for intermediate users.",
+            description=(
+                "Complete guide to setting up ProtonMail with end-to-end encryption "
+                "on Android devices. Perfect for intermediate users."
+            ),
             platform="Android",
             provider="ProtonMail",
             license="open-source",
@@ -85,7 +88,9 @@ def demo_ranking():
         SearchResult(
             id="2",
             title="Tutanota Android Configuration",
-            description="Step-by-step tutorial for configuring Tutanota email client on Android with encryption features.",
+            description=(
+                "Step-by-step tutorial for configuring Tutanota email client " "on Android with encryption features."
+            ),
             platform="Android",
             provider="Tutanota",
             license="open-source",
@@ -129,7 +134,8 @@ def demo_ranking():
     print("Candidate Results:")
     for candidate in candidates:
         print(
-            f"  - ID: {candidate.id}, Title: {candidate.title}, Platform: {candidate.platform}, Provider: {candidate.provider}"
+            f"  - ID: {candidate.id}, Title: {candidate.title}, "
+            f"Platform: {candidate.platform}, Provider: {candidate.provider}"
         )
     print()
 
@@ -148,7 +154,8 @@ def demo_ranking():
         print()
 
     print(
-        f"Summary: {len(candidates)} candidates were processed, {len(response.rankedResults)} passed constraints and were ranked."
+        f"Summary: {len(candidates)} candidates were processed, "
+        f"{len(response.rankedResults)} passed constraints and were ranked."
     )
 
 
