@@ -1,8 +1,6 @@
 from arq import create_pool
 from arq.connections import RedisSettings
 
-from ads.matcher import find_matching_ads_background
-
 REDIS_HOST = "redis"
 REDIS_PORT = 6379
 
@@ -21,12 +19,20 @@ async def shutdown(ctx):
     await ctx["redis"].close()
 
 
+async def placeholder_task(ctx):
+    """
+    Placeholder background task.
+    Add actual background tasks here as needed.
+    """
+    pass
+
+
 class WorkerSettings:
     """
     arq worker settings.
     """
 
-    functions = [find_matching_ads_background]
+    functions = [placeholder_task]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = RedisSettings(host=REDIS_HOST, port=REDIS_PORT)

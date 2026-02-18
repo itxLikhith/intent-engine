@@ -119,7 +119,7 @@ services:
     image: postgres:15-alpine
     container_name: intent-engine-postgres
     environment:
-      - POSTGRES_USER=.env.example
+      - POSTGRES_USER=intent_user
       - POSTGRES_PASSWORD=intent_secure_password_change_in_prod
       - POSTGRES_DB=intent_engine
     ports:
