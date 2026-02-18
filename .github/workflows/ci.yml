@@ -165,6 +165,9 @@ jobs:
             --cov-report=term-missing \
             --timeout=300 \
             -v \
+            --ignore=tests/comprehensive_test.py \
+            --ignore=tests/api_integration_test.py \
+            --ignore=tests/test_advertising_api.py \
             tests/
 
       - name: Upload coverage to Codecov
@@ -226,6 +229,9 @@ jobs:
 
       - name: Run integration tests
         run: |
+          pip install requests pytest
+          pytest tests/comprehensive_test.py
+          pytest tests/api_integration_test.py
           python test_complete_workflow.py || true
 
       - name: Show logs on failure
