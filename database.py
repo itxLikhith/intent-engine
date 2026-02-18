@@ -215,7 +215,7 @@ class CreativeAsset(Base):
     ad_id = Column(Integer, ForeignKey("ads.id"), nullable=False, index=True)
     asset_type = Column(String, nullable=False, index=True)  # image, video, text, html
     asset_url = Column(String, nullable=False)  # Location of creative asset
-    dimensions = Column(JSON)  # {"width": 300, "height": 250} for display ads
+    payload = Column(JSON)  # {"width": 300, "height": 250} for display ads
     checksum = Column(String)  # Integrity verification
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
@@ -273,6 +273,7 @@ class ClickTracking(Base):
     ip_hash = Column(String, index=True)  # Hashed IP for fraud detection
     user_agent_hash = Column(String)  # Hashed user agent
     referring_url = Column(String)  # Source of click
+    payload = Column(JSON)
 
     # Relationship to ad
     ad = relationship("Ad")
@@ -299,6 +300,7 @@ class ConversionTracking(Base):
     value = Column(Float)  # Conversion value (if applicable)
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)  # Conversion timestamp
     status = Column(String, default="pending", index=True)  # Verified, pending, rejected
+    payload = Column(JSON)
 
     # Relationship to click
     click = relationship("ClickTracking")
@@ -323,6 +325,7 @@ class FraudDetection(Base):
     reason = Column(String)  # Reason for flagging
     severity = Column(String, index=True)  # Low, medium, high risk
     review_status = Column(String, default="pending", index=True)  # Pending, reviewed, action_taken
+    payload = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)  # Timestamp
 
     # Relationship to ad (optional, could be linked to ad_id if needed)
@@ -358,6 +361,7 @@ class ABTest(Base):
     confidence_level = Column(Float, default=0.95)  # Statistical confidence level
     primary_metric = Column(String, default="ctr")  # Primary metric to optimize
     winner_variant_id = Column(Integer, nullable=True)  # ID of winning variant (if determined)
+    payload = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), index=True)
 
@@ -388,6 +392,7 @@ class ABTestVariant(Base):
     clicks = Column(Integer, default=0)
     conversions = Column(Integer, default=0)
     revenue = Column(Float, default=0.0)
+    payload = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
     # Relationships

@@ -133,8 +133,8 @@ class Ad(AdBase):
 class CreativeAssetBase(BaseModel):
     asset_type: str  # image, video, text, html
     asset_url: str
-    dimensions: dict[str, Any] | None = None  # {"width": 300, "height": 250}
-    checksum: str | None = None
+    payload: Optional[dict[str, Any]] = None  # {"width": 300, "height": 250}
+    checksum: Optional[str] = None
 
 
 class CreativeAssetCreate(CreativeAssetBase):
@@ -142,10 +142,10 @@ class CreativeAssetCreate(CreativeAssetBase):
 
 
 class CreativeAssetUpdate(BaseModel):
-    asset_type: str | None = None
-    asset_url: str | None = None
-    dimensions: dict[str, Any] | None = None
-    checksum: str | None = None
+    asset_type: Optional[str] = None
+    asset_url: Optional[str] = None
+    payload: Optional[dict[str, Any]] = None
+    checksum: Optional[str] = None
 
 
 class CreativeAsset(CreativeAssetBase):
@@ -187,10 +187,11 @@ class AdMetric(AdMetricBase):
 
 class ClickTrackingBase(BaseModel):
     ad_id: int
-    session_id: str | None = None  # Anonymous session identifier
-    ip_hash: str | None = None  # Hashed IP for fraud detection
-    user_agent_hash: str | None = None  # Hashed user agent
-    referring_url: str | None = None  # Source of click
+    session_id: Optional[str] = None  # Anonymous session identifier
+    ip_hash: Optional[str] = None  # Hashed IP for fraud detection
+    user_agent_hash: Optional[str] = None  # Hashed user agent
+    referring_url: Optional[str] = None  # Source of click
+    payload: Optional[dict[str, Any]] = None
 
 
 class ClickTrackingCreate(ClickTrackingBase):
@@ -207,9 +208,10 @@ class ClickTracking(ClickTrackingBase):
 
 class ConversionTrackingBase(BaseModel):
     click_id: int  # Foreign key to click tracking
-    conversion_type: str | None = None  # Purchase, signup, download, etc.
-    value: float | None = None  # Conversion value (if applicable)
+    conversion_type: Optional[str] = None  # Purchase, signup, download, etc.
+    value: Optional[float] = None  # Conversion value (if applicable)
     status: str = "pending"  # Verified, pending, rejected
+    payload: Optional[dict[str, Any]] = None
 
 
 class ConversionTrackingCreate(ConversionTrackingBase):
@@ -225,12 +227,13 @@ class ConversionTracking(ConversionTrackingBase):
 
 
 class FraudDetectionBase(BaseModel):
-    event_id: int | None = None  # ID of suspicious event
-    event_type: str | None = None  # Click, impression, conversion
-    reason: str | None = None  # Reason for flagging
-    severity: str | None = None  # Low, medium, high risk
+    event_id: Optional[int] = None  # ID of suspicious event
+    event_type: Optional[str] = None  # Click, impression, conversion
+    reason: Optional[str] = None  # Reason for flagging
+    severity: Optional[str] = None  # Low, medium, high risk
     review_status: str = "pending"  # Pending, reviewed, action_taken
-    ad_id: int | None = None  # Optional link to ad
+    ad_id: Optional[int] = None  # Optional link to ad
+    payload: Optional[dict[str, Any]] = None
 
 
 class FraudDetectionCreate(FraudDetectionBase):
@@ -464,12 +467,13 @@ class PrivacyComplianceReport(BaseModel):
 # A/B Testing Models
 class ABTestBase(BaseModel):
     name: str
-    description: str | None = None
+    description: Optional[str] = None
     campaign_id: int
     traffic_allocation: float = 1.0
     min_sample_size: int = 1000
     confidence_level: float = 0.95
     primary_metric: str = "ctr"
+    payload: Optional[dict[str, Any]] = None
 
 
 class ABTestCreate(ABTestBase):
@@ -477,13 +481,14 @@ class ABTestCreate(ABTestBase):
 
 
 class ABTestUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    traffic_allocation: float | None = None
-    min_sample_size: int | None = None
-    confidence_level: float | None = None
-    primary_metric: str | None = None
-    status: str | None = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    traffic_allocation: Optional[float] = None
+    min_sample_size: Optional[int] = None
+    confidence_level: Optional[float] = None
+    primary_metric: Optional[str] = None
+    status: Optional[str] = None
+    payload: Optional[dict[str, Any]] = None
 
 
 class ABTestResponse(ABTestBase):
@@ -504,6 +509,7 @@ class ABTestVariantBase(BaseModel):
     ad_id: int
     traffic_weight: float = 0.5
     is_control: bool = False
+    payload: Optional[dict[str, Any]] = None
 
 
 class ABTestVariantCreate(ABTestVariantBase):
