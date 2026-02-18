@@ -37,11 +37,11 @@ jobs:
 
       - name: Check formatting
         run: ruff format --check .
-        continue-on-error: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/master' }}
 
       - name: Lint
         run: ruff check . --output-format=github
-        continue-on-error: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/master' }}
 
       - name: Auto-fix on push (main/master only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'

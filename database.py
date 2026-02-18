@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 class ABTestStatus(Enum):
     """A/B Test status options"""
+
     DRAFT = "draft"
     RUNNING = "running"
     PAUSED = "paused"
@@ -347,7 +348,9 @@ class ABTest(Base):
     name = Column(String, nullable=False)
     description = Column(Text)
     campaign_id = Column(Integer, ForeignKey("campaigns.id"), index=True)
-    status = Column(String, default=ABTestStatus.DRAFT.value, index=True)  # draft, running, paused, completed, cancelled
+    status = Column(
+        String, default=ABTestStatus.DRAFT.value, index=True
+    )  # draft, running, paused, completed, cancelled
     start_date = Column(DateTime(timezone=True), index=True)
     end_date = Column(DateTime(timezone=True), index=True)
     traffic_allocation = Column(Float, default=1.0)  # Percentage of traffic to include in test
