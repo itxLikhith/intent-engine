@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS creative_assets (
     ad_id INTEGER NOT NULL REFERENCES ads(id) ON DELETE CASCADE,
     asset_type VARCHAR(50) NOT NULL,
     asset_url TEXT NOT NULL,
-    dimensions JSONB,
+    payload JSONB,
     checksum VARCHAR(64),
     file_size INTEGER,
     mime_type VARCHAR(100),
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS click_tracking (
     city VARCHAR(100),
     is_fraudulent BOOLEAN DEFAULT FALSE,
     fraud_score DECIMAL(5,4),
-    metadata JSONB,
+    payload JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS conversion_tracking (
     conversion_value DECIMAL(12,4),
     timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
     status VARCHAR(20) DEFAULT 'pending',
-    metadata JSONB,
+    payload JSONB,
     revenue DECIMAL(12,4),
     quantity INTEGER,
     product_id VARCHAR(100),
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS fraud_detection (
     is_fraudulent BOOLEAN DEFAULT FALSE,
     severity VARCHAR(20),
     reason TEXT,
-    metadata JSONB,
+    payload JSONB,
     review_status VARCHAR(20) DEFAULT 'pending',
     reviewed_by VARCHAR(100),
     reviewed_at TIMESTAMP WITH TIME ZONE,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS ab_tests (
     end_date TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    metadata JSONB
+    payload JSONB
 );
 
 -- A/B Test Variants table
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS ab_test_variants (
     test_id INTEGER NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     weight DECIMAL(5,4) NOT NULL,
-    metadata JSONB,
+    payload JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(test_id, name)
 );
