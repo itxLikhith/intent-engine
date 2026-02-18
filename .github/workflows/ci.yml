@@ -1,73 +1,106 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [main, master]
+    tags: ['v*.*.*']
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+  REGISTRY: docker.io
+  IMAGE_NAME: anony45/intent-engine-api
 
 jobs:
-  # Job 1: Auto-fix on push (skip for PRs and auto-fix commits)
-  auto-fix:
+  # ============================================================================
+  # Job 1: Code Quality - Lint & Format
+  # ============================================================================
+  code-quality:
+    name: Code Quality
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[auto-fix]')
-    permissions:
-      contents: write
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Install Ruff
-        run: pip install ruff
-
-      - name: Auto-fix with Ruff
-        run: |
-          ruff check . --fix --unsafe-fixes || true
-          ruff format . || true
-
-      - name: Commit changes if needed
-        run: |
-          if [[ -n $(git status --porcelain) ]]; then
-            git config --local user.email "github-actions[bot]@users.noreply.github.com"
-            git config --local user.name "github-actions[bot]"
-            git pull --rebase --no-verify || true
-            git add -A
-            git commit -m "style: auto-fix linting issues [auto-fix]" || exit 0
-            git push
-          fi
-
-  # Job 2: Lint and format check (required for PRs)
-  lint:
-    runs-on: ubuntu-latest
-    needs: auto-fix
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install Ruff
         run: pip install ruff
 
       - name: Check formatting
         run: ruff format --check .
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
 
       - name: Lint
         run: ruff check . --output-format=github
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
 
-  # Job 3: Tests with coverage
-  test:
+      - name: Auto-fix on push (main/master only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          ruff check . --fix --unsafe-fixes || true
+          ruff format . || true
+          
+          if [[ -n $(git status --porcelain) ]]; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git pull --rebase --no-verify || true
+            git add -A
+            git commit -m "style: auto-fix linting issues [skip ci]" || exit 0
+            git push
+          fi
+
+  # ============================================================================
+  # Job 2: Security Scanning
+  # ============================================================================
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
-    needs: lint
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install safety
+        run: pip install safety bandit
+
+      - name: Check dependencies for vulnerabilities
+        run: safety check -r requirements.txt --output json || true
+        continue-on-error: true
+
+      - name: Run bandit security scan
+        run: bandit -r . -f json -o bandit-report.json || true
+        continue-on-error: true
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+
+  # ============================================================================
+  # Job 3: Unit Tests with Coverage
+  # ============================================================================
+  test:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [code-quality]
     services:
       postgres:
         image: postgres:15-alpine
@@ -98,23 +131,249 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout
 
-      - name: Run tests
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        run: |
+          for migration in migrations/*.sql; do
+            if [ -f "$migration" ]; then
+              PGPASSWORD=test psql -h localhost -U test -d test_db -f "$migration"
+            fi
+          done
+
+      - name: Run tests with coverage
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test_db
           REDIS_HOST: localhost
           REDIS_PORT: 6379
         run: |
-          pytest --cov=. --cov-report=xml -v || true
+          pytest \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --timeout=300 \
+            -v \
+            tests/
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           flags: unittests
+          fail_ci_if_error: false
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/
+
+  # ============================================================================
+  # Job 4: Integration Tests (Docker)
+  # ============================================================================
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: intent-engine-test:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start services
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          sleep 60
+
+      - name: Wait for API to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8000/ | grep -q "healthy"; then
+              echo "API is ready!"
+              exit 0
+            fi
+            echo "Waiting for API... ($i/30)"
+            sleep 10
+          done
+          echo "API failed to start"
+          exit 1
+
+      - name: Run integration tests
+        run: |
+          python test_complete_workflow.py || true
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker-compose logs
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose down -v
+
+  # ============================================================================
+  # Job 5: Build & Push Docker Image (on tags or main)
+  # ============================================================================
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [integration-test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  # ============================================================================
+  # Job 6: Create GitHub Release (on tags)
+  # ============================================================================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-and-push]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          configuration: |
+            {
+              "categories": [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": ["feature", "enhancement"]
+                },
+                {
+                  "title": "## 🐛 Bug Fixes",
+                  "labels": ["fix", "bug"]
+                },
+                {
+                  "title": "## 📝 Documentation",
+                  "labels": ["docs", "documentation"]
+                },
+                {
+                  "title": "## 🔒 Security",
+                  "labels": ["security"]
+                },
+                {
+                  "title": "## 🧪 Tests",
+                  "labels": ["test", "testing"]
+                }
+              ]
+            }
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ## 🐳 Docker Image
+            - `docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}`
+            - `docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest`
+            
+            ## 📦 Installation
+            ```bash
+            docker-compose up -d
+            ```
+          draft: false
+          prerelease: false
+          files: |
+            sbom.spdx.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # Job 7: Notify (on failure)
+  # ============================================================================
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [code-quality, security, test, integration-test, build-and-push, release]
+    if: failure()
+    steps:
+      - name: Send failure notification
+        run: |
+          echo "Workflow failed: ${{ github.workflow }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          # Add Slack/Discord/Email notification here if needed
