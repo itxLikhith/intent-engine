@@ -14,7 +14,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql import func
 
@@ -41,8 +50,12 @@ class ABTest(Base):
     status = Column(String, default=ABTestStatus.DRAFT.value)
     start_date = Column(DateTime)
     end_date = Column(DateTime)
-    traffic_allocation = Column(Float, default=1.0)  # Percentage of traffic to include in test
-    min_sample_size = Column(Integer, default=1000)  # Minimum samples before significance
+    traffic_allocation = Column(
+        Float, default=1.0
+    )  # Percentage of traffic to include in test
+    min_sample_size = Column(
+        Integer, default=1000
+    )  # Minimum samples before significance
     confidence_level = Column(Float, default=0.95)  # Statistical confidence level
     primary_metric = Column(String, default="ctr")  # Primary metric to optimize
     winner_variant_id = Column(Integer)  # ID of winning variant (if determined)
@@ -50,7 +63,9 @@ class ABTest(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    variants = relationship("ABTestVariant", back_populates="test", cascade="all, delete-orphan")
+    variants = relationship(
+        "ABTestVariant", back_populates="test", cascade="all, delete-orphan"
+    )
 
 
 class ABTestVariant(Base):
@@ -151,13 +166,22 @@ class ABTestService:
         return test
 
     def add_variant(
-        self, test_id: int, name: str, ad_id: int, traffic_weight: float = 0.5, is_control: bool = False
+        self,
+        test_id: int,
+        name: str,
+        ad_id: int,
+        traffic_weight: float = 0.5,
+        is_control: bool = False,
     ) -> ABTestVariant:
         """
         Add a variant to an A/B test.
         """
         variant = ABTestVariant(
-            test_id=test_id, name=name, ad_id=ad_id, traffic_weight=traffic_weight, is_control=is_control
+            test_id=test_id,
+            name=name,
+            ad_id=ad_id,
+            traffic_weight=traffic_weight,
+            is_control=is_control,
         )
         self.db.add(variant)
         self.db.commit()
@@ -179,7 +203,9 @@ class ABTestService:
         # Validate traffic weights sum to approximately 1
         total_weight = sum(v.traffic_weight for v in test.variants)
         if abs(total_weight - 1.0) > 0.01:
-            raise ValueError(f"Variant traffic weights must sum to 1.0 (current: {total_weight})")
+            raise ValueError(
+                f"Variant traffic weights must sum to 1.0 (current: {total_weight})"
+            )
 
         test.status = ABTestStatus.RUNNING.value
         test.start_date = datetime.utcnow()
@@ -200,7 +226,9 @@ class ABTestService:
         self.db.refresh(test)
         return test
 
-    def complete_test(self, test_id: int, winner_variant_id: int | None = None) -> ABTest:
+    def complete_test(
+        self, test_id: int, winner_variant_id: int | None = None
+    ) -> ABTest:
         """
         Complete an A/B test and optionally declare a winner.
         """
@@ -223,7 +251,9 @@ class ABTestService:
         self.db.refresh(test)
         return test
 
-    def assign_variant(self, test_id: int, user_identifier: str) -> ABTestVariant | None:
+    def assign_variant(
+        self, test_id: int, user_identifier: str
+    ) -> ABTestVariant | None:
         """
         Assign a user to a variant using consistent hashing.
         This ensures the same user always sees the same variant.
@@ -236,12 +266,19 @@ class ABTestService:
         user_hash = hashlib.sha256(f"{test_id}:{user_identifier}".encode()).hexdigest()
         existing = (
             self.db.query(ABTestAssignment)
-            .filter(ABTestAssignment.test_id == test_id, ABTestAssignment.user_hash == user_hash)
+            .filter(
+                ABTestAssignment.test_id == test_id,
+                ABTestAssignment.user_hash == user_hash,
+            )
             .first()
         )
 
         if existing:
-            return self.db.query(ABTestVariant).filter(ABTestVariant.id == existing.variant_id).first()
+            return (
+                self.db.query(ABTestVariant)
+                .filter(ABTestVariant.id == existing.variant_id)
+                .first()
+            )
 
         # Check if user should be included in test (traffic allocation)
         inclusion_hash = int(hashlib.md5(user_hash.encode()).hexdigest(), 16) % 100
@@ -253,13 +290,17 @@ class ABTestService:
 
         if variant:
             # Record assignment
-            assignment = ABTestAssignment(test_id=test_id, variant_id=variant.id, user_hash=user_hash)
+            assignment = ABTestAssignment(
+                test_id=test_id, variant_id=variant.id, user_hash=user_hash
+            )
             self.db.add(assignment)
             self.db.commit()
 
         return variant
 
-    def _select_variant_weighted(self, variants: list[ABTestVariant], seed: str) -> ABTestVariant | None:
+    def _select_variant_weighted(
+        self, variants: list[ABTestVariant], seed: str
+    ) -> ABTestVariant | None:
         """
         Select a variant based on traffic weights using deterministic hashing.
         """
@@ -282,7 +323,9 @@ class ABTestService:
         """
         Record an impression for a variant.
         """
-        variant = self.db.query(ABTestVariant).filter(ABTestVariant.id == variant_id).first()
+        variant = (
+            self.db.query(ABTestVariant).filter(ABTestVariant.id == variant_id).first()
+        )
         if variant:
             variant.impressions += 1
             self.db.commit()
@@ -291,7 +334,9 @@ class ABTestService:
         """
         Record a click for a variant.
         """
-        variant = self.db.query(ABTestVariant).filter(ABTestVariant.id == variant_id).first()
+        variant = (
+            self.db.query(ABTestVariant).filter(ABTestVariant.id == variant_id).first()
+        )
         if variant:
             variant.clicks += 1
             self.db.commit()
@@ -300,7 +345,9 @@ class ABTestService:
         """
         Record a conversion for a variant.
         """
-        variant = self.db.query(ABTestVariant).filter(ABTestVariant.id == variant_id).first()
+        variant = (
+            self.db.query(ABTestVariant).filter(ABTestVariant.id == variant_id).first()
+        )
         if variant:
             variant.conversions += 1
             variant.revenue += revenue
@@ -318,16 +365,22 @@ class ABTestService:
         total_impressions = sum(v.impressions for v in variants)
 
         # Find control variant
-        control = next((v for v in variants if v.is_control), variants[0] if variants else None)
+        control = next(
+            (v for v in variants if v.is_control), variants[0] if variants else None
+        )
 
         # Calculate stats for each variant
         variant_stats = []
         for variant in variants:
             ctr = variant.clicks / variant.impressions if variant.impressions > 0 else 0
-            conv_rate = variant.conversions / variant.clicks if variant.clicks > 0 else 0
+            conv_rate = (
+                variant.conversions / variant.clicks if variant.clicks > 0 else 0
+            )
 
             # Calculate confidence interval for CTR
-            ci = self._calculate_confidence_interval(variant.clicks, variant.impressions, test.confidence_level)
+            ci = self._calculate_confidence_interval(
+                variant.clicks, variant.impressions, test.confidence_level
+            )
 
             # Calculate lift vs control
             lift = None
@@ -366,15 +419,26 @@ class ABTestService:
 
             if best_variant:
                 p_value = self._calculate_p_value(
-                    control.clicks, control.impressions, best_variant.clicks, best_variant.impressions
+                    control.clicks,
+                    control.impressions,
+                    best_variant.clicks,
+                    best_variant.impressions,
                 )
 
                 is_significant = p_value < (1 - test.confidence_level)
 
                 if is_significant and total_impressions >= test.min_sample_size:
                     # Determine winner based on primary metric
-                    best_ctr = best_variant.clicks / best_variant.impressions if best_variant.impressions > 0 else 0
-                    control_ctr = control.clicks / control.impressions if control.impressions > 0 else 0
+                    best_ctr = (
+                        best_variant.clicks / best_variant.impressions
+                        if best_variant.impressions > 0
+                        else 0
+                    )
+                    control_ctr = (
+                        control.clicks / control.impressions
+                        if control.impressions > 0
+                        else 0
+                    )
 
                     if best_ctr > control_ctr:
                         winner_id = best_variant.id
@@ -408,7 +472,9 @@ class ABTestService:
             recommended_action=recommended_action,
         )
 
-    def _calculate_confidence_interval(self, successes: int, trials: int, confidence: float) -> tuple[float, float]:
+    def _calculate_confidence_interval(
+        self, successes: int, trials: int, confidence: float
+    ) -> tuple[float, float]:
         """
         Calculate Wilson score confidence interval.
         """
@@ -421,12 +487,18 @@ class ABTestService:
 
         denominator = 1 + z * z / trials
         center = (p + z * z / (2 * trials)) / denominator
-        spread = z * math.sqrt((p * (1 - p) + z * z / (4 * trials)) / trials) / denominator
+        spread = (
+            z * math.sqrt((p * (1 - p) + z * z / (4 * trials)) / trials) / denominator
+        )
 
         return (max(0, center - spread), min(1, center + spread))
 
     def _calculate_p_value(
-        self, control_successes: int, control_trials: int, treatment_successes: int, treatment_trials: int
+        self,
+        control_successes: int,
+        control_trials: int,
+        treatment_successes: int,
+        treatment_trials: int,
     ) -> float:
         """
         Calculate p-value using two-proportion z-test.
@@ -438,13 +510,17 @@ class ABTestService:
         p2 = treatment_successes / treatment_trials
 
         # Pooled proportion
-        p_pooled = (control_successes + treatment_successes) / (control_trials + treatment_trials)
+        p_pooled = (control_successes + treatment_successes) / (
+            control_trials + treatment_trials
+        )
 
         if p_pooled == 0 or p_pooled == 1:
             return 1.0
 
         # Standard error
-        se = math.sqrt(p_pooled * (1 - p_pooled) * (1 / control_trials + 1 / treatment_trials))
+        se = math.sqrt(
+            p_pooled * (1 - p_pooled) * (1 / control_trials + 1 / treatment_trials)
+        )
 
         if se == 0:
             return 1.0
@@ -471,7 +547,9 @@ class ABTestService:
         """
         return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
-    def get_all_tests(self, campaign_id: int | None = None, status: str | None = None) -> list[ABTest]:
+    def get_all_tests(
+        self, campaign_id: int | None = None, status: str | None = None
+    ) -> list[ABTest]:
         """
         Get all A/B tests with optional filters.
         """
@@ -500,7 +578,9 @@ class ABTestService:
             return False
 
         # Delete assignments first
-        self.db.query(ABTestAssignment).filter(ABTestAssignment.test_id == test_id).delete()
+        self.db.query(ABTestAssignment).filter(
+            ABTestAssignment.test_id == test_id
+        ).delete()
 
         # Delete test (variants will be cascade deleted)
         self.db.delete(test)

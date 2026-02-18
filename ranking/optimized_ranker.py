@@ -21,7 +21,6 @@ from typing import Any
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_ranking_cache
-
 from core.schema import (
     Constraint,
     ConstraintType,
@@ -90,7 +89,9 @@ class OptimizedConstraintSatisfactionEngine:
     def __init__(self):
         self.embedding_cache = get_embedding_cache()
 
-    def satisfies_constraints(self, result: SearchResult, constraints: list[Constraint]) -> bool:
+    def satisfies_constraints(
+        self, result: SearchResult, constraints: list[Constraint]
+    ) -> bool:
         """Check if a result satisfies all hard constraints"""
         for constraint in constraints:
             if not constraint.hardFilter:
@@ -101,7 +102,9 @@ class OptimizedConstraintSatisfactionEngine:
 
         return True
 
-    def _satisfies_single_constraint(self, result: SearchResult, constraint: Constraint) -> bool:
+    def _satisfies_single_constraint(
+        self, result: SearchResult, constraint: Constraint
+    ) -> bool:
         """Check if a result satisfies a single constraint with fast exact matching"""
         dimension = constraint.dimension
         value = constraint.value
@@ -217,7 +220,9 @@ class OptimizedIntentAlignmentEngine:
     def __init__(self):
         self.embedding_cache = get_embedding_cache()
 
-    def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
+    def compute_intent_alignment(
+        self, result: SearchResult, intent: UniversalIntent
+    ) -> tuple[float, list[str]]:
         """Compute alignment score with improved weighting"""
         scores = []
         reasons = []
@@ -227,27 +232,37 @@ class OptimizedIntentAlignmentEngine:
         inferred = intent.inferred or InferredIntent()
 
         # 1. Query-content alignment (semantic similarity) - 35%
-        query_score, query_reasons = self._compute_query_content_alignment(result, intent, declared)
+        query_score, query_reasons = self._compute_query_content_alignment(
+            result, intent, declared
+        )
         scores.append((query_score, 0.35))
         reasons.extend(query_reasons)
 
         # 2. Use case alignment - 20%
-        use_case_score, use_case_reasons = self._compute_use_case_alignment(result, intent, inferred)
+        use_case_score, use_case_reasons = self._compute_use_case_alignment(
+            result, intent, inferred
+        )
         scores.append((use_case_score, 0.20))
         reasons.extend(use_case_reasons)
 
         # 3. Ethical signal alignment - 15%
-        ethical_score, ethical_reasons = self._compute_ethical_alignment(result, intent, inferred)
+        ethical_score, ethical_reasons = self._compute_ethical_alignment(
+            result, intent, inferred
+        )
         scores.append((ethical_score, 0.15))
         reasons.extend(ethical_reasons)
 
         # 4. Skill level alignment - 15%
-        skill_score, skill_reasons = self._compute_skill_alignment(result, intent, declared)
+        skill_score, skill_reasons = self._compute_skill_alignment(
+            result, intent, declared
+        )
         scores.append((skill_score, 0.15))
         reasons.extend(skill_reasons)
 
         # 5. Temporal intent alignment - 10%
-        temporal_score, temporal_reasons = self._compute_temporal_alignment(result, intent, inferred)
+        temporal_score, temporal_reasons = self._compute_temporal_alignment(
+            result, intent, inferred
+        )
         scores.append((temporal_score, 0.10))
         reasons.extend(temporal_reasons)
 
@@ -348,7 +363,9 @@ class OptimizedIntentAlignmentEngine:
                 # Semantic match
                 use_case_emb = self.embedding_cache.encode_text(use_case_str)
                 if use_case_emb is not None:
-                    similarity = self.embedding_cache.cosine_similarity(use_case_emb, tag_emb)
+                    similarity = self.embedding_cache.cosine_similarity(
+                        use_case_emb, tag_emb
+                    )
                     if similarity > 0.5:
                         score += similarity * 0.3
                         reasons.append(f"use-case-{use_case.value}-semantic")
@@ -556,8 +573,14 @@ class OptimizedIntentRanker:
         # Compute alignment scores
         ranked_results = []
         for candidate in filtered_candidates:
-            score, reasons = self.alignment_engine.compute_intent_alignment(candidate, request.intent)
-            ranked_results.append(RankedResult(result=candidate, alignmentScore=score, matchReasons=reasons))
+            score, reasons = self.alignment_engine.compute_intent_alignment(
+                candidate, request.intent
+            )
+            ranked_results.append(
+                RankedResult(
+                    result=candidate, alignmentScore=score, matchReasons=reasons
+                )
+            )
 
         # Deduplicate
         ranked_results = self.deduplicator.deduplicate(ranked_results)
@@ -567,7 +590,11 @@ class OptimizedIntentRanker:
 
         # Create response
         processing_time = (time.time() - start_time) * 1000
-        response = RankingResponse(rankedResults=ranked_results, cache_hit=False, processing_time_ms=processing_time)
+        response = RankingResponse(
+            rankedResults=ranked_results,
+            cache_hit=False,
+            processing_time_ms=processing_time,
+        )
 
         # Cache result
         self.cache.set(cache_key, response)
@@ -578,14 +605,18 @@ class OptimizedIntentRanker:
         """Filter candidates based on constraints"""
         filtered = []
         for candidate in request.candidates:
-            if self.constraint_engine.satisfies_constraints(candidate, request.intent.declared.constraints):
+            if self.constraint_engine.satisfies_constraints(
+                candidate, request.intent.declared.constraints
+            ):
                 filtered.append(candidate)
         return filtered
 
     def _make_cache_key(self, request: RankingRequest) -> str:
         """Create cache key for request"""
         # Hash intent query and candidate IDs
-        intent_str = request.intent.declared.query if request.intent.declared.query else ""
+        intent_str = (
+            request.intent.declared.query if request.intent.declared.query else ""
+        )
         candidate_ids = sorted([c.id for c in request.candidates])
         key_data = f"{intent_str}:{','.join(candidate_ids)}"
         return hashlib.md5(key_data.encode()).hexdigest()

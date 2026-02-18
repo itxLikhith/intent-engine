@@ -4,7 +4,15 @@ Script to initialize the database with sample data for the advertising system
 
 from datetime import datetime, timedelta
 
-from database import Ad, AdGroup, AdMetric, Advertiser, Campaign, CreativeAsset, db_manager
+from database import (
+    Ad,
+    AdGroup,
+    AdMetric,
+    Advertiser,
+    Campaign,
+    CreativeAsset,
+    db_manager,
+)
 
 
 def init_sample_data():
@@ -16,7 +24,9 @@ def init_sample_data():
 
     try:
         # Create sample advertiser
-        advertiser = Advertiser(name="Sample Advertiser Inc.", contact_email="contact@sample-advertiser.com")
+        advertiser = Advertiser(
+            name="Sample Advertiser Inc.", contact_email="contact@sample-advertiser.com"
+        )
         db.add(advertiser)
         db.commit()
         db.refresh(advertiser)
@@ -41,7 +51,11 @@ def init_sample_data():
         ad_group = AdGroup(
             campaign_id=campaign.id,
             name="Mobile Ads Group",
-            targeting_settings={"device_type": ["mobile"], "location": ["US", "CA", "UK"], "language": ["en"]},
+            targeting_settings={
+                "device_type": ["mobile"],
+                "location": ["US", "CA", "UK"],
+                "language": ["en"],
+            },
             bid_strategy="manual",
         )
         db.add(ad_group)

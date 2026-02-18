@@ -18,7 +18,11 @@ from core.schema import (
     UniversalIntent,
     UseCase,
 )
-from services.recommender import ServiceMetadata, ServiceRecommendationRequest, recommend_services
+from services.recommender import (
+    ServiceMetadata,
+    ServiceRecommendationRequest,
+    recommend_services,
+)
 
 
 def create_test_intent():
@@ -39,9 +43,15 @@ def create_test_intent():
         inferred=InferredIntent(
             useCases=[UseCase.PROFESSIONAL_DEVELOPMENT, UseCase.LEARNING],
             temporalIntent=TemporalIntent(
-                horizon=TemporalHorizon.WEEK, recency=Recency.EVERGREEN, frequency=Frequency.RECURRING
+                horizon=TemporalHorizon.WEEK,
+                recency=Recency.EVERGREEN,
+                frequency=Frequency.RECURRING,
             ),
-            ethicalSignals=[EthicalSignal(dimension=EthicalDimension.OPENNESS, preference="open_format")],
+            ethicalSignals=[
+                EthicalSignal(
+                    dimension=EthicalDimension.OPENNESS, preference="open_format"
+                )
+            ],
         ),
     )
 
@@ -54,14 +64,26 @@ def create_test_services(count=10):
             ServiceMetadata(
                 id=f"service_{i + 1}",
                 name=f"Service {i + 1}",
-                supportedGoals=["CREATE", "COLLABORATE", "EDIT"] if i % 2 == 0 else ["FIND_INFORMATION", "LEARN"],
+                supportedGoals=(
+                    ["CREATE", "COLLABORATE", "EDIT"]
+                    if i % 2 == 0
+                    else ["FIND_INFORMATION", "LEARN"]
+                ),
                 primaryUseCases=(
-                    ["writing", "research", "drafting"] if i % 3 == 0 else ["searching", "discovery", "learning"]
+                    ["writing", "research", "drafting"]
+                    if i % 3 == 0
+                    else ["searching", "discovery", "learning"]
                 ),
                 temporalPatterns=(
-                    ["long_session", "recurring_edit"] if i % 4 == 0 else ["quick_lookup", "one_time_task"]
+                    ["long_session", "recurring_edit"]
+                    if i % 4 == 0
+                    else ["quick_lookup", "one_time_task"]
                 ),
-                ethicalAlignment=["open_format", "local_first"] if i % 5 == 0 else ["encrypted", "privacy_first"],
+                ethicalAlignment=(
+                    ["open_format", "local_first"]
+                    if i % 5 == 0
+                    else ["encrypted", "privacy_first"]
+                ),
                 description=f"Description for service {i + 1}",
             )
         )
@@ -74,19 +96,25 @@ def test_performance():
     services = create_test_services(10)  # 10 services as specified
 
     # Warm up the model
-    request = ServiceRecommendationRequest(intent=intent, availableServices=services[:1])
+    request = ServiceRecommendationRequest(
+        intent=intent, availableServices=services[:1]
+    )
     recommend_services(request)
 
     # Measure performance
     times = []
     for _ in range(10):  # Run 10 iterations
         start_time = time.time()
-        request = ServiceRecommendationRequest(intent=intent, availableServices=services)
+        request = ServiceRecommendationRequest(
+            intent=intent, availableServices=services
+        )
         response = recommend_services(request)
         end_time = time.time()
         elapsed_ms = (end_time - start_time) * 1000
         times.append(elapsed_ms)
-        print(f"Iteration - Time: {elapsed_ms:.2f}ms, Recommendations: {len(response.recommendations)}")
+        print(
+            f"Iteration - Time: {elapsed_ms:.2f}ms, Recommendations: {len(response.recommendations)}"
+        )
 
     avg_time = sum(times) / len(times)
     max_time = max(times)

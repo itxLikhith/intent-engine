@@ -5,25 +5,13 @@ Unit tests for the service_recommender module
 import copy
 import unittest
 
-from core.schema import (
-    DeclaredIntent,
-    EthicalDimension,
-    EthicalSignal,
-    Frequency,
-    InferredIntent,
-    IntentGoal,
-    Recency,
-    SkillLevel,
-    TemporalHorizon,
-    TemporalIntent,
-    UniversalIntent,
-    UseCase,
-)
-from services.recommender import (
-    ServiceMetadata,
-    ServiceRecommendationRequest,
-    recommend_services,
-)
+from core.schema import (DeclaredIntent, EthicalDimension, EthicalSignal,
+                         Frequency, InferredIntent, IntentGoal, Recency,
+                         SkillLevel, TemporalHorizon, TemporalIntent,
+                         UniversalIntent, UseCase)
+from services.recommender import (ServiceMetadata,
+                                  ServiceRecommendationRequest,
+                                  recommend_services)
 
 
 class TestServiceRecommender(unittest.TestCase):

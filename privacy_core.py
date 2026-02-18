@@ -62,7 +62,11 @@ class PrivacyComplianceEngine:
         for dimension in ad.forbiddenDimensions:
             if dimension.lower() in self.forbidden_targeting_dimensions:
                 violations.append(
-                    {"type": "forbidden_forbidden_dimension", "dimension": dimension, "severity": "MEDIUM"}
+                    {
+                        "type": "forbidden_forbidden_dimension",
+                        "dimension": dimension,
+                        "severity": "MEDIUM",
+                    }
                 )
 
         return {
@@ -90,7 +94,9 @@ class PrivacyComplianceEngine:
         anonymized_intent.sessionFeedback = None
 
         # Ensure expiresAt is set correctly (8 hours from creation)
-        anonymized_intent.expiresAt = (datetime.utcnow() + timedelta(hours=8)).isoformat() + "Z"
+        anonymized_intent.expiresAt = (
+            datetime.utcnow() + timedelta(hours=8)
+        ).isoformat() + "Z"
 
         return anonymized_intent
 

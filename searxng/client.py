@@ -65,7 +65,9 @@ class SearXNGClient:
     - Connection pooling for better performance
     """
 
-    def __init__(self, base_url: str = None, redis_host: str = None, redis_port: int = 6379):
+    def __init__(
+        self, base_url: str = None, redis_host: str = None, redis_port: int = 6379
+    ):
         """
         Initialize SearXNG client.
 
@@ -76,7 +78,9 @@ class SearXNGClient:
             redis_port: Redis port (default: 6379).
         """
         # Use environment variable or Docker service name by default for containerized deployments
-        self.base_url = (base_url or os.getenv("SEARXNG_BASE_URL", "http://searxng:8080")).rstrip("/")
+        self.base_url = (
+            base_url or os.getenv("SEARXNG_BASE_URL", "http://searxng:8080")
+        ).rstrip("/")
         self.timeout = 10.0  # seconds (reduced from 30s for better performance)
         self.connect_timeout = 3.0  # connection timeout
         self.cache_ttl = 600  # Cache TTL: 10 minutes
@@ -85,7 +89,9 @@ class SearXNGClient:
         self.cache = None
         if REDIS_AVAILABLE and redis_host:
             try:
-                self.cache = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
+                self.cache = redis.Redis(
+                    host=redis_host, port=redis_port, decode_responses=True
+                )
                 self.cache.ping()
                 logger.info(f"SearXNG Redis cache connected: {redis_host}:{redis_port}")
             except Exception as e:
@@ -96,7 +102,9 @@ class SearXNGClient:
 
         # Initialize persistent HTTP client with connection pooling
         # This avoids creating a new connection for each request
-        timeout_config = httpx.Timeout(timeout=self.timeout, connect=self.connect_timeout)
+        timeout_config = httpx.Timeout(
+            timeout=self.timeout, connect=self.connect_timeout
+        )
         limits = httpx.Limits(
             max_connections=100,  # Maximum concurrent connections
             max_keepalive_connections=20,  # Keep connections alive for reuse
@@ -184,7 +192,9 @@ class SearXNGClient:
 
             data = response.json()
             results_count = len(data.get("results", [])) if data.get("results") else 0
-            logger.debug(f"SearXNG response: query={data.get('query')}, results_count={results_count}")
+            logger.debug(
+                f"SearXNG response: query={data.get('query')}, results_count={results_count}"
+            )
 
             # Parse results - handle None case
             raw_results = data.get("results")
@@ -258,7 +268,9 @@ class SearXNGClient:
                 continue
 
         # Sort by score (highest first) - handle None values
-        results.sort(key=lambda r: r.score if r.score is not None else 0.0, reverse=True)
+        results.sort(
+            key=lambda r: r.score if r.score is not None else 0.0, reverse=True
+        )
         return results
 
     def get_engines(self) -> list[dict[str, Any]]:

@@ -6,120 +6,11 @@ This module contains shared utilities used across all components of the Intent E
 
 import logging
 import re
-from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
-from typing import Any
-
-import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class EmbeddingCache:
-    """Cache for embeddings to improve performance with LRU eviction"""
-
-    def __init__(self, maxsize: int = 1000):
-        self.cache: OrderedDict[str, np.ndarray] = OrderedDict()
-        self.maxsize = maxsize
-        self.hits = 0
-        self.misses = 0
-        self.model = None
-        self.tokenizer = None
-        self._load_model()
-
-    def _load_model(self):
-        """Load the sentence transformer model"""
-        try:
-            from transformers import AutoModel, AutoTokenizer
-
-            # Use a lightweight model optimized for CPU
-            model_name = "sentence-transformers/all-MiniLM-L6-v2"
-
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.model = AutoModel.from_pretrained(model_name)
-
-            # Move model to CPU
-            self.model = self.model.to("cpu")
-
-            logger.info(f"Loaded embedding model: {model_name}")
-        except ImportError:
-            logger.warning("Transformers library not available. Using mock embeddings.")
-            self.tokenizer = None
-            self.model = None
-
-    def encode_text(self, text: str) -> np.ndarray | None:
-        """Encode text to embedding vector using the sentence transformer model"""
-        if self.model is None or self.tokenizer is None:
-            # Return random vector for mock implementation
-            return np.random.rand(384).astype(np.float32)
-
-        # Check cache first (LRU access pattern)
-        if text in self.cache:
-            self.hits += 1
-            # Move to end to mark as recently used
-            self.cache.move_to_end(text)
-            return self.cache[text]
-
-        self.misses += 1
-
-        try:
-            import torch
-
-            # Tokenize the input
-            inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
-
-            # Move inputs to the same device as the model
-            device = next(self.model.parameters()).device
-            inputs = {k: v.to(device) for k, v in inputs.items()}
-
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                # Use mean pooling to get sentence embedding
-                embeddings = outputs.last_hidden_state.mean(dim=1)
-
-            result = embeddings.cpu().numpy().flatten().astype(np.float32)
-
-            # Cache the result with LRU eviction
-            if len(self.cache) >= self.maxsize:
-                # Remove oldest (least recently used) item
-                self.cache.popitem(last=False)
-            self.cache[text] = result
-
-            return result
-        except Exception as e:
-            logger.error(f"Error encoding text: {e}")
-            return None
-
-    def get_stats(self) -> dict[str, Any]:
-        """Get cache statistics"""
-        total = self.hits + self.misses
-        hit_rate = self.hits / total if total > 0 else 0.0
-        return {
-            "hits": self.hits,
-            "misses": self.misses,
-            "hit_rate": hit_rate,
-            "size": len(self.cache),
-            "maxsize": self.maxsize,
-        }
-
-    def clear(self):
-        """Clear the cache and reset statistics"""
-        self.cache.clear()
-        self.hits = 0
-        self.misses = 0
-
-    def cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
-        """Calculate cosine similarity between two vectors"""
-        dot_product = np.dot(vec1, vec2)
-        norm_vec1 = np.linalg.norm(vec1)
-        norm_vec2 = np.linalg.norm(vec2)
-
-        if norm_vec1 == 0 or norm_vec2 == 0:
-            return 0.0
-
-        return float(dot_product / (norm_vec1 * norm_vec2))
 
 
 def extract_price_range(text: str) -> tuple | None:
@@ -209,17 +100,3 @@ def fuzzy_match(text1: str, text2: str, threshold: float = 0.7) -> bool:
 
     similarity = len(intersection) / len(union)
     return similarity >= threshold
-
-
-# Global instance for caching
-_embedding_cache_instance = None
-
-
-def get_embedding_cache() -> EmbeddingCache:
-    """
-    Get singleton instance of EmbeddingCache
-    """
-    global _embedding_cache_instance
-    if _embedding_cache_instance is None:
-        _embedding_cache_instance = EmbeddingCache()
-    return _embedding_cache_instance

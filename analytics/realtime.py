@@ -65,7 +65,11 @@ class RealTimeAnalytics:
 
         if campaign_id:
             # Join with ad and ad_group to get campaign_id
-            query = query.join(DbAd).join(DbAdGroup).filter(DbAdGroup.campaign_id == campaign_id)
+            query = (
+                query.join(DbAd)
+                .join(DbAdGroup)
+                .filter(DbAdGroup.campaign_id == campaign_id)
+            )
 
         # Get metrics from last hour
         from datetime import timedelta

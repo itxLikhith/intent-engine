@@ -120,7 +120,11 @@ class PerformanceBenchmark:
 
         times = []
         for i in range(iterations):
-            payload = {"query": "privacy email service", "urls": urls, "options": {"exclude_big_tech": True}}
+            payload = {
+                "query": "privacy email service",
+                "urls": urls,
+                "options": {"exclude_big_tech": True},
+            }
 
             start = time.time()
             response = requests.post(f"{self.base_url}/rank-urls", json=payload)
@@ -130,7 +134,9 @@ class PerformanceBenchmark:
                 times.append(elapsed)
                 result = response.json()
                 if i == 0:
-                    print(f"  Cache hit rate: {result.get('cache_hit_rate', 0) * 100:.1f}%")
+                    print(
+                        f"  Cache hit rate: {result.get('cache_hit_rate', 0) * 100:.1f}%"
+                    )
             else:
                 print(f"  Failed: {response.status_code}")
 
@@ -170,7 +176,11 @@ class PerformanceBenchmark:
 
         times = []
         for i in range(iterations):
-            payload = {"intent": intent, "ad_inventory": ads, "config": {"minThreshold": 0.3, "topK": 3}}
+            payload = {
+                "intent": intent,
+                "ad_inventory": ads,
+                "config": {"minThreshold": 0.3, "topK": 3},
+            }
 
             start = time.time()
             response = requests.post(f"{self.base_url}/match-ads", json=payload)

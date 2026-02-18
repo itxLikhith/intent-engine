@@ -6,18 +6,9 @@ import copy
 import unittest
 
 from ads.matcher import AdMatchingRequest, AdMetadata, match_ads
-from core.schema import (
-    Constraint,
-    ConstraintType,
-    DeclaredIntent,
-    EthicalDimension,
-    EthicalSignal,
-    InferredIntent,
-    IntentGoal,
-    SkillLevel,
-    UniversalIntent,
-    UseCase,
-)
+from core.schema import (Constraint, ConstraintType, DeclaredIntent,
+                         EthicalDimension, EthicalSignal, InferredIntent,
+                         IntentGoal, SkillLevel, UniversalIntent, UseCase)
 
 
 class TestAdMatcher(unittest.TestCase):

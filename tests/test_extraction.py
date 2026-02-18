@@ -5,19 +5,9 @@ Unit tests for the intent_extractor module
 import copy
 import unittest
 
-from core.schema import (
-    ConstraintType,
-    EthicalDimension,
-    Frequency,
-    IntentGoal,
-    Recency,
-    SkillLevel,
-    TemporalHorizon,
-)
-from extraction.extractor import (
-    IntentExtractionRequest,
-    extract_intent,
-)
+from core.schema import (ConstraintType, EthicalDimension, Frequency,
+                         IntentGoal, Recency, SkillLevel, TemporalHorizon)
+from extraction.extractor import IntentExtractionRequest, extract_intent
 
 
 class TestIntentExtractor(unittest.TestCase):

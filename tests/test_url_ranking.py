@@ -5,16 +5,11 @@ Unit tests for the URL ranking module
 import asyncio
 import unittest
 
-from core.schema import (
-    Constraint,
-    ConstraintType,
-    DeclaredIntent,
-    EthicalDimension,
-    EthicalSignal,
-    InferredIntent,
-    UniversalIntent,
-)
-from ranking.url_ranker import PrivacyDatabase, URLAnalyzer, URLRanker, URLRankingRequest, URLResult
+from core.schema import (Constraint, ConstraintType, DeclaredIntent,
+                         EthicalDimension, EthicalSignal, InferredIntent,
+                         UniversalIntent)
+from ranking.url_ranker import (PrivacyDatabase, URLAnalyzer, URLRanker,
+                                URLRankingRequest, URLResult)
 
 
 class TestPrivacyDatabase(unittest.TestCase):

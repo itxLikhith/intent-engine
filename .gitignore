@@ -101,6 +101,8 @@ torch/
 .pytest/
 .nox/
 .coverage.xml
+test_*.py
+*_test.py
 
 # Distribution / packaging
 .python-version
@@ -138,11 +140,16 @@ config/local_settings.py
 settings_local.py
 local_settings.py
 
-# Database
+# Database (except migrations)
 *.db
 *.db-journal
 *.sqlite
 *.sqlite3
+!*.sql
+
+# Migrations (include SQL files, exclude run logs)
+migrations/*.log
+migrations/.lock
 
 # Docker
 .dockerignore
@@ -217,67 +224,6 @@ __pycache__/
 .history
 *.code-workspace
 
-# Eclipse
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-local.properties
-.settings/
-.loadpath
-.recommenders
-
-# IntelliJ IDEA
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# Android Studio
-*.keystore
-*.jks
-
-# Gradle
-.gradle/
-build/
-
-# Rust/Cargo
-target/
-Cargo.lock
-
-# Go
-*.o
-*.a
-*.so
-*.exe
-*.dll
-*.dylib
-*.test
-*.profdata
-*.gcda
-*.gcno
-*.gcov
-*.profraw
-
-# Java
-*.class
-*.jar
-*.war
-*.ear
-*.nar
-hs_err_pid*
-replay_pid*
-
-# Scala
-*.class
-*.jar
-*.war
-*.ear
-*.nar
-*.log
-
 # Test and Report Files (Generated)
 stress_test_results_*.json
 api_logs.txt
@@ -286,24 +232,13 @@ api_logs.txt
 *_QUICKSTART.md
 *_REPORT.md
 *.md.bak
+TESTING_RESULTS.md
 
 # Local scripts
 start.bat
 start.sh
 build_and_push.bat
 build_and_push.sh
-
-# Init scripts (generated)
-init-scripts/
-
-# Monitoring (local only)
-monitoring/
-
-# Bridge (local only)
-bridge/
-
-# pgAdmin (local only)
-pgadmin/
 
 # Data directory (local development)
 data/
@@ -316,6 +251,15 @@ grafana/provisioning/datasources/*.yml
 # PgBouncer local config
 pgbouncer/pgbouncer.ini
 pgbouncer/userlist.txt
+
+# Monitoring (local only)
+monitoring/
+
+# Bridge (local only)
+bridge/
+
+# pgAdmin (local only)
+pgadmin/
 
 # Local development overrides
 docker-compose.override.yml

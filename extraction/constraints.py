@@ -42,8 +42,14 @@ class ConstraintExtractor:
 
         # Price constraints
         self.price_patterns = {
-            r"\b(under|less than|below)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": ("price", "<={value}"),
-            r"\b(over|more than|above)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": ("price", ">={value}"),
+            r"\b(under|less than|below)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": (
+                "price",
+                "<={value}",
+            ),
+            r"\b(over|more than|above)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": (
+                "price",
+                ">={value}",
+            ),
             r"\b(free|gratis|no cost|zero cost)\b": ("price", "0"),
             r"\b(budget|cheap|affordable|low cost)\b": ("price", "budget"),
         }
@@ -55,10 +61,22 @@ class ConstraintExtractor:
                 "feature",
                 "end-to-end_encryption",
             ),
-            r"\b(end[-\s]*to[-\s]*end|e2e)\s+(encrypt|encryption)\b": ("feature", "end-to-end_encryption"),
-            r"\b(encrypted|secure|private)\s+(email|mail)\b": ("feature", "encrypted_email"),
-            r"\b(real[-\s]*time|instant)\s+(sync|collaboration)\b": ("feature", "real-time_collaboration"),
-            r"\b(offline|local|on[-\s]*device)\s+(storage|sync)\b": ("feature", "offline_capability"),
+            r"\b(end[-\s]*to[-\s]*end|e2e)\s+(encrypt|encryption)\b": (
+                "feature",
+                "end-to-end_encryption",
+            ),
+            r"\b(encrypted|secure|private)\s+(email|mail)\b": (
+                "feature",
+                "encrypted_email",
+            ),
+            r"\b(real[-\s]*time|instant)\s+(sync|collaboration)\b": (
+                "feature",
+                "real-time_collaboration",
+            ),
+            r"\b(offline|local|on[-\s]*device)\s+(storage|sync)\b": (
+                "feature",
+                "offline_capability",
+            ),
             r"\b(ad[-\s]*free|no\s+ads|ad[-\s]*less)\b": ("feature", "ad-free"),
         }
 
@@ -77,7 +95,12 @@ class ConstraintExtractor:
                 constraint_key = (ConstraintType.INCLUSION.value, dimension, str(value))
                 if constraint_key not in seen_constraints:
                     constraints.append(
-                        Constraint(type=ConstraintType.INCLUSION, dimension=dimension, value=value, hardFilter=True)
+                        Constraint(
+                            type=ConstraintType.INCLUSION,
+                            dimension=dimension,
+                            value=value,
+                            hardFilter=True,
+                        )
                     )
                     seen_constraints.add(constraint_key)
 
@@ -88,7 +111,12 @@ class ConstraintExtractor:
                 constraint_key = (ConstraintType.EXCLUSION.value, dimension, str(value))
                 if constraint_key not in seen_constraints:
                     constraints.append(
-                        Constraint(type=ConstraintType.EXCLUSION, dimension=dimension, value=value, hardFilter=True)
+                        Constraint(
+                            type=ConstraintType.EXCLUSION,
+                            dimension=dimension,
+                            value=value,
+                            hardFilter=True,
+                        )
                     )
                     seen_constraints.add(constraint_key)
 
@@ -99,11 +127,18 @@ class ConstraintExtractor:
                 if isinstance(match, tuple) and len(match) >= 2:
                     value_str = match[1]  # The numeric value
                     actual_template = template.format(value=value_str)
-                    constraint_key = (ConstraintType.RANGE.value, dimension, actual_template)
+                    constraint_key = (
+                        ConstraintType.RANGE.value,
+                        dimension,
+                        actual_template,
+                    )
                     if constraint_key not in seen_constraints:
                         constraints.append(
                             Constraint(
-                                type=ConstraintType.RANGE, dimension=dimension, value=actual_template, hardFilter=True
+                                type=ConstraintType.RANGE,
+                                dimension=dimension,
+                                value=actual_template,
+                                hardFilter=True,
                             )
                         )
                         seen_constraints.add(constraint_key)
@@ -117,7 +152,12 @@ class ConstraintExtractor:
                 constraint_key = (ConstraintType.INCLUSION.value, dimension, str(value))
                 if constraint_key not in seen_constraints:
                     constraints.append(
-                        Constraint(type=ConstraintType.INCLUSION, dimension=dimension, value=value, hardFilter=True)
+                        Constraint(
+                            type=ConstraintType.INCLUSION,
+                            dimension=dimension,
+                            value=value,
+                            hardFilter=True,
+                        )
                     )
                     seen_constraints.add(constraint_key)
                     feature_types_seen.add(dimension)
@@ -134,7 +174,9 @@ class ConstraintExtractor:
         # Look for common negative preference patterns
         if re.search(r"\b(no\s+big\s+tech|no\s+big\s+corporations?)\b", text_lower):
             negative_prefs.append("no big tech")
-        if re.search(r"\b(no\s+proprietary|no\s+closed\s+source|open\s+source)\b", text_lower):
+        if re.search(
+            r"\b(no\s+proprietary|no\s+closed\s+source|open\s+source)\b", text_lower
+        ):
             negative_prefs.append("no proprietary")
         if re.search(r"\b(privacy[-\s]*first|privacy\s+focused)\b", text_lower):
             negative_prefs.append("privacy-focused")

@@ -5,26 +5,11 @@ Unit tests for the intent_ranker module
 import copy
 import unittest
 
-from core.schema import (
-    Constraint,
-    ConstraintType,
-    DeclaredIntent,
-    EthicalDimension,
-    EthicalSignal,
-    Frequency,
-    InferredIntent,
-    Recency,
-    SkillLevel,
-    TemporalHorizon,
-    TemporalIntent,
-    UniversalIntent,
-    UseCase,
-)
-from ranking.ranker import (
-    RankingRequest,
-    SearchResult,
-    rank_results,
-)
+from core.schema import (Constraint, ConstraintType, DeclaredIntent,
+                         EthicalDimension, EthicalSignal, Frequency,
+                         InferredIntent, Recency, SkillLevel, TemporalHorizon,
+                         TemporalIntent, UniversalIntent, UseCase)
+from ranking.ranker import RankingRequest, SearchResult, rank_results
 
 
 class TestIntentRanker(unittest.TestCase):

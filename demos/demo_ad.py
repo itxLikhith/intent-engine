@@ -31,11 +31,24 @@ def create_demo_intent():
             query="How to setup E2E encrypted email on Android, no big tech solutions",
             goal=IntentGoal.LEARN,
             constraints=[
-                Constraint(type=ConstraintType.INCLUSION, dimension="platform", value="Android", hardFilter=True),
                 Constraint(
-                    type=ConstraintType.EXCLUSION, dimension="provider", value=["Google", "Microsoft"], hardFilter=True
+                    type=ConstraintType.INCLUSION,
+                    dimension="platform",
+                    value="Android",
+                    hardFilter=True,
                 ),
-                Constraint(type=ConstraintType.INCLUSION, dimension="license", value="open_source", hardFilter=True),
+                Constraint(
+                    type=ConstraintType.EXCLUSION,
+                    dimension="provider",
+                    value=["Google", "Microsoft"],
+                    hardFilter=True,
+                ),
+                Constraint(
+                    type=ConstraintType.INCLUSION,
+                    dimension="license",
+                    value="open_source",
+                    hardFilter=True,
+                ),
             ],
             negativePreferences=["no big tech"],
             skillLevel=SkillLevel.INTERMEDIATE,
@@ -43,8 +56,13 @@ def create_demo_intent():
         inferred=InferredIntent(
             useCases=[UseCase.LEARNING, UseCase.TROUBLESHOOTING],
             ethicalSignals=[
-                EthicalSignal(dimension=EthicalDimension.PRIVACY, preference="privacy-first"),
-                EthicalSignal(dimension=EthicalDimension.OPENNESS, preference="open-source_preferred"),
+                EthicalSignal(
+                    dimension=EthicalDimension.PRIVACY, preference="privacy-first"
+                ),
+                EthicalSignal(
+                    dimension=EthicalDimension.OPENNESS,
+                    preference="open-source_preferred",
+                ),
             ],
         ),
     )
@@ -63,7 +81,9 @@ def demo_ad_matching():
             f"  - {constraint.type.value} {constraint.dimension}: {constraint.value} "
             f"(hard filter: {constraint.hardFilter})"
         )
-    print(f"\nEthical Signals: {[(es.dimension.value, es.preference) for es in intent.inferred.ethicalSignals]}\n")
+    print(
+        f"\nEthical Signals: {[(es.dimension.value, es.preference) for es in intent.inferred.ethicalSignals]}\n"
+    )
 
     # Define ad inventory
     ads = [
@@ -114,7 +134,10 @@ def demo_ad_matching():
             title="Secure Messaging App",
             description="Encrypted communication platform for teams",
             targetingConstraints={"platform": ["Android"], "license": ["open_source"]},
-            forbiddenDimensions=["age", "location"],  # FORBIDDEN: Contains forbidden dimensions
+            forbiddenDimensions=[
+                "age",
+                "location",
+            ],  # FORBIDDEN: Contains forbidden dimensions
             qualityScore=0.90,
             ethicalTags=["privacy", "security"],
             advertiser="SecureCom Inc.",
@@ -140,7 +163,9 @@ def demo_ad_matching():
     print()
 
     # Create ad matching request
-    request = AdMatchingRequest(intent=intent, adInventory=ads, config={"topK": 5, "minThreshold": 0.4})
+    request = AdMatchingRequest(
+        intent=intent, adInventory=ads, config={"topK": 5, "minThreshold": 0.4}
+    )
 
     # Perform ad matching
     response = match_ads(request)

@@ -16,12 +16,7 @@ from urllib.parse import urlparse
 
 import numpy as np
 
-from core.schema import (
-    Constraint,
-    ConstraintType,
-    EthicalDimension,
-    UniversalIntent,
-)
+from core.schema import Constraint, ConstraintType, EthicalDimension, UniversalIntent
 from ranking.ranker import EmbeddingCache
 
 # Configure logging
@@ -326,10 +321,14 @@ class PrivacyDatabase:
                 return result
 
         # Check if it's a tracker domain
-        is_tracker = any(domain.endswith("." + td) or domain == td for td in self.TRACKER_DOMAINS)
+        is_tracker = any(
+            domain.endswith("." + td) or domain == td for td in self.TRACKER_DOMAINS
+        )
 
         # Check if it's big tech
-        is_big_tech = any(domain.endswith("." + bt) or domain == bt for bt in self.BIG_TECH_DOMAINS)
+        is_big_tech = any(
+            domain.endswith("." + bt) or domain == bt for bt in self.BIG_TECH_DOMAINS
+        )
 
         # Default values based on domain analysis
         privacy_score = 0.3 if is_big_tech else 0.5
@@ -520,14 +519,23 @@ class URLRanker:
 
         # Step 2: Filter URLs based on constraints
         filtered_urls = self._apply_filters(
-            analyzed_urls, constraints, min_privacy_score, exclude_big_tech, privacy_preference
+            analyzed_urls,
+            constraints,
+            min_privacy_score,
+            exclude_big_tech,
+            privacy_preference,
         )
 
         # Step 3: Score remaining URLs
-        scored_urls = await self._score_urls(filtered_urls, query, weights, ethical_signals)
+        scored_urls = await self._score_urls(
+            filtered_urls, query, weights, ethical_signals
+        )
 
         # Step 4: Sort by final score (handle None values)
-        scored_urls.sort(key=lambda x: x.final_score if x.final_score is not None else 0.0, reverse=True)
+        scored_urls.sort(
+            key=lambda x: x.final_score if x.final_score is not None else 0.0,
+            reverse=True,
+        )
 
         processing_time = (time.time() - start_time) * 1000  # Convert to ms
 
@@ -584,7 +592,10 @@ class URLRanker:
                 continue
 
             # Apply minimum privacy score
-            if min_privacy_score is not None and url_result.privacy_score < min_privacy_score:
+            if (
+                min_privacy_score is not None
+                and url_result.privacy_score < min_privacy_score
+            ):
                 continue
 
             # Exclude big tech if requested
@@ -595,14 +606,18 @@ class URLRanker:
 
             # Apply negative preferences (e.g., "no google")
             if negative_preferences:
-                if not self._satisfies_negative_preferences(url_result, negative_preferences):
+                if not self._satisfies_negative_preferences(
+                    url_result, negative_preferences
+                ):
                     continue
 
             filtered.append(url_result)
 
         return filtered
 
-    def _satisfies_constraints(self, url_result: URLResult, constraints: list[Constraint]) -> bool:
+    def _satisfies_constraints(
+        self, url_result: URLResult, constraints: list[Constraint]
+    ) -> bool:
         """Check if URL satisfies hard constraints"""
         for constraint in constraints:
             if not constraint.hardFilter:
@@ -614,7 +629,9 @@ class URLRanker:
             if dimension == "domain" or dimension == "provider":
                 if constraint.type == ConstraintType.INCLUSION:
                     if isinstance(value, list):
-                        if not any(v.lower() in url_result.domain.lower() for v in value):
+                        if not any(
+                            v.lower() in url_result.domain.lower() for v in value
+                        ):
                             return False
                     elif isinstance(value, str):
                         if value.lower() not in url_result.domain.lower():
@@ -633,14 +650,18 @@ class URLRanker:
                         violates = False
                         if "high" in value.lower() and url_result.privacy_score < 0.7:
                             violates = True
-                        elif "medium" in value.lower() and url_result.privacy_score < 0.5:
+                        elif (
+                            "medium" in value.lower() and url_result.privacy_score < 0.5
+                        ):
                             violates = True
                         if violates:
                             return False
 
         return True
 
-    def _satisfies_negative_preferences(self, url_result: URLResult, preferences: list[str]) -> bool:
+    def _satisfies_negative_preferences(
+        self, url_result: URLResult, preferences: list[str]
+    ) -> bool:
         """Check if URL satisfies negative preferences like 'no google'"""
         for pref in preferences:
             pref_lower = pref.lower().replace("no ", "").replace("not ", "")
@@ -649,13 +670,19 @@ class URLRanker:
             privacy_db = PrivacyDatabase()
             for big_tech in privacy_db.BIG_TECH_DOMAINS:
                 if big_tech.replace(".com", "").replace(".", " ") in pref_lower:
-                    if big_tech in url_result.domain or url_result.domain.endswith("." + big_tech):
+                    if big_tech in url_result.domain or url_result.domain.endswith(
+                        "." + big_tech
+                    ):
                         return False
 
         return True
 
     async def _score_urls(
-        self, urls: list[URLResult], query: str, weights: dict[str, float], ethical_signals: list[Any]
+        self,
+        urls: list[URLResult],
+        query: str,
+        weights: dict[str, float],
+        ethical_signals: list[Any],
     ) -> list[URLResult]:
         """Score URLs based on multiple factors using batch processing for efficiency"""
         import asyncio
@@ -675,17 +702,23 @@ class URLRanker:
 
             # Batch encode all contents at once (much faster than individual encoding)
             if contents:
-                content_embeddings = await asyncio.to_thread(self.embedding_cache.encode_batch, contents)
+                content_embeddings = await asyncio.to_thread(
+                    self.embedding_cache.encode_batch, contents
+                )
 
                 # Calculate similarities for all URLs
                 for idx, url_idx in enumerate(url_indices):
                     embedding = content_embeddings[idx]
                     if embedding is not None:
-                        similarity = self.embedding_cache.cosine_similarity(query_embedding, embedding)
+                        similarity = self.embedding_cache.cosine_similarity(
+                            query_embedding, embedding
+                        )
                         urls[url_idx].relevance_score = (similarity + 1) / 2
                     else:
                         # Fallback to keyword matching
-                        urls[url_idx].relevance_score = self._calculate_keyword_relevance(urls[url_idx], query)
+                        urls[url_idx].relevance_score = (
+                            self._calculate_keyword_relevance(urls[url_idx], query)
+                        )
 
         # Ensure weights is not None
         if weights is None:
@@ -694,7 +727,9 @@ class URLRanker:
         # Process remaining URLs that weren't batch encoded
         for url in urls:
             if url.relevance_score == 0.0:  # Not yet scored
-                url.relevance_score = self._calculate_relevance(url, query, query_embedding)
+                url.relevance_score = self._calculate_relevance(
+                    url, query, query_embedding
+                )
 
             # 2. Privacy score (already computed during analysis)
             privacy = url.privacy_score if url.privacy_score is not None else 0.5
@@ -731,7 +766,9 @@ class URLRanker:
         matches = query_words.intersection(content_words)
         return min(1.0, len(matches) / len(query_words)) * 0.5 + 0.3
 
-    def _calculate_relevance(self, url: URLResult, query: str, query_embedding: np.ndarray | None) -> float:
+    def _calculate_relevance(
+        self, url: URLResult, query: str, query_embedding: np.ndarray | None
+    ) -> float:
         """Calculate relevance score between query and URL"""
         # Combine title and description for content
         content = f"{url.title or ''} {url.description or ''} {url.content_type or ''}"
@@ -743,7 +780,9 @@ class URLRanker:
         if query_embedding is not None:
             content_embedding = self.embedding_cache.encode_text(content)
             if content_embedding is not None:
-                similarity = self.embedding_cache.cosine_similarity(query_embedding, content_embedding)
+                similarity = self.embedding_cache.cosine_similarity(
+                    query_embedding, content_embedding
+                )
                 # Normalize from [-1, 1] to [0, 1]
                 return (similarity + 1) / 2
 

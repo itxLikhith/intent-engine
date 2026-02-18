@@ -21,7 +21,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy.orm import Session
 
-from database import Ad, AdGroup, Advertiser, Base, Campaign, CreativeAsset, db_manager, engine
+from database import (
+    Ad,
+    AdGroup,
+    Advertiser,
+    Base,
+    Campaign,
+    CreativeAsset,
+    db_manager,
+    engine,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -70,13 +79,38 @@ def seed_campaigns(db: Session, advertisers: list[Advertiser]) -> list[Campaign]
     now = datetime.utcnow()
     campaigns_data = [
         # TechCorp campaigns
-        {"advertiser_id": advertisers[0].id, "name": "Q1 2026 Product Launch", "budget": 50000, "daily_budget": 500},
-        {"advertiser_id": advertisers[0].id, "name": "Developer Tools Promotion", "budget": 25000, "daily_budget": 250},
+        {
+            "advertiser_id": advertisers[0].id,
+            "name": "Q1 2026 Product Launch",
+            "budget": 50000,
+            "daily_budget": 500,
+        },
+        {
+            "advertiser_id": advertisers[0].id,
+            "name": "Developer Tools Promotion",
+            "budget": 25000,
+            "daily_budget": 250,
+        },
         # GreenEnergy campaigns
-        {"advertiser_id": advertisers[1].id, "name": "Solar Panel Awareness", "budget": 30000, "daily_budget": 300},
-        {"advertiser_id": advertisers[1].id, "name": "EV Charging Network", "budget": 20000, "daily_budget": 200},
+        {
+            "advertiser_id": advertisers[1].id,
+            "name": "Solar Panel Awareness",
+            "budget": 30000,
+            "daily_budget": 300,
+        },
+        {
+            "advertiser_id": advertisers[1].id,
+            "name": "EV Charging Network",
+            "budget": 20000,
+            "daily_budget": 200,
+        },
         # EduLearn campaigns
-        {"advertiser_id": advertisers[2].id, "name": "Online Courses 2026", "budget": 40000, "daily_budget": 400},
+        {
+            "advertiser_id": advertisers[2].id,
+            "name": "Online Courses 2026",
+            "budget": 40000,
+            "daily_budget": 400,
+        },
         {
             "advertiser_id": advertisers[2].id,
             "name": "Professional Certifications",
@@ -84,8 +118,18 @@ def seed_campaigns(db: Session, advertisers: list[Advertiser]) -> list[Campaign]
             "daily_budget": 350,
         },
         # HealthFirst campaigns
-        {"advertiser_id": advertisers[3].id, "name": "Telemedicine Services", "budget": 25000, "daily_budget": 250},
-        {"advertiser_id": advertisers[3].id, "name": "Health Screening Campaign", "budget": 15000, "daily_budget": 150},
+        {
+            "advertiser_id": advertisers[3].id,
+            "name": "Telemedicine Services",
+            "budget": 25000,
+            "daily_budget": 250,
+        },
+        {
+            "advertiser_id": advertisers[3].id,
+            "name": "Health Screening Campaign",
+            "budget": 15000,
+            "daily_budget": 150,
+        },
         # FinanceWise campaigns
         {
             "advertiser_id": advertisers[4].id,
@@ -93,22 +137,77 @@ def seed_campaigns(db: Session, advertisers: list[Advertiser]) -> list[Campaign]
             "budget": 45000,
             "daily_budget": 450,
         },
-        {"advertiser_id": advertisers[4].id, "name": "Retirement Planning", "budget": 20000, "daily_budget": 200},
+        {
+            "advertiser_id": advertisers[4].id,
+            "name": "Retirement Planning",
+            "budget": 20000,
+            "daily_budget": 200,
+        },
         # TravelBug campaigns
-        {"advertiser_id": advertisers[5].id, "name": "Summer Vacation Deals", "budget": 35000, "daily_budget": 350},
-        {"advertiser_id": advertisers[5].id, "name": "Adventure Tours 2026", "budget": 25000, "daily_budget": 250},
+        {
+            "advertiser_id": advertisers[5].id,
+            "name": "Summer Vacation Deals",
+            "budget": 35000,
+            "daily_budget": 350,
+        },
+        {
+            "advertiser_id": advertisers[5].id,
+            "name": "Adventure Tours 2026",
+            "budget": 25000,
+            "daily_budget": 250,
+        },
         # FoodieDelights campaigns
-        {"advertiser_id": advertisers[6].id, "name": "Recipe App Promotion", "budget": 15000, "daily_budget": 150},
-        {"advertiser_id": advertisers[6].id, "name": "Meal Kit Delivery", "budget": 20000, "daily_budget": 200},
+        {
+            "advertiser_id": advertisers[6].id,
+            "name": "Recipe App Promotion",
+            "budget": 15000,
+            "daily_budget": 150,
+        },
+        {
+            "advertiser_id": advertisers[6].id,
+            "name": "Meal Kit Delivery",
+            "budget": 20000,
+            "daily_budget": 200,
+        },
         # StyleHub campaigns
-        {"advertiser_id": advertisers[7].id, "name": "Spring Collection 2026", "budget": 30000, "daily_budget": 300},
-        {"advertiser_id": advertisers[7].id, "name": "Sustainable Fashion", "budget": 18000, "daily_budget": 180},
+        {
+            "advertiser_id": advertisers[7].id,
+            "name": "Spring Collection 2026",
+            "budget": 30000,
+            "daily_budget": 300,
+        },
+        {
+            "advertiser_id": advertisers[7].id,
+            "name": "Sustainable Fashion",
+            "budget": 18000,
+            "daily_budget": 180,
+        },
         # GameZone campaigns
-        {"advertiser_id": advertisers[8].id, "name": "New Game Releases", "budget": 40000, "daily_budget": 400},
-        {"advertiser_id": advertisers[8].id, "name": "Gaming Hardware Sale", "budget": 25000, "daily_budget": 250},
+        {
+            "advertiser_id": advertisers[8].id,
+            "name": "New Game Releases",
+            "budget": 40000,
+            "daily_budget": 400,
+        },
+        {
+            "advertiser_id": advertisers[8].id,
+            "name": "Gaming Hardware Sale",
+            "budget": 25000,
+            "daily_budget": 250,
+        },
         # HomeComfort campaigns
-        {"advertiser_id": advertisers[9].id, "name": "Smart Home Devices", "budget": 35000, "daily_budget": 350},
-        {"advertiser_id": advertisers[9].id, "name": "Furniture Collection", "budget": 28000, "daily_budget": 280},
+        {
+            "advertiser_id": advertisers[9].id,
+            "name": "Smart Home Devices",
+            "budget": 35000,
+            "daily_budget": 350,
+        },
+        {
+            "advertiser_id": advertisers[9].id,
+            "name": "Furniture Collection",
+            "budget": 28000,
+            "daily_budget": 280,
+        },
     ]
 
     campaigns = []
@@ -136,11 +235,31 @@ def seed_ad_groups(db: Session, campaigns: list[Campaign]) -> list[AdGroup]:
 
     ad_groups_data = [
         # For each campaign, create 2-3 ad groups
-        {"campaign_id": campaigns[0].id, "name": "Search Ads", "bid_strategy": "automated"},
-        {"campaign_id": campaigns[0].id, "name": "Display Ads", "bid_strategy": "manual"},
-        {"campaign_id": campaigns[0].id, "name": "Video Ads", "bid_strategy": "automated"},
-        {"campaign_id": campaigns[1].id, "name": "Developer Targeting", "bid_strategy": "automated"},
-        {"campaign_id": campaigns[1].id, "name": "Enterprise Targeting", "bid_strategy": "manual"},
+        {
+            "campaign_id": campaigns[0].id,
+            "name": "Search Ads",
+            "bid_strategy": "automated",
+        },
+        {
+            "campaign_id": campaigns[0].id,
+            "name": "Display Ads",
+            "bid_strategy": "manual",
+        },
+        {
+            "campaign_id": campaigns[0].id,
+            "name": "Video Ads",
+            "bid_strategy": "automated",
+        },
+        {
+            "campaign_id": campaigns[1].id,
+            "name": "Developer Targeting",
+            "bid_strategy": "automated",
+        },
+        {
+            "campaign_id": campaigns[1].id,
+            "name": "Enterprise Targeting",
+            "bid_strategy": "manual",
+        },
     ]
 
     # Generate ad groups for all campaigns
@@ -150,8 +269,16 @@ def seed_ad_groups(db: Session, campaigns: list[Campaign]) -> list[AdGroup]:
 
         ad_groups_data.extend(
             [
-                {"campaign_id": campaign.id, "name": f"{campaign.name} - Group A", "bid_strategy": "automated"},
-                {"campaign_id": campaign.id, "name": f"{campaign.name} - Group B", "bid_strategy": "manual"},
+                {
+                    "campaign_id": campaign.id,
+                    "name": f"{campaign.name} - Group A",
+                    "bid_strategy": "automated",
+                },
+                {
+                    "campaign_id": campaign.id,
+                    "name": f"{campaign.name} - Group B",
+                    "bid_strategy": "manual",
+                },
             ]
         )
 
@@ -171,7 +298,9 @@ def seed_ad_groups(db: Session, campaigns: list[Campaign]) -> list[AdGroup]:
     return ad_groups
 
 
-def seed_ads(db: Session, advertisers: list[Advertiser], ad_groups: list[AdGroup]) -> list[Ad]:
+def seed_ads(
+    db: Session, advertisers: list[Advertiser], ad_groups: list[AdGroup]
+) -> list[Ad]:
     """Create sample ads"""
     logger.info("Seeding ads...")
 
@@ -186,7 +315,10 @@ def seed_ads(db: Session, advertisers: list[Advertiser], ad_groups: list[AdGroup
             "quality_score": 0.85,
             "creative_format": "banner",
             "ethical_tags": ["open_source", "privacy"],
-            "targeting_constraints": {"device_type": ["desktop"], "interests": ["programming", "technology"]},
+            "targeting_constraints": {
+                "device_type": ["desktop"],
+                "interests": ["programming", "technology"],
+            },
         },
         {
             "advertiser_id": advertisers[0].id,
@@ -220,7 +352,9 @@ def seed_ads(db: Session, advertisers: list[Advertiser], ad_groups: list[AdGroup
             "quality_score": 0.78,
             "creative_format": "native",
             "ethical_tags": ["sustainability", "transportation"],
-            "targeting_constraints": {"interests": ["electric_vehicles", "sustainability"]},
+            "targeting_constraints": {
+                "interests": ["electric_vehicles", "sustainability"]
+            },
         },
         # EduLearn ads
         {
@@ -383,8 +517,14 @@ def main():
     """Main function to seed all data"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Seed Intent Engine database with sample data")
-    parser.add_argument("--reset", action="store_true", help="Drop and recreate all tables before seeding")
+    parser = argparse.ArgumentParser(
+        description="Seed Intent Engine database with sample data"
+    )
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Drop and recreate all tables before seeding",
+    )
     args = parser.parse_args()
 
     logger.info("Starting data seeding...")

@@ -140,10 +140,15 @@ class FraudDetector:
         recommended_action = self._get_recommended_action(risk_score, signals)
 
         return FraudAnalysisResult(
-            is_fraudulent=is_fraudulent, risk_score=risk_score, signals=signals, recommended_action=recommended_action
+            is_fraudulent=is_fraudulent,
+            risk_score=risk_score,
+            signals=signals,
+            recommended_action=recommended_action,
         )
 
-    def analyze_conversion(self, conversion_data: dict[str, Any]) -> FraudAnalysisResult:
+    def analyze_conversion(
+        self, conversion_data: dict[str, Any]
+    ) -> FraudAnalysisResult:
         """
         Analyze a conversion event for potential fraud.
         """
@@ -161,10 +166,15 @@ class FraudDetector:
         recommended_action = self._get_recommended_action(risk_score, signals)
 
         return FraudAnalysisResult(
-            is_fraudulent=is_fraudulent, risk_score=risk_score, signals=signals, recommended_action=recommended_action
+            is_fraudulent=is_fraudulent,
+            risk_score=risk_score,
+            signals=signals,
+            recommended_action=recommended_action,
         )
 
-    def analyze_impression(self, impression_data: dict[str, Any]) -> FraudAnalysisResult:
+    def analyze_impression(
+        self, impression_data: dict[str, Any]
+    ) -> FraudAnalysisResult:
         """
         Analyze an impression event for potential fraud.
         """
@@ -182,7 +192,10 @@ class FraudDetector:
         recommended_action = self._get_recommended_action(risk_score, signals)
 
         return FraudAnalysisResult(
-            is_fraudulent=is_fraudulent, risk_score=risk_score, signals=signals, recommended_action=recommended_action
+            is_fraudulent=is_fraudulent,
+            risk_score=risk_score,
+            signals=signals,
+            recommended_action=recommended_action,
         )
 
     def _check_click_velocity(self, click_data: dict[str, Any]) -> list[FraudSignal]:
@@ -207,7 +220,10 @@ class FraudDetector:
         # Check clicks per IP per minute
         clicks_per_minute = (
             self.db.query(DbClickTracking)
-            .filter(DbClickTracking.ip_hash == ip_hash, DbClickTracking.timestamp >= one_minute_ago)
+            .filter(
+                DbClickTracking.ip_hash == ip_hash,
+                DbClickTracking.timestamp >= one_minute_ago,
+            )
             .count()
         )
 
@@ -219,14 +235,20 @@ class FraudDetector:
                     severity=FraudSeverity.HIGH,
                     confidence=0.9,
                     reason=f"Excessive clicks per minute: {clicks_per_minute} (threshold: {threshold})",
-                    metadata={"clicks_per_minute": clicks_per_minute, "ip_hash": ip_hash},
+                    metadata={
+                        "clicks_per_minute": clicks_per_minute,
+                        "ip_hash": ip_hash,
+                    },
                 )
             )
 
         # Check clicks per IP per hour
         clicks_per_hour = (
             self.db.query(DbClickTracking)
-            .filter(DbClickTracking.ip_hash == ip_hash, DbClickTracking.timestamp >= one_hour_ago)
+            .filter(
+                DbClickTracking.ip_hash == ip_hash,
+                DbClickTracking.timestamp >= one_hour_ago,
+            )
             .count()
         )
 
@@ -246,18 +268,27 @@ class FraudDetector:
         if session_id:
             session_clicks_per_minute = (
                 self.db.query(DbClickTracking)
-                .filter(DbClickTracking.session_id == session_id, DbClickTracking.timestamp >= one_minute_ago)
+                .filter(
+                    DbClickTracking.session_id == session_id,
+                    DbClickTracking.timestamp >= one_minute_ago,
+                )
                 .count()
             )
 
-            if session_clicks_per_minute >= self.config["max_clicks_per_session_per_minute"]:
+            if (
+                session_clicks_per_minute
+                >= self.config["max_clicks_per_session_per_minute"]
+            ):
                 signals.append(
                     FraudSignal(
                         fraud_type=FraudType.CLICK_FRAUD,
                         severity=FraudSeverity.HIGH,
                         confidence=0.85,
                         reason=f"Excessive clicks per session per minute: {session_clicks_per_minute}",
-                        metadata={"session_clicks": session_clicks_per_minute, "session_id": session_id},
+                        metadata={
+                            "session_clicks": session_clicks_per_minute,
+                            "session_id": session_id,
+                        },
                     )
                 )
 
@@ -352,7 +383,10 @@ class FraudDetector:
         one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         unique_user_agents = (
             self.db.query(func.count(func.distinct(DbClickTracking.user_agent_hash)))
-            .filter(DbClickTracking.ip_hash == ip_hash, DbClickTracking.timestamp >= one_hour_ago)
+            .filter(
+                DbClickTracking.ip_hash == ip_hash,
+                DbClickTracking.timestamp >= one_hour_ago,
+            )
             .scalar()
             or 0
         )
@@ -364,7 +398,10 @@ class FraudDetector:
                     severity=FraudSeverity.MEDIUM,
                     confidence=0.7,
                     reason=f"Multiple user agents ({unique_user_agents}) from same IP - possible proxy/VPN",
-                    metadata={"unique_user_agents": unique_user_agents, "ip_hash": ip_hash},
+                    metadata={
+                        "unique_user_agents": unique_user_agents,
+                        "ip_hash": ip_hash,
+                    },
                 )
             )
 
@@ -387,7 +424,10 @@ class FraudDetector:
         five_seconds_ago = datetime.utcnow() - timedelta(seconds=5)
         recent_clicks = (
             self.db.query(DbClickTracking)
-            .filter(DbClickTracking.ip_hash == ip_hash, DbClickTracking.timestamp >= five_seconds_ago)
+            .filter(
+                DbClickTracking.ip_hash == ip_hash,
+                DbClickTracking.timestamp >= five_seconds_ago,
+            )
             .order_by(DbClickTracking.timestamp.desc())
             .limit(10)
             .all()
@@ -400,13 +440,17 @@ class FraudDetector:
                 intervals = []
                 for i in range(len(timestamps) - 1):
                     if timestamps[i] and timestamps[i + 1]:
-                        interval = abs((timestamps[i] - timestamps[i + 1]).total_seconds())
+                        interval = abs(
+                            (timestamps[i] - timestamps[i + 1]).total_seconds()
+                        )
                         intervals.append(interval)
 
                 if intervals:
                     # Check if intervals are suspiciously similar (machine-like)
                     avg_interval = sum(intervals) / len(intervals)
-                    variance = sum((i - avg_interval) ** 2 for i in intervals) / len(intervals)
+                    variance = sum((i - avg_interval) ** 2 for i in intervals) / len(
+                        intervals
+                    )
 
                     # Low variance in intervals suggests automated clicking
                     if variance < 0.1 and avg_interval < 1.0:
@@ -422,7 +466,9 @@ class FraudDetector:
 
         return signals
 
-    def _check_device_fingerprint(self, click_data: dict[str, Any]) -> list[FraudSignal]:
+    def _check_device_fingerprint(
+        self, click_data: dict[str, Any]
+    ) -> list[FraudSignal]:
         """
         Check for device fingerprint anomalies.
         """
@@ -432,7 +478,9 @@ class FraudDetector:
         user_agent = click_data.get("user_agent", "")
         if user_agent:
             # Check for desktop browser claiming to be mobile or vice versa
-            is_mobile_ua = any(m in user_agent.lower() for m in ["mobile", "android", "iphone", "ipad"])
+            is_mobile_ua = any(
+                m in user_agent.lower() for m in ["mobile", "android", "iphone", "ipad"]
+            )
             screen_width = click_data.get("screen_width", 0)
 
             if screen_width:
@@ -444,23 +492,32 @@ class FraudDetector:
                             severity=FraudSeverity.MEDIUM,
                             confidence=0.65,
                             reason="Device type mismatch between user agent and screen size",
-                            metadata={"user_agent": user_agent, "screen_width": screen_width},
+                            metadata={
+                                "user_agent": user_agent,
+                                "screen_width": screen_width,
+                            },
                         )
                     )
 
         return signals
 
-    def _check_conversion_timing(self, conversion_data: dict[str, Any]) -> list[FraudSignal]:
+    def _check_conversion_timing(
+        self, conversion_data: dict[str, Any]
+    ) -> list[FraudSignal]:
         """
         Check for suspicious conversion timing.
         """
         signals = []
 
         click_timestamp = conversion_data.get("click_timestamp")
-        conversion_timestamp = conversion_data.get("conversion_timestamp") or datetime.utcnow()
+        conversion_timestamp = (
+            conversion_data.get("conversion_timestamp") or datetime.utcnow()
+        )
 
         if click_timestamp:
-            time_to_conversion = (conversion_timestamp - click_timestamp).total_seconds()
+            time_to_conversion = (
+                conversion_timestamp - click_timestamp
+            ).total_seconds()
 
             # Too fast conversion is suspicious
             if time_to_conversion < self.config["min_time_to_conversion_seconds"]:
@@ -476,7 +533,9 @@ class FraudDetector:
 
         return signals
 
-    def _check_conversion_patterns(self, conversion_data: dict[str, Any]) -> list[FraudSignal]:
+    def _check_conversion_patterns(
+        self, conversion_data: dict[str, Any]
+    ) -> list[FraudSignal]:
         """
         Check for suspicious conversion patterns.
         """
@@ -490,7 +549,9 @@ class FraudDetector:
 
         # Check for duplicate conversions from same click
         existing_conversions = (
-            self.db.query(DbConversionTracking).filter(DbConversionTracking.click_id == click_id).count()
+            self.db.query(DbConversionTracking)
+            .filter(DbConversionTracking.click_id == click_id)
+            .count()
         )
 
         if existing_conversions > 1:
@@ -500,13 +561,18 @@ class FraudDetector:
                     severity=FraudSeverity.HIGH,
                     confidence=0.95,
                     reason=f"Multiple conversions ({existing_conversions}) from same click",
-                    metadata={"click_id": click_id, "conversion_count": existing_conversions},
+                    metadata={
+                        "click_id": click_id,
+                        "conversion_count": existing_conversions,
+                    },
                 )
             )
 
         return signals
 
-    def _check_impression_velocity(self, impression_data: dict[str, Any]) -> list[FraudSignal]:
+    def _check_impression_velocity(
+        self, impression_data: dict[str, Any]
+    ) -> list[FraudSignal]:
         """
         Check for abnormal impression velocity.
         """
@@ -543,7 +609,9 @@ class FraudDetector:
 
         return min(max_score + multiple_signal_bonus, 1.0)
 
-    def _get_recommended_action(self, risk_score: float, signals: list[FraudSignal]) -> str:
+    def _get_recommended_action(
+        self, risk_score: float, signals: list[FraudSignal]
+    ) -> str:
         """
         Get recommended action based on risk score and signals.
         """
@@ -567,7 +635,11 @@ class FraudDetector:
         start_time = datetime.utcnow() - timedelta(hours=hours)
 
         # Analyze recent clicks
-        recent_clicks = self.db.query(DbClickTracking).filter(DbClickTracking.timestamp >= start_time).all()
+        recent_clicks = (
+            self.db.query(DbClickTracking)
+            .filter(DbClickTracking.timestamp >= start_time)
+            .all()
+        )
 
         fraud_summary = {
             "total_analyzed": len(recent_clicks),

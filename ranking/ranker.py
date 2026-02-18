@@ -7,12 +7,14 @@ This module implements Algorithms 2 and 3 for constraint satisfaction and intent
 import hashlib
 import logging
 import re
+import threading
 from dataclasses import dataclass
 from datetime import UTC
 from typing import Any
 
 import numpy as np
 
+from core.embedding_service import get_embedding_service
 from core.schema import (
     Constraint,
     ConstraintType,
@@ -74,251 +76,25 @@ class RankingResponse:
 
 
 class EmbeddingCache:
-    """Cache for embeddings to improve performance with Redis support"""
+    """Cache for embeddings to improve performance - uses shared EmbeddingService"""
 
     def __init__(self, redis_client=None):
-        self.cache = {}
-        self.model = None
-        self.tokenizer = None
-        self.redis = redis_client
-        self.cache_ttl = 3600  # 1 hour TTL for Redis cache
-        self._load_model()
-
-        # Initialize Redis if not provided
-        if self.redis is None:
-            self._init_redis()
-
-    def _init_redis(self):
-        """Initialize Redis connection for cross-instance caching"""
-        try:
-            import os
-
-            import redis as redis_lib
-
-            redis_host = os.getenv("REDIS_HOST", "redis")
-            redis_port = int(os.getenv("REDIS_PORT", 6379))
-
-            self.redis = redis_lib.Redis(
-                host=redis_host,
-                port=redis_port,
-                decode_responses=False,  # We need binary for numpy arrays
-                socket_connect_timeout=5,
-                socket_timeout=5,
-                health_check_interval=30,
-            )
-            # Test connection
-            self.redis.ping()
-            logger.info(f"EmbeddingCache connected to Redis at {redis_host}:{redis_port}")
-        except Exception as e:
-            logger.warning(f"Redis not available for embeddings, using in-memory only: {e}")
-            self.redis = None
-
-    def _get_cache_key(self, text: str) -> str:
-        """Generate cache key for text"""
-        import hashlib
-
-        return f"emb:{hashlib.md5(text.encode()).hexdigest()}"
-
-    def _get_from_redis(self, text: str) -> np.ndarray | None:
-        """Try to get embedding from Redis"""
-        if self.redis is None:
-            return None
-
-        try:
-            key = self._get_cache_key(text)
-            cached = self.redis.get(key)
-            if cached:
-                # Deserialize numpy array
-                return np.frombuffer(cached, dtype=np.float32)
-        except Exception as e:
-            logger.debug(f"Redis get failed: {e}")
-
-        return None
-
-    def _set_in_redis(self, text: str, embedding: np.ndarray):
-        """Store embedding in Redis"""
-        if self.redis is None:
-            return
-
-        try:
-            key = self._get_cache_key(text)
-            # Serialize numpy array
-            self.redis.setex(key, self.cache_ttl, embedding.tobytes())
-        except Exception as e:
-            logger.debug(f"Redis set failed: {e}")
-
-    def _load_model(self):
-        """Load the sentence transformer model"""
-        try:
-            from transformers import AutoModel, AutoTokenizer
-
-            # Use a lightweight model optimized for CPU
-            model_name = "sentence-transformers/all-MiniLM-L6-v2"
-
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.model = AutoModel.from_pretrained(model_name)
-
-            # Move model to CPU
-            self.model = self.model.to("cpu")
-
-            logger.info(f"Loaded embedding model: {model_name}")
-        except ImportError:
-            logger.warning("Transformers library not available. Using mock embeddings.")
-            self.tokenizer = None
-            self.model = None
+        # Use the shared embedding service instead of loading models independently
+        self._service = get_embedding_service()
+        # Initialize if needed
+        self._service.initialize(use_redis=(redis_client is not None))
 
     def encode_text(self, text: str) -> np.ndarray | None:
-        """Encode text to embedding vector using the sentence transformer model with caching"""
-        if self.model is None or self.tokenizer is None:
-            # Return deterministic hash-based vector for mock implementation
-            hash_input = text.encode("utf-8")
-            hash_bytes = hashlib.md5(hash_input).digest()
-            # Create a 384-dim vector from hash
-            result = np.zeros(384, dtype=np.float32)
-            for i in range(384):
-                result[i] = (hash_bytes[i % 16] + i * 17) % 100 / 100.0
-            # Normalize the vector
-            norm = np.linalg.norm(result)
-            if norm > 0:
-                result = result / norm
-            return result
-
-        # Check local cache first
-        if text in self.cache:
-            return self.cache[text]
-
-        # Check Redis cache
-        redis_cached = self._get_from_redis(text)
-        if redis_cached is not None:
-            # Store in local cache for faster access
-            self.cache[text] = redis_cached
-            return redis_cached
-
-        try:
-            import torch
-
-            # Tokenize the input
-            inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
-
-            # Move inputs to the same device as the model
-            device = next(self.model.parameters()).device
-            inputs = {k: v.to(device) for k, v in inputs.items()}
-
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                # Use mean pooling to get sentence embedding
-                embeddings = outputs.last_hidden_state.mean(dim=1)
-
-            result = embeddings.cpu().numpy().flatten().astype(np.float32)
-
-            # Cache the result in both local and Redis
-            self.cache[text] = result
-            self._set_in_redis(text, result)
-
-            return result
-        except Exception as e:
-            logger.error(f"Error encoding text: {e}")
-            return None
+        """Encode text to embedding vector using the shared service"""
+        return self._service.encode_text(text)
 
     def encode_batch(self, texts: list[str]) -> list[np.ndarray | None]:
-        """
-        Encode a batch of texts to embedding vectors efficiently.
-
-        Args:
-            texts: List of texts to encode
-
-        Returns:
-            List of embedding vectors (or None if encoding failed)
-        """
-        if not texts:
-            return []
-
-        if self.model is None or self.tokenizer is None:
-            # Return deterministic hash-based vectors for mock implementation
-            results = []
-            for text in texts:
-                hash_input = text.encode("utf-8")
-                hash_bytes = hashlib.md5(hash_input).digest()
-                # Create a 384-dim vector from hash
-                result = np.zeros(384, dtype=np.float32)
-                for i in range(384):
-                    result[i] = (hash_bytes[i % 16] + i * 17) % 100 / 100.0
-                # Normalize the vector
-                norm = np.linalg.norm(result)
-                if norm > 0:
-                    result = result / norm
-                results.append(result)
-            return results
-
-        # Filter out cached texts (check both local and Redis cache)
-        uncached_texts = []
-        uncached_indices = []
-        results: list[np.ndarray | None] = [None] * len(texts)
-
-        for i, text in enumerate(texts):
-            # Check local cache first
-            if text in self.cache:
-                results[i] = self.cache[text]
-            else:
-                # Check Redis cache
-                redis_cached = self._get_from_redis(text)
-                if redis_cached is not None:
-                    results[i] = redis_cached
-                    self.cache[text] = redis_cached  # Also store in local cache
-                else:
-                    uncached_texts.append(text)
-                    uncached_indices.append(i)
-
-        if not uncached_texts:
-            # All texts were cached
-            return results
-
-        try:
-            import torch
-
-            # Tokenize all uncached texts in a batch
-            inputs = self.tokenizer(uncached_texts, return_tensors="pt", padding=True, truncation=True, max_length=512)
-
-            # Move inputs to the same device as the model
-            device = next(self.model.parameters()).device
-            inputs = {k: v.to(device) for k, v in inputs.items()}
-
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                # Use mean pooling to get sentence embeddings
-                embeddings = outputs.last_hidden_state.mean(dim=1)
-
-            # Convert to numpy and cache results
-            numpy_embeddings = embeddings.cpu().numpy().astype(np.float32)
-
-            for idx, text_idx in enumerate(uncached_indices):
-                result = numpy_embeddings[idx].flatten()
-                results[text_idx] = result
-                text = texts[text_idx]
-                # Cache in both local and Redis
-                self.cache[text] = result
-                self._set_in_redis(text, result)
-
-            return results
-
-        except Exception as e:
-            logger.error(f"Error encoding batch: {e}")
-            # Fallback to individual encoding
-            for i, text in enumerate(texts):
-                if results[i] is None:
-                    results[i] = self.encode_text(text)
-            return results
+        """Encode batch of texts using the shared service"""
+        return self._service.encode_batch(texts)
 
     def cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """Calculate cosine similarity between two vectors"""
-        dot_product = np.dot(vec1, vec2)
-        norm_vec1 = np.linalg.norm(vec1)
-        norm_vec2 = np.linalg.norm(vec2)
-
-        if norm_vec1 == 0 or norm_vec2 == 0:
-            return 0.0
-
-        return float(dot_product / (norm_vec1 * norm_vec2))
+        return self._service.cosine_similarity(vec1, vec2)
 
 
 class ConstraintSatisfactionEngine:
@@ -327,7 +103,9 @@ class ConstraintSatisfactionEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def satisfies_constraints(self, result: SearchResult, constraints: list[Constraint]) -> bool:
+    def satisfies_constraints(
+        self, result: SearchResult, constraints: list[Constraint]
+    ) -> bool:
         """
         Check if a result satisfies all hard constraints
         Implements Algorithm 2: satisfiesConstraints()
@@ -341,7 +119,9 @@ class ConstraintSatisfactionEngine:
 
         return True
 
-    def _satisfies_single_constraint(self, result: SearchResult, constraint: Constraint) -> bool:
+    def _satisfies_single_constraint(
+        self, result: SearchResult, constraint: Constraint
+    ) -> bool:
         """Check if a result satisfies a single constraint"""
         dimension = constraint.dimension
         value = constraint.value
@@ -400,13 +180,29 @@ class ConstraintSatisfactionEngine:
                     if constraint_type == ConstraintType.RANGE:
                         # Check price constraints
                         violates = False
-                        if operator == "<=" and result.price and result.price > price_limit:
+                        if (
+                            operator == "<="
+                            and result.price
+                            and result.price > price_limit
+                        ):
                             violates = True
-                        elif operator == ">=" and result.price and result.price < price_limit:
+                        elif (
+                            operator == ">="
+                            and result.price
+                            and result.price < price_limit
+                        ):
                             violates = True
-                        elif operator == "<" and result.price and result.price >= price_limit:
+                        elif (
+                            operator == "<"
+                            and result.price
+                            and result.price >= price_limit
+                        ):
                             violates = True
-                        elif operator == ">" and result.price and result.price <= price_limit:
+                        elif (
+                            operator == ">"
+                            and result.price
+                            and result.price <= price_limit
+                        ):
                             violates = True
                         if violates:
                             return False
@@ -433,16 +229,132 @@ class ConstraintSatisfactionEngine:
                         return False
 
         elif dimension == "format":
-            # Assuming format could be file format or document type
-            if constraint_type == ConstraintType.INCLUSION or constraint_type == ConstraintType.EXCLUSION:
-                # This would depend on specific implementation
-                pass
+            # Handle format constraints (file format, document type, content format)
+            # Assumes result has a 'format' attribute or it can be inferred from tags/description
+            result_format = getattr(result, "format", None)
+
+            # Try to infer format from tags if not explicitly set
+            if result_format is None and result.tags:
+                format_tags = [
+                    t
+                    for t in result.tags
+                    if t.lower()
+                    in ["pdf", "doc", "video", "audio", "interactive", "text"]
+                ]
+                if format_tags:
+                    result_format = format_tags[0].lower()
+
+            if result_format is None:
+                # If no format info available, inclusion fails, exclusion passes
+                if constraint_type == ConstraintType.INCLUSION:
+                    return False
+                else:  # EXCLUSION
+                    return True
+
+            result_format = result_format.lower()
+
+            if constraint_type == ConstraintType.INCLUSION:
+                if isinstance(value, str):
+                    if value.lower() != result_format:
+                        return False
+                elif isinstance(value, list):
+                    if not any(v.lower() == result_format for v in value):
+                        return False
+            elif constraint_type == ConstraintType.EXCLUSION:
+                if isinstance(value, str):
+                    if value.lower() == result_format:
+                        return False
+                elif isinstance(value, list):
+                    if any(v.lower() == result_format for v in value):
+                        return False
 
         elif dimension == "recency":
-            # Handle recency constraints
-            if constraint_type == ConstraintType.INCLUSION or constraint_type == ConstraintType.EXCLUSION:
-                # This would depend on specific implementation
-                pass
+            # Handle recency constraints (content freshness)
+            # Assumes result.recency is in ISO format or similar
+            if not result.recency:
+                # If no recency info available, inclusion fails, exclusion passes
+                if constraint_type == ConstraintType.INCLUSION:
+                    return False
+                else:  # EXCLUSION
+                    return True
+
+            from datetime import datetime, timedelta
+
+            try:
+                # Parse result recency
+                recency_str = result.recency
+                if recency_str.endswith("Z"):
+                    result_date = datetime.fromisoformat(
+                        recency_str.replace("Z", "+00:00")
+                    )
+                elif (
+                    "+" in recency_str or recency_str.count("-") > 2
+                ):  # Has timezone info
+                    result_date = datetime.fromisoformat(recency_str)
+                else:
+                    # Naive datetime, treat as UTC
+                    result_date = datetime.fromisoformat(recency_str).replace(
+                        tzinfo=UTC
+                    )
+
+                now = datetime.now(UTC)
+                days_old = (now - result_date).days
+
+                # Handle recency constraint values
+                if isinstance(value, str):
+                    value_lower = value.lower()
+
+                    # Parse recency constraints like "last_7_days", "last_30_days", "this_year", etc.
+                    if value_lower.startswith("last_") and value_lower.endswith(
+                        "_days"
+                    ):
+                        try:
+                            days_limit = int(value_lower.split("_")[1])
+                            if days_old > days_limit:
+                                return False
+                        except (ValueError, IndexError):
+                            pass
+                    elif value_lower == "today" and days_old > 1:
+                        return False
+                    elif value_lower == "this_week" and days_old > 7:
+                        return False
+                    elif value_lower == "this_month" and days_old > 30:
+                        return False
+                    elif value_lower == "this_year":
+                        current_year = now.year
+                        result_year = result_date.year
+                        if result_year != current_year:
+                            return False
+                    elif value_lower == "evergreen":
+                        # Evergreen content is old but still relevant - no filtering
+                        pass
+
+                elif isinstance(value, dict):
+                    # Handle structured recency constraints
+                    if "max_days_old" in value:
+                        max_days = value["max_days_old"]
+                        if days_old > max_days:
+                            return False
+                    if "min_days_old" in value:
+                        min_days = value["min_days_old"]
+                        if days_old < min_days:
+                            return False
+
+            except (ValueError, AttributeError):
+                # If date parsing fails, skip this check (fail open)
+                if constraint_type == ConstraintType.INCLUSION:
+                    return False
+
+            # Handle exclusion constraints for recency
+            if constraint_type == ConstraintType.EXCLUSION and isinstance(value, str):
+                value_lower = value.lower()
+                # For exclusion, filter out if matches
+                if value_lower == "today" and days_old <= 1:
+                    return False
+                elif value_lower == "this_week" and days_old <= 7:
+                    return False
+                elif value_lower == "this_month" and days_old <= 30:
+                    return False
 
         return True
 
@@ -453,7 +365,9 @@ class IntentAlignmentEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
+    def compute_intent_alignment(
+        self, result: SearchResult, intent: UniversalIntent
+    ) -> tuple[float, list[str]]:
         """
         Compute alignment score between a result and user intent
         Implements Algorithm 3: computeIntentAlignment()
@@ -462,12 +376,16 @@ class IntentAlignmentEngine:
         reasons = []
 
         # 1. Query-content alignment (semantic similarity)
-        query_content_score, query_reasons = self._compute_query_content_alignment(result, intent)
+        query_content_score, query_reasons = self._compute_query_content_alignment(
+            result, intent
+        )
         scores.append(query_content_score)
         reasons.extend(query_reasons)
 
         # 2. Use case alignment (semantic similarity)
-        use_case_score, use_case_reasons = self._compute_use_case_alignment(result, intent)
+        use_case_score, use_case_reasons = self._compute_use_case_alignment(
+            result, intent
+        )
         scores.append(use_case_score)
         reasons.extend(use_case_reasons)
 
@@ -482,7 +400,9 @@ class IntentAlignmentEngine:
         reasons.extend(skill_reasons)
 
         # 5. Temporal intent alignment
-        temporal_score, temporal_reasons = self._compute_temporal_alignment(result, intent)
+        temporal_score, temporal_reasons = self._compute_temporal_alignment(
+            result, intent
+        )
         scores.append(temporal_score)
         reasons.extend(temporal_reasons)
 
@@ -504,7 +424,9 @@ class IntentAlignmentEngine:
                 adjusted_weights = [remaining_weight]
             weights = adjusted_weights
 
-        alignment_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
+        alignment_score = sum(
+            score * weight for score, weight in zip(scores, weights, strict=False)
+        )
 
         # Clamp the score between 0 and 1
         alignment_score = max(0.0, min(1.0, alignment_score))
@@ -531,7 +453,9 @@ class IntentAlignmentEngine:
         content_embedding = self.embedding_cache.encode_text(content)
 
         if query_embedding is not None and content_embedding is not None:
-            similarity = self.embedding_cache.cosine_similarity(query_embedding, content_embedding)
+            similarity = self.embedding_cache.cosine_similarity(
+                query_embedding, content_embedding
+            )
             # Normalize to 0-1 range
             score = (similarity + 1) / 2  # Cosine similarity is -1 to 1, convert to 0-1
 
@@ -557,7 +481,9 @@ class IntentAlignmentEngine:
             else:
                 return 0.5, reasons  # Neutral if no query words
 
-    def _compute_use_case_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
+    def _compute_use_case_alignment(
+        self, result: SearchResult, intent: UniversalIntent
+    ) -> tuple[float, list[str]]:
         """Compute alignment based on use case similarity"""
         reasons = []
 
@@ -583,7 +509,9 @@ class IntentAlignmentEngine:
                 tag_embedding = self.embedding_cache.encode_text(tag_text)
 
                 if use_case_embedding is not None and tag_embedding is not None:
-                    similarity = self.embedding_cache.cosine_similarity(use_case_embedding, tag_embedding)
+                    similarity = self.embedding_cache.cosine_similarity(
+                        use_case_embedding, tag_embedding
+                    )
                     # Normalize to 0-1 range and add to score
                     similarity_score = (similarity + 1) / 2
                     score += similarity_score * 0.3  # Smaller weight for semantic match
@@ -594,7 +522,9 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_ethical_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
+    def _compute_ethical_alignment(
+        self, result: SearchResult, intent: UniversalIntent
+    ) -> tuple[float, list[str]]:
         """Compute alignment based on ethical signals"""
         reasons = []
 
@@ -628,7 +558,9 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_skill_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
+    def _compute_skill_alignment(
+        self, result: SearchResult, intent: UniversalIntent
+    ) -> tuple[float, list[str]]:
         """Compute alignment based on skill level"""
         reasons = []
 
@@ -659,11 +591,17 @@ class IntentAlignmentEngine:
                 )
                 or (
                     declared_skill == SkillLevel.INTERMEDIATE
-                    and result_skill in [SkillLevel.BEGINNER, SkillLevel.INTERMEDIATE, SkillLevel.ADVANCED]
+                    and result_skill
+                    in [
+                        SkillLevel.BEGINNER,
+                        SkillLevel.INTERMEDIATE,
+                        SkillLevel.ADVANCED,
+                    ]
                 )
                 or (
                     declared_skill == SkillLevel.ADVANCED
-                    and result_skill in [SkillLevel.INTERMEDIATE, SkillLevel.ADVANCED, SkillLevel.EXPERT]
+                    and result_skill
+                    in [SkillLevel.INTERMEDIATE, SkillLevel.ADVANCED, SkillLevel.EXPERT]
                 )
             ):
                 # Allow some flexibility in skill matching
@@ -677,7 +615,9 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_temporal_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
+    def _compute_temporal_alignment(
+        self, result: SearchResult, intent: UniversalIntent
+    ) -> tuple[float, list[str]]:
         """Compute alignment based on temporal intent"""
         reasons = []
 
@@ -695,12 +635,18 @@ class IntentAlignmentEngine:
             try:
                 # Assume result.recency is in ISO format or similar
                 if result.recency.endswith("Z"):
-                    result_date = datetime.fromisoformat(result.recency.replace("Z", "+00:00"))
-                elif "+" in result.recency or result.recency.count("-") > 2:  # Has timezone info
+                    result_date = datetime.fromisoformat(
+                        result.recency.replace("Z", "+00:00")
+                    )
+                elif (
+                    "+" in result.recency or result.recency.count("-") > 2
+                ):  # Has timezone info
                     result_date = datetime.fromisoformat(result.recency)
                 else:
                     # Naive datetime, treat as UTC
-                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=UTC)
+                    result_date = datetime.fromisoformat(result.recency).replace(
+                        tzinfo=UTC
+                    )
 
                 # Make sure both datetimes have timezone info
                 now = datetime.now(UTC)
@@ -723,12 +669,18 @@ class IntentAlignmentEngine:
             try:
                 # Same date parsing logic as above
                 if result.recency.endswith("Z"):
-                    result_date = datetime.fromisoformat(result.recency.replace("Z", "+00:00"))
-                elif "+" in result.recency or result.recency.count("-") > 2:  # Has timezone info
+                    result_date = datetime.fromisoformat(
+                        result.recency.replace("Z", "+00:00")
+                    )
+                elif (
+                    "+" in result.recency or result.recency.count("-") > 2
+                ):  # Has timezone info
                     result_date = datetime.fromisoformat(result.recency)
                 else:
                     # Naive datetime, treat as UTC
-                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=UTC)
+                    result_date = datetime.fromisoformat(result.recency).replace(
+                        tzinfo=UTC
+                    )
 
                 # Make sure both datetimes have timezone info
                 now = datetime.now(UTC)
@@ -770,11 +722,17 @@ class IntentRanker:
         # Step 2: Compute intent alignment for each candidate
         ranked_results = []
         for candidate in filtered_candidates:
-            alignment_score, match_reasons = self.intent_alignment_engine.compute_intent_alignment(
-                candidate, request.intent
+            alignment_score, match_reasons = (
+                self.intent_alignment_engine.compute_intent_alignment(
+                    candidate, request.intent
+                )
             )
 
-            ranked_result = RankedResult(result=candidate, alignmentScore=alignment_score, matchReasons=match_reasons)
+            ranked_result = RankedResult(
+                result=candidate,
+                alignmentScore=alignment_score,
+                matchReasons=match_reasons,
+            )
             ranked_results.append(ranked_result)
 
         # Step 3: Sort by alignment score (descending)
@@ -785,15 +743,20 @@ class IntentRanker:
 
 # Global instance for caching
 _intent_ranker_instance = None
+_ranker_lock = threading.Lock()
 
 
 def get_intent_ranker() -> IntentRanker:
     """
-    Get singleton instance of IntentRanker with cached model
+    Get thread-safe singleton instance of IntentRanker with cached model.
+
+    Uses double-checked locking pattern for thread safety.
     """
     global _intent_ranker_instance
     if _intent_ranker_instance is None:
-        _intent_ranker_instance = IntentRanker()
+        with _ranker_lock:
+            if _intent_ranker_instance is None:
+                _intent_ranker_instance = IntentRanker()
     return _intent_ranker_instance
 
 

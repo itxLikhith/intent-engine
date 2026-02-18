@@ -119,7 +119,12 @@ class AuditTrailManager:
         if end_date:
             query = query.filter(AuditTrail.timestamp <= end_date)
 
-        events = query.order_by(AuditTrail.timestamp.desc()).offset(offset).limit(limit).all()
+        events = (
+            query.order_by(AuditTrail.timestamp.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
         return events
 
     def get_user_audit_events(self, user_id: str, limit: int = 50) -> list[AuditTrail]:
@@ -157,7 +162,9 @@ class AuditTrailManager:
 
         # Count by event type
         event_counts = (
-            self.db.query(AuditTrail.event_type, func.count(AuditTrail.id).label("count"))
+            self.db.query(
+                AuditTrail.event_type, func.count(AuditTrail.id).label("count")
+            )
             .group_by(AuditTrail.event_type)
             .all()
         )
@@ -167,7 +174,10 @@ class AuditTrailManager:
 
         week_ago = datetime.utcnow() - timedelta(days=7)
         daily_counts = (
-            self.db.query(func.date(AuditTrail.timestamp).label("date"), func.count(AuditTrail.id).label("count"))
+            self.db.query(
+                func.date(AuditTrail.timestamp).label("date"),
+                func.count(AuditTrail.id).label("count"),
+            )
             .filter(AuditTrail.timestamp >= week_ago)
             .group_by(func.date(AuditTrail.timestamp))
             .order_by("date")
@@ -178,7 +188,9 @@ class AuditTrailManager:
             "timestamp": datetime.utcnow().isoformat(),
             "total_events": total_events,
             "events_by_type": {event_type: count for event_type, count in event_counts},
-            "daily_counts": [{"date": str(date), "count": count} for date, count in daily_counts],
+            "daily_counts": [
+                {"date": str(date), "count": count} for date, count in daily_counts
+            ],
             "recent_activity": len(self.get_recent_events(hours=24)),
         }
 
@@ -190,7 +202,11 @@ class AuditTrailManager:
 
         cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
 
-        deleted_count = self.db.query(AuditTrail).filter(AuditTrail.timestamp < cutoff_date).delete()
+        deleted_count = (
+            self.db.query(AuditTrail)
+            .filter(AuditTrail.timestamp < cutoff_date)
+            .delete()
+        )
 
         self.db.commit()
         return deleted_count

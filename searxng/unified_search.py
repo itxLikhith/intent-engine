@@ -78,7 +78,11 @@ class UnifiedSearchService:
         if request.extract_intent:
             intent_task_idx = len(tasks)
             # Run intent extraction in thread pool (it's CPU-bound)
-            tasks.append(asyncio.to_thread(self._extract_intent_with_error_handling, request.query))
+            tasks.append(
+                asyncio.to_thread(
+                    self._extract_intent_with_error_handling, request.query
+                )
+            )
 
         # Always run SearXNG search (it's I/O-bound)
         tasks.append(self._search_searxng(request))
@@ -97,14 +101,20 @@ class UnifiedSearchService:
                 logger.debug(f"intent_response: {intent_result is not None}")
                 if intent_result and hasattr(intent_result, "intent"):
                     universal_intent = intent_result.intent
-                    logger.debug(f"universal_intent extracted: {universal_intent is not None}")
+                    logger.debug(
+                        f"universal_intent extracted: {universal_intent is not None}"
+                    )
                     if universal_intent:
-                        extracted_intent = self._convert_to_extracted_intent(universal_intent)
+                        extracted_intent = self._convert_to_extracted_intent(
+                            universal_intent
+                        )
                         logger.debug(
                             f"extracted_intent converted: goal={extracted_intent.goal if extracted_intent else 'None'}"
                         )
                 else:
-                    logger.warning("Intent extraction returned None or missing 'intent' attribute")
+                    logger.warning(
+                        "Intent extraction returned None or missing 'intent' attribute"
+                    )
 
         # Process SearXNG result (last task)
         searxng_result = results[-1]
@@ -120,7 +130,9 @@ class UnifiedSearchService:
         if request.rank_results and universal_intent:
             logger.debug("Ranking with intent enabled")
             try:
-                ranked_results = await self._rank_with_intent(searxng_results, universal_intent, request)
+                ranked_results = await self._rank_with_intent(
+                    searxng_results, universal_intent, request
+                )
             except Exception as e:
                 logger.error(f"Ranking failed: {e}")
                 import traceback
@@ -156,12 +168,16 @@ class UnifiedSearchService:
             engines_used=engines_used,
             categories_searched=request.categories or ["general"],
             ranking_applied=request.rank_results and universal_intent is not None,
-            results_ranked=len([r for r in ranked_results if r.ranked_score != r.original_score]),
+            results_ranked=len(
+                [r for r in ranked_results if r.ranked_score != r.original_score]
+            ),
             privacy_enhanced=True,
             tracking_blocked=True,
         )
 
-        logger.info(f"Unified search complete: {len(response.results)} results in {processing_time_ms:.2f}ms")
+        logger.info(
+            f"Unified search complete: {len(response.results)} results in {processing_time_ms:.2f}ms"
+        )
         return response
 
     def _extract_intent(self, query: str) -> Any:
@@ -169,7 +185,10 @@ class UnifiedSearchService:
         intent_request = IntentExtractionRequest(
             product="search",
             input={"text": query},
-            context={"sessionId": f"search_{datetime.utcnow().timestamp()}", "userLocale": "en-US"},
+            context={
+                "sessionId": f"search_{datetime.utcnow().timestamp()}",
+                "userLocale": "en-US",
+            },
         )
         return extract_intent(intent_request)
 
@@ -181,7 +200,9 @@ class UnifiedSearchService:
             logger.warning(f"Intent extraction error in thread: {e}")
             raise
 
-    def _convert_to_extracted_intent(self, universal_intent: UniversalIntent) -> ExtractedIntent:
+    def _convert_to_extracted_intent(
+        self, universal_intent: UniversalIntent
+    ) -> ExtractedIntent:
         """Convert UniversalIntent to ExtractedIntent for API response."""
         # Defensive: handle None values in inferred intent
         inferred = universal_intent.inferred if universal_intent.inferred else None
@@ -208,15 +229,27 @@ class UnifiedSearchService:
                 for c in constraints_list
             ],
             use_cases=[uc.value for uc in use_cases_list],
-            result_type=(inferred.resultType.value if inferred and inferred.resultType else "unknown"),
-            complexity=(inferred.complexity.value if inferred and inferred.complexity else "moderate"),
+            result_type=(
+                inferred.resultType.value
+                if inferred and inferred.resultType
+                else "unknown"
+            ),
+            complexity=(
+                inferred.complexity.value
+                if inferred and inferred.complexity
+                else "moderate"
+            ),
             confidence=0.8,  # Default confidence
         )
 
-    async def _search_searxng(self, request: UnifiedSearchRequest) -> list[SearXNGResult]:
+    async def _search_searxng(
+        self, request: UnifiedSearchRequest
+    ) -> list[SearXNGResult]:
         """Search SearXNG and return results."""
         try:
-            logger.debug(f"_search_searxng: calling SearXNG client with query='{request.query}'")
+            logger.debug(
+                f"_search_searxng: calling SearXNG client with query='{request.query}'"
+            )
             response = await self.searxng_client.search(
                 query=request.query,
                 categories=request.categories,
@@ -235,7 +268,10 @@ class UnifiedSearchService:
             return []
 
     async def _rank_with_intent(
-        self, results: list[SearXNGResult], universal_intent: UniversalIntent, request: UnifiedSearchRequest
+        self,
+        results: list[SearXNGResult],
+        universal_intent: UniversalIntent,
+        request: UnifiedSearchRequest,
     ) -> list[RankedSearchResult]:
         """
         Rank search results based on intent alignment.
@@ -246,7 +282,9 @@ class UnifiedSearchService:
         - Privacy compliance
         - Ethical alignment
         """
-        logger.debug(f"_rank_with_intent: {len(results)} results, intent={universal_intent is not None}")
+        logger.debug(
+            f"_rank_with_intent: {len(results)} results, intent={universal_intent is not None}"
+        )
 
         # Convert SearXNG results to URL ranking format (list of URL strings)
         urls_to_rank = [r.url for r in results]
@@ -287,7 +325,9 @@ class UnifiedSearchService:
                 title=ranked.title or (original.title if original else ""),
                 content=ranked.description or (original.content if original else ""),
                 engine=original.engine if original else "unknown",
-                original_score=original.score if original and original.score is not None else 0.0,
+                original_score=(
+                    original.score if original and original.score is not None else 0.0
+                ),
                 ranked_score=ranked.final_score,
                 rank=idx + 1,
                 category=original.category if original else "general",
@@ -307,7 +347,9 @@ class UnifiedSearchService:
         logger.debug(f"_rank_with_intent returning {len(ranked_results)} results")
         return ranked_results
 
-    def _convert_to_ranked_results(self, results: list[SearXNGResult]) -> list[RankedSearchResult]:
+    def _convert_to_ranked_results(
+        self, results: list[SearXNGResult]
+    ) -> list[RankedSearchResult]:
         """Convert SearXNG results to RankedSearchResult without intent ranking."""
         return [
             RankedSearchResult(
@@ -356,7 +398,11 @@ class UnifiedSearchService:
 
             # Filter big tech
             if request.exclude_big_tech:
-                domain = result.url.split("/")[2].lower() if "/" in result.url else result.url.lower()
+                domain = (
+                    result.url.split("/")[2].lower()
+                    if "/" in result.url
+                    else result.url.lower()
+                )
                 if any(bt in domain for bt in big_tech_domains):
                     continue
 
@@ -368,7 +414,9 @@ class UnifiedSearchService:
 
         return filtered
 
-    def _generate_match_reasons(self, ranked_result: Any, universal_intent: UniversalIntent) -> list[str]:
+    def _generate_match_reasons(
+        self, ranked_result: Any, universal_intent: UniversalIntent
+    ) -> list[str]:
         """Generate human-readable match reasons for a result."""
         reasons = []
 
@@ -435,7 +483,10 @@ def _cached_extract_intent(query_hash: str, query: str):
         intent_request = IntentExtractionRequest(
             product="search",
             input={"text": query},
-            context={"sessionId": f"search_cached_{datetime.utcnow().timestamp()}", "userLocale": "en-US"},
+            context={
+                "sessionId": f"search_cached_{datetime.utcnow().timestamp()}",
+                "userLocale": "en-US",
+            },
         )
         return extract_intent(intent_request)
     except Exception as e:

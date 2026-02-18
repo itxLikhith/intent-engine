@@ -93,7 +93,10 @@ class ConsentManager:
             # Update existing record if it exists
             existing = (
                 self.db.query(UserConsent)
-                .filter(UserConsent.user_id == user_id, UserConsent.consent_type == consent_type.value)
+                .filter(
+                    UserConsent.user_id == user_id,
+                    UserConsent.consent_type == consent_type.value,
+                )
                 .first()
             )
 
@@ -110,11 +113,16 @@ class ConsentManager:
             else:
                 raise
 
-    def get_user_consent(self, user_id: str, consent_type: ConsentType) -> UserConsent | None:
+    def get_user_consent(
+        self, user_id: str, consent_type: ConsentType
+    ) -> UserConsent | None:
         """Get a user's consent for a specific type"""
         consent = (
             self.db.query(UserConsent)
-            .filter(UserConsent.user_id == user_id, UserConsent.consent_type == consent_type.value)
+            .filter(
+                UserConsent.user_id == user_id,
+                UserConsent.consent_type == consent_type.value,
+            )
             .first()
         )
 
@@ -128,7 +136,9 @@ class ConsentManager:
 
     def get_all_user_consents(self, user_id: str) -> list[UserConsent]:
         """Get all consents for a user"""
-        consents = self.db.query(UserConsent).filter(UserConsent.user_id == user_id).all()
+        consents = (
+            self.db.query(UserConsent).filter(UserConsent.user_id == user_id).all()
+        )
 
         # Check for expired consents
         for consent in consents:
@@ -143,7 +153,10 @@ class ConsentManager:
         """Withdraw a user's consent"""
         consent = (
             self.db.query(UserConsent)
-            .filter(UserConsent.user_id == user_id, UserConsent.consent_type == consent_type.value)
+            .filter(
+                UserConsent.user_id == user_id,
+                UserConsent.consent_type == consent_type.value,
+            )
             .first()
         )
 
@@ -179,13 +192,21 @@ class ConsentManager:
     def get_consent_summary(self) -> dict[str, Any]:
         """Get a summary of all consents in the system"""
         total_consents = self.db.query(UserConsent).count()
-        granted_consents = self.db.query(UserConsent).filter(UserConsent.granted is True).count()
-        denied_consents = self.db.query(UserConsent).filter(UserConsent.granted is False).count()
+        granted_consents = (
+            self.db.query(UserConsent).filter(UserConsent.granted is True).count()
+        )
+        denied_consents = (
+            self.db.query(UserConsent).filter(UserConsent.granted is False).count()
+        )
 
         # Count by type
         consent_counts_by_type = {}
         for consent_type in ConsentType:
-            count = self.db.query(UserConsent).filter(UserConsent.consent_type == consent_type.value).count()
+            count = (
+                self.db.query(UserConsent)
+                .filter(UserConsent.consent_type == consent_type.value)
+                .count()
+            )
             consent_counts_by_type[consent_type.value] = count
 
         summary = {

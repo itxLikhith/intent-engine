@@ -80,7 +80,8 @@ class StressTester:
             use_dns_cache=True,
         )
         self.session = aiohttp.ClientSession(
-            connector=connector, timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+            connector=connector,
+            timeout=aiohttp.ClientTimeout(total=self.config.timeout),
         )
         return self
 
@@ -89,7 +90,11 @@ class StressTester:
             await self.session.close()
 
     async def make_request(
-        self, method: str, endpoint: str, data: dict | None = None, headers: dict | None = None
+        self,
+        method: str,
+        endpoint: str,
+        data: dict | None = None,
+        headers: dict | None = None,
     ) -> tuple:
         """Make a single HTTP request and return (status, latency, error)"""
         url = f"{self.config.base_url}{endpoint}"
@@ -102,7 +107,9 @@ class StressTester:
                     return response.status, latency, None
             elif method == "POST":
                 async with self.session.post(
-                    url, json=data, headers={**(headers or {}), "Content-Type": "application/json"}
+                    url,
+                    json=data,
+                    headers={**(headers or {}), "Content-Type": "application/json"},
                 ) as response:
                     latency = (time.perf_counter() - start_time) * 1000
                     return response.status, latency, None
@@ -148,7 +155,9 @@ class StressTester:
             for i in range(num_requests // self.config.num_workers + 1):
                 if i * self.config.num_workers + worker_id >= num_requests:
                     break
-                status, latency, error = await self.make_request(method, endpoint, data, headers)
+                status, latency, error = await self.make_request(
+                    method, endpoint, data, headers
+                )
 
                 with self._lock:
                     result.total_requests += 1
@@ -163,7 +172,9 @@ class StressTester:
                     latencies.append(latency)
 
         start_time = time.time()
-        workers = [asyncio.create_task(worker(i)) for i in range(self.config.num_workers)]
+        workers = [
+            asyncio.create_task(worker(i)) for i in range(self.config.num_workers)
+        ]
         await asyncio.gather(*workers)
         duration = time.time() - start_time
 
@@ -179,7 +190,9 @@ class StressTester:
 
         result.requests_per_second = result.total_requests / duration
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
 
         self._print_result(result, duration)
@@ -217,7 +230,10 @@ class StressTester:
 
         # Test 1: Rapid sequential database operations
         await self.run_load_test(
-            test_name="PostgreSQL - Sequential DB Operations", method="GET", endpoint="/campaigns", num_requests=200
+            test_name="PostgreSQL - Sequential DB Operations",
+            method="GET",
+            endpoint="/campaigns",
+            num_requests=200,
         )
 
         # Test 2: Concurrent database writes
@@ -259,7 +275,9 @@ class StressTester:
 
                 # Alternate between read and write
                 if i % 2 == 0:
-                    status, latency, error = await self.make_request("GET", "/campaigns")
+                    status, latency, error = await self.make_request(
+                        "GET", "/campaigns"
+                    )
                 else:
                     test_data = {
                         "name": f"Mixed Ops Campaign {worker_id}_{i}",
@@ -267,7 +285,9 @@ class StressTester:
                         "budget": 1000.0,
                         "status": "active",
                     }
-                    status, latency, error = await self.make_request("POST", "/campaigns", test_data)
+                    status, latency, error = await self.make_request(
+                        "POST", "/campaigns", test_data
+                    )
 
                 with self._lock:
                     result.total_requests += 1
@@ -279,7 +299,9 @@ class StressTester:
                     latencies.append(latency)
 
         start_time = time.time()
-        workers = [asyncio.create_task(mixed_worker(i)) for i in range(self.config.num_workers)]
+        workers = [
+            asyncio.create_task(mixed_worker(i)) for i in range(self.config.num_workers)
+        ]
         await asyncio.gather(*workers)
         duration = time.time() - start_time
 
@@ -294,7 +316,9 @@ class StressTester:
 
         result.requests_per_second = result.total_requests / duration
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
 
         self._print_result(result, duration)
@@ -329,12 +353,16 @@ class StressTester:
 
         # First request (cache miss)
         for i in range(10):
-            status, latency, error = await self.make_request("POST", "/extract-intent", test_data)
+            status, latency, error = await self.make_request(
+                "POST", "/extract-intent", test_data
+            )
             latencies_first.append(latency)
 
         # Subsequent requests (should be cached)
         for i in range(50):
-            status, latency, error = await self.make_request("POST", "/extract-intent", test_data)
+            status, latency, error = await self.make_request(
+                "POST", "/extract-intent", test_data
+            )
             latencies_cached.append(latency)
 
             with self._lock:
@@ -351,11 +379,17 @@ class StressTester:
             result.max_latency_ms = max(all_latencies)
 
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
 
-        print(f"\nFirst Request Avg (cache miss): {statistics.mean(latencies_first):.2f}ms")
-        print(f"Cached Request Avg (cache hit): {statistics.mean(latencies_cached):.2f}ms")
+        print(
+            f"\nFirst Request Avg (cache miss): {statistics.mean(latencies_first):.2f}ms"
+        )
+        print(
+            f"Cached Request Avg (cache hit): {statistics.mean(latencies_cached):.2f}ms"
+        )
         if latencies_first and latencies_cached:
             speedup = (
                 statistics.mean(latencies_first) / statistics.mean(latencies_cached)
@@ -387,7 +421,9 @@ class StressTester:
         for query in queries:
             test_data = {"product": "search", "input": {"text": query}}
             for i in range(20):
-                status, latency, error = await self.make_request("POST", "/extract-intent", test_data)
+                status, latency, error = await self.make_request(
+                    "POST", "/extract-intent", test_data
+                )
                 latencies.append(latency)
 
                 with self._lock:
@@ -402,7 +438,9 @@ class StressTester:
             result.max_latency_ms = max(latencies)
 
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
         self._print_result(result, 0)
         self.results.append(result)
@@ -429,7 +467,9 @@ class StressTester:
 
         for origin in self.config.cors_test_origins:
             headers = {"Origin": origin}
-            status, latency, error = await self.make_request("GET", "/", headers=headers)
+            status, latency, error = await self.make_request(
+                "GET", "/", headers=headers
+            )
 
             result.total_requests += 1
             if status >= 200 and status < 400:
@@ -442,7 +482,9 @@ class StressTester:
             print(f"  Status: {status}, Latency: {latency:.2f}ms")
 
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
         self._print_result(result, 0)
         self.results.append(result)
@@ -464,7 +506,9 @@ class StressTester:
 
         for headers in test_headers:
             headers["Origin"] = "http://localhost:3000"
-            status, latency, error = await self.make_request("GET", "/", headers=headers)
+            status, latency, error = await self.make_request(
+                "GET", "/", headers=headers
+            )
 
             result.total_requests += 1
             if status >= 200 and status < 400:
@@ -474,7 +518,9 @@ class StressTester:
             print(f"  Status: {status}, Latency: {latency:.2f}ms")
 
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
         self._print_result(result, 0)
         self.results.append(result)
@@ -513,7 +559,9 @@ class StressTester:
             result.avg_latency_ms = statistics.mean(latencies)
 
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
         self._print_result(result, 0)
         self.results.append(result)
@@ -531,18 +579,30 @@ class StressTester:
             test_name="API - Intent Extraction",
             method="POST",
             endpoint="/extract-intent",
-            data={"product": "search", "input": {"text": "best laptop for programming"}},
+            data={
+                "product": "search",
+                "input": {"text": "best laptop for programming"},
+            },
             num_requests=100,
         )
 
         # Test 2: Health check
-        await self.run_load_test(test_name="API - Health Check", method="GET", endpoint="/", num_requests=200)
+        await self.run_load_test(
+            test_name="API - Health Check", method="GET", endpoint="/", num_requests=200
+        )
 
         # Test 3: Campaign listing
-        await self.run_load_test(test_name="API - Campaign List", method="GET", endpoint="/campaigns", num_requests=100)
+        await self.run_load_test(
+            test_name="API - Campaign List",
+            method="GET",
+            endpoint="/campaigns",
+            num_requests=100,
+        )
 
         # Test 4: Status endpoint
-        await self.run_load_test(test_name="API - Status", method="GET", endpoint="/status", num_requests=100)
+        await self.run_load_test(
+            test_name="API - Status", method="GET", endpoint="/status", num_requests=100
+        )
 
         # Test 5: Sustained load test
         await self._test_sustained_load()
@@ -575,7 +635,10 @@ class StressTester:
 
                 await asyncio.sleep(0.1)  # Small delay between requests
 
-        workers = [asyncio.create_task(sustained_worker(i)) for i in range(self.config.num_workers)]
+        workers = [
+            asyncio.create_task(sustained_worker(i))
+            for i in range(self.config.num_workers)
+        ]
         await asyncio.gather(*workers)
         actual_duration = time.time() - start_time
 
@@ -590,7 +653,9 @@ class StressTester:
 
         result.requests_per_second = result.total_requests / actual_duration
         result.success_rate = (
-            (result.successful_requests / result.total_requests * 100) if result.total_requests > 0 else 0
+            (result.successful_requests / result.total_requests * 100)
+            if result.total_requests > 0
+            else 0
         )
 
         self._print_result(result, actual_duration)
@@ -651,7 +716,9 @@ class StressTester:
         total_requests = sum(r.total_requests for r in self.results)
         total_successful = sum(r.successful_requests for r in self.results)
         total_failed = sum(r.failed_requests for r in self.results)
-        overall_success_rate = (total_successful / total_requests * 100) if total_requests > 0 else 0
+        overall_success_rate = (
+            (total_successful / total_requests * 100) if total_requests > 0 else 0
+        )
 
         report.append("SUMMARY")
         report.append("-" * 60)
@@ -687,7 +754,9 @@ class StressTester:
         report.append("=" * 80)
 
         if overall_success_rate < 99:
-            report.append("[WARNING] High error rate detected - investigate failing requests")
+            report.append(
+                "[WARNING] High error rate detected - investigate failing requests"
+            )
 
         high_latency_tests = [r for r in self.results if r.p99_latency_ms > 1000]
         if high_latency_tests:
@@ -734,7 +803,9 @@ class StressTester:
         print(report)
 
         # Save report to file
-        report_file = f"stress_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        report_file = (
+            f"stress_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        )
         with open(report_file, "w") as f:
             f.write(report)
         print(f"\nReport saved to: {report_file}")
@@ -747,15 +818,26 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Intent Engine Stress Test Suite")
-    parser.add_argument("--workers", type=int, default=50, help="Number of concurrent workers")
-    parser.add_argument("--requests", type=int, default=500, help="Number of requests per test")
-    parser.add_argument("--duration", type=int, default=60, help="Test duration in seconds")
-    parser.add_argument("--url", type=str, default="http://localhost:8000", help="Base URL")
+    parser.add_argument(
+        "--workers", type=int, default=50, help="Number of concurrent workers"
+    )
+    parser.add_argument(
+        "--requests", type=int, default=500, help="Number of requests per test"
+    )
+    parser.add_argument(
+        "--duration", type=int, default=60, help="Test duration in seconds"
+    )
+    parser.add_argument(
+        "--url", type=str, default="http://localhost:8000", help="Base URL"
+    )
 
     args = parser.parse_args()
 
     config = TestConfig(
-        base_url=args.url, num_workers=args.workers, num_requests=args.requests, test_duration=args.duration
+        base_url=args.url,
+        num_workers=args.workers,
+        num_requests=args.requests,
+        test_duration=args.duration,
     )
 
     async with StressTester(config) as tester:

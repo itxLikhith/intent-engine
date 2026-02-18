@@ -71,8 +71,14 @@ class ConstraintExtractor:
 
         # Price constraints
         self.price_patterns = {
-            r"\b(under|less than|below)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": ("price", "<={value}"),
-            r"\b(over|more than|above)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": ("price", ">={value}"),
+            r"\b(under|less than|below)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": (
+                "price",
+                "<={value}",
+            ),
+            r"\b(over|more than|above)\s*(\d+)\s*(rupees|rs|₹|dollars?|usd)\b": (
+                "price",
+                ">={value}",
+            ),
             r"\b(free|gratis|no cost|zero cost)\b": ("price", "0"),
             r"\b(budget|cheap|affordable|low cost)\b": ("price", "budget"),
         }
@@ -84,10 +90,22 @@ class ConstraintExtractor:
                 "feature",
                 "end-to-end_encryption",
             ),
-            r"\b(end[-\s]*to[-\s]*end|e2e)\s+(encrypt|encryption)\b": ("feature", "end-to-end_encryption"),
-            r"\b(encrypted|secure|private)\s+(email|mail)\b": ("feature", "encrypted_email"),
-            r"\b(real[-\s]*time|instant)\s+(sync|collaboration)\b": ("feature", "real-time_collaboration"),
-            r"\b(offline|local|on[-\s]*device)\s+(storage|sync)\b": ("feature", "offline_capability"),
+            r"\b(end[-\s]*to[-\s]*end|e2e)\s+(encrypt|encryption)\b": (
+                "feature",
+                "end-to-end_encryption",
+            ),
+            r"\b(encrypted|secure|private)\s+(email|mail)\b": (
+                "feature",
+                "encrypted_email",
+            ),
+            r"\b(real[-\s]*time|instant)\s+(sync|collaboration)\b": (
+                "feature",
+                "real-time_collaboration",
+            ),
+            r"\b(offline|local|on[-\s]*device)\s+(storage|sync)\b": (
+                "feature",
+                "offline_capability",
+            ),
             r"\b(ad[-\s]*free|no\s+ads|ad[-\s]*less)\b": ("feature", "ad-free"),
         }
 
@@ -106,7 +124,12 @@ class ConstraintExtractor:
                 constraint_key = (ConstraintType.INCLUSION.value, dimension, str(value))
                 if constraint_key not in seen_constraints:
                     constraints.append(
-                        Constraint(type=ConstraintType.INCLUSION, dimension=dimension, value=value, hardFilter=True)
+                        Constraint(
+                            type=ConstraintType.INCLUSION,
+                            dimension=dimension,
+                            value=value,
+                            hardFilter=True,
+                        )
                     )
                     seen_constraints.add(constraint_key)
 
@@ -117,7 +140,12 @@ class ConstraintExtractor:
                 constraint_key = (ConstraintType.EXCLUSION.value, dimension, str(value))
                 if constraint_key not in seen_constraints:
                     constraints.append(
-                        Constraint(type=ConstraintType.EXCLUSION, dimension=dimension, value=value, hardFilter=True)
+                        Constraint(
+                            type=ConstraintType.EXCLUSION,
+                            dimension=dimension,
+                            value=value,
+                            hardFilter=True,
+                        )
                     )
                     seen_constraints.add(constraint_key)
 
@@ -128,11 +156,18 @@ class ConstraintExtractor:
                 if isinstance(match, tuple) and len(match) >= 2:
                     value_str = match[1]  # The numeric value
                     actual_template = template.format(value=value_str)
-                    constraint_key = (ConstraintType.RANGE.value, dimension, actual_template)
+                    constraint_key = (
+                        ConstraintType.RANGE.value,
+                        dimension,
+                        actual_template,
+                    )
                     if constraint_key not in seen_constraints:
                         constraints.append(
                             Constraint(
-                                type=ConstraintType.RANGE, dimension=dimension, value=actual_template, hardFilter=True
+                                type=ConstraintType.RANGE,
+                                dimension=dimension,
+                                value=actual_template,
+                                hardFilter=True,
                             )
                         )
                         seen_constraints.add(constraint_key)
@@ -148,7 +183,12 @@ class ConstraintExtractor:
                 constraint_key = (ConstraintType.INCLUSION.value, dimension, str(value))
                 if constraint_key not in seen_constraints:
                     constraints.append(
-                        Constraint(type=ConstraintType.INCLUSION, dimension=dimension, value=value, hardFilter=True)
+                        Constraint(
+                            type=ConstraintType.INCLUSION,
+                            dimension=dimension,
+                            value=value,
+                            hardFilter=True,
+                        )
                     )
                     seen_constraints.add(constraint_key)
                     # FIX: Track by value, not dimension (was always "feature")
@@ -166,7 +206,9 @@ class ConstraintExtractor:
         # Look for common negative preference patterns
         if re.search(r"\b(no\s+big\s+tech|no\s+big\s+corporations?)\b", text_lower):
             negative_prefs.append("no big tech")
-        if re.search(r"\b(no\s+proprietary|no\s+closed\s+source|open\s+source)\b", text_lower):
+        if re.search(
+            r"\b(no\s+proprietary|no\s+closed\s+source|open\s+source)\b", text_lower
+        ):
             negative_prefs.append("no proprietary")
         if re.search(r"\b(privacy[-\s]*first|privacy\s+focused)\b", text_lower):
             negative_prefs.append("privacy-focused")
@@ -258,8 +300,12 @@ class SkillLevelDetector:
         ]
 
         # Count matches for each category
-        beginner_count = sum(len(re.findall(kw, text_lower)) for kw in beginner_keywords)
-        advanced_count = sum(len(re.findall(kw, text_lower)) for kw in advanced_keywords)
+        beginner_count = sum(
+            len(re.findall(kw, text_lower)) for kw in beginner_keywords
+        )
+        advanced_count = sum(
+            len(re.findall(kw, text_lower)) for kw in advanced_keywords
+        )
 
         # Determine skill level based on counts
         if advanced_count > beginner_count:
@@ -297,7 +343,12 @@ class SemanticInferenceEngine:
                 "solve error messages",
                 "debug problems",
             ],
-            UseCase.VERIFICATION: ["verify account", "confirm email address", "validate credentials", "check security"],
+            UseCase.VERIFICATION: [
+                "verify account",
+                "confirm email address",
+                "validate credentials",
+                "check security",
+            ],
             UseCase.PROFESSIONAL_DEVELOPMENT: [
                 "advance career skills",
                 "learn new technology",
@@ -346,7 +397,9 @@ class SemanticInferenceEngine:
         for use_case, examples in self.use_case_examples.items():
             # Simple keyword matching for now - in production would use embeddings
             for example in examples:
-                if any(word in query_lower for word in example.split()[:3]):  # Match first few words
+                if any(
+                    word in query_lower for word in example.split()[:3]
+                ):  # Match first few words
                     inferred_use_cases.append(use_case)
                     break
 
@@ -363,7 +416,9 @@ class SemanticInferenceEngine:
         for preference, examples in self.ethical_signal_examples.items():
             # Simple keyword matching for now - in production would use embeddings
             for example in examples:
-                if any(word in query_lower for word in example.split()[:3]):  # Match first few words
+                if any(
+                    word in query_lower for word in example.split()[:3]
+                ):  # Match first few words
                     # Map preference string back to EthicalDimension enum
                     if "privacy" in preference:
                         dimension = EthicalDimension.PRIVACY
@@ -374,7 +429,9 @@ class SemanticInferenceEngine:
                     else:
                         dimension = EthicalDimension.ETHICS
 
-                    inferred_signals.append(EthicalSignal(dimension=dimension, preference=preference))
+                    inferred_signals.append(
+                        EthicalSignal(dimension=dimension, preference=preference)
+                    )
                     break
 
         return inferred_signals
@@ -385,13 +442,23 @@ class SemanticInferenceEngine:
         """
         query_lower = query.lower()
 
-        if any(word in query_lower for word in ["how to", "tutorial", "guide", "setup", "configure"]):
+        if any(
+            word in query_lower
+            for word in ["how to", "tutorial", "guide", "setup", "configure"]
+        ):
             return ResultType.TUTORIAL
-        elif any(word in query_lower for word in ["compare", "versus", "vs", "difference", "alternative"]):
+        elif any(
+            word in query_lower
+            for word in ["compare", "versus", "vs", "difference", "alternative"]
+        ):
             return ResultType.COMMUNITY  # Community discussions often compare products
-        elif any(word in query_lower for word in ["buy", "purchase", "price", "cost", "deal"]):
+        elif any(
+            word in query_lower for word in ["buy", "purchase", "price", "cost", "deal"]
+        ):
             return ResultType.MARKETPLACE
-        elif any(word in query_lower for word in ["what is", "explain", "define", "describe"]):
+        elif any(
+            word in query_lower for word in ["what is", "explain", "define", "describe"]
+        ):
             return ResultType.ANSWER
         else:
             return ResultType.TOOL  # Default to tool for most technical queries
@@ -403,7 +470,16 @@ class SemanticInferenceEngine:
         # Simple heuristics based on query characteristics
         if len(query.split()) <= 5:
             return Complexity.SIMPLE
-        elif any(word in query.lower() for word in ["advanced", "expert", "technical", "configuration", "performance"]):
+        elif any(
+            word in query.lower()
+            for word in [
+                "advanced",
+                "expert",
+                "technical",
+                "configuration",
+                "performance",
+            ]
+        ):
             return Complexity.ADVANCED
         else:
             return Complexity.MODERATE
@@ -421,17 +497,25 @@ class IntentExtractor:
         self.skill_detector = SkillLevelDetector()
         self.semantic_engine = SemanticInferenceEngine()
 
-    def extract_intent_from_request(self, request: IntentExtractionRequest) -> IntentExtractionResponse:
+    def extract_intent_from_request(
+        self, request: IntentExtractionRequest
+    ) -> IntentExtractionResponse:
         """
         Main function to extract intent from request following Algorithm 1
         """
-        text = request.input.get("text", "") if isinstance(request.input, dict) else str(request.input)
-        session_id = request.context.get("sessionId", f"sess_{uuid.uuid4().hex}")
-        user_locale = request.context.get("userLocale", "en-US")
+        text = (
+            request.input.get("text", "")
+            if isinstance(request.input, dict)
+            else str(request.input)
+        )
+        session_id = getattr(request.context, "sessionId", None) or f"sess_{uuid.uuid4().hex}"
+        user_locale = getattr(request.context, "userLocale", "en-US")
 
         # Phase 1: Constraint Extraction (Regex patterns)
         constraints = self.constraint_extractor.extract_constraints(text)
-        negative_preferences = self.constraint_extractor.extract_negative_preferences(text)
+        negative_preferences = self.constraint_extractor.extract_negative_preferences(
+            text
+        )
 
         # Phase 2: Goal Classification (Keyword matching)
         goal = self.goal_classifier.classify_goal(text)
@@ -474,7 +558,8 @@ class IntentExtractor:
             intent=intent,
             extractionMetrics={
                 "confidence": 0.8,  # Placeholder confidence
-                "extractedDimensions": [c.dimension for c in constraints] + (["goal"] if goal else []),
+                "extractedDimensions": [c.dimension for c in constraints]
+                + (["goal"] if goal else []),
                 "warnings": [],  # Add warnings if needed
             },
         )
@@ -542,7 +627,14 @@ class IntentExtractor:
         """
         text_lower = text.lower()
 
-        immediate_keywords = ["urgent", "now", "immediately", "right now", "asap", "emergency"]
+        immediate_keywords = [
+            "urgent",
+            "now",
+            "immediately",
+            "right now",
+            "asap",
+            "emergency",
+        ]
         soon_keywords = ["today", "this week", "soon", "within days", "quick"]
 
         if any(word in text_lower for word in immediate_keywords):
@@ -569,17 +661,27 @@ class IntentExtractor:
             horizon = TemporalHorizon.FLEXIBLE
 
         # Determine recency
-        if any(word in text_lower for word in ["latest", "new", "recent", "updated", "current"]):
+        if any(
+            word in text_lower
+            for word in ["latest", "new", "recent", "updated", "current"]
+        ):
             recency = Recency.RECENT
-        elif any(word in text_lower for word in ["old", "historical", "past", "archive"]):
+        elif any(
+            word in text_lower for word in ["old", "historical", "past", "archive"]
+        ):
             recency = Recency.HISTORICAL
         else:
             recency = Recency.EVERGREEN
 
         # Determine frequency
-        if any(word in text_lower for word in ["every", "daily", "weekly", "monthly", "recurring", "repeat"]):
+        if any(
+            word in text_lower
+            for word in ["every", "daily", "weekly", "monthly", "recurring", "repeat"]
+        ):
             frequency = Frequency.RECURRING
-        elif any(word in text_lower for word in ["once", "single", "one time", "one-time"]):
+        elif any(
+            word in text_lower for word in ["once", "single", "one time", "one-time"]
+        ):
             frequency = Frequency.ONEOFF
         else:
             frequency = Frequency.EXPLORATORY

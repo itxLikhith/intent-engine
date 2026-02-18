@@ -90,13 +90,21 @@ class AdvancedAnalytics:
         from database import ClickTracking, ConversionTracking
 
         # Get conversion
-        conversion = self.db.query(ConversionTracking).filter(ConversionTracking.id == conversion_id).first()
+        conversion = (
+            self.db.query(ConversionTracking)
+            .filter(ConversionTracking.id == conversion_id)
+            .first()
+        )
 
         if not conversion:
             raise ValueError(f"Conversion {conversion_id} not found")
 
         # Get the click that led to conversion
-        click = self.db.query(ClickTracking).filter(ClickTracking.id == conversion.click_id).first()
+        click = (
+            self.db.query(ClickTracking)
+            .filter(ClickTracking.id == conversion.click_id)
+            .first()
+        )
 
         if not click:
             raise ValueError(f"Click for conversion {conversion_id} not found")
@@ -113,7 +121,11 @@ class AdvancedAnalytics:
             .filter(
                 ClickTracking.session_id == click.session_id,
                 ClickTracking.timestamp >= lookback_window,
-                ClickTracking.timestamp <= conversion.timestamp if conversion.timestamp else datetime.utcnow(),
+                (
+                    ClickTracking.timestamp <= conversion.timestamp
+                    if conversion.timestamp
+                    else datetime.utcnow()
+                ),
             )
             .order_by(ClickTracking.timestamp)
             .all()
@@ -124,11 +136,15 @@ class AdvancedAnalytics:
             touchpoints = [click]
 
         # Calculate attribution weights based on model
-        weights = self._calculate_attribution_weights(touchpoints, model, conversion.timestamp)
+        weights = self._calculate_attribution_weights(
+            touchpoints, model, conversion.timestamp
+        )
 
         # Calculate attributed values
         conversion_value = conversion.value or 0.0
-        attributed_values = {ad_id: weight * conversion_value for ad_id, weight in weights.items()}
+        attributed_values = {
+            ad_id: weight * conversion_value for ad_id, weight in weights.items()
+        }
 
         # Build touchpoint data
         touchpoint_data = [
@@ -150,7 +166,10 @@ class AdvancedAnalytics:
         )
 
     def _calculate_attribution_weights(
-        self, touchpoints: list, model: AttributionModel, conversion_time: datetime | None
+        self,
+        touchpoints: list,
+        model: AttributionModel,
+        conversion_time: datetime | None,
     ) -> dict[int, float]:
         """
         Calculate attribution weights for touchpoints based on model.
@@ -168,12 +187,18 @@ class AdvancedAnalytics:
         if model == AttributionModel.FIRST_TOUCH:
             # 100% credit to first touchpoint
             first_ad_id = touchpoints[0].ad_id
-            weights = {ad_id: (1.0 if ad_id == first_ad_id else 0.0) for ad_id in ad_touchpoints.keys()}
+            weights = {
+                ad_id: (1.0 if ad_id == first_ad_id else 0.0)
+                for ad_id in ad_touchpoints.keys()
+            }
 
         elif model == AttributionModel.LAST_TOUCH:
             # 100% credit to last touchpoint
             last_ad_id = touchpoints[-1].ad_id
-            weights = {ad_id: (1.0 if ad_id == last_ad_id else 0.0) for ad_id in ad_touchpoints.keys()}
+            weights = {
+                ad_id: (1.0 if ad_id == last_ad_id else 0.0)
+                for ad_id in ad_touchpoints.keys()
+            }
 
         elif model == AttributionModel.LINEAR:
             # Equal credit to all touchpoints
@@ -193,7 +218,9 @@ class AdvancedAnalytics:
 
             for tp in touchpoints:
                 if tp.timestamp:
-                    days_before = (conversion_time - tp.timestamp).total_seconds() / 86400
+                    days_before = (
+                        conversion_time - tp.timestamp
+                    ).total_seconds() / 86400
                     # Exponential decay
                     weight = math.pow(0.5, days_before / self.time_decay_half_life)
                 else:
@@ -205,7 +232,11 @@ class AdvancedAnalytics:
                 total_weight += weight
 
             # Normalize
-            weights = {ad_id: w / total_weight for ad_id, w in decay_weights.items()} if total_weight > 0 else {}
+            weights = (
+                {ad_id: w / total_weight for ad_id, w in decay_weights.items()}
+                if total_weight > 0
+                else {}
+            )
 
         elif model == AttributionModel.POSITION_BASED:
             # 40% first, 40% last, 20% distributed among middle
@@ -227,7 +258,9 @@ class AdvancedAnalytics:
                 weights[first_ad] += 0.4
                 weights[last_ad] += 0.4
 
-                middle_weight = 0.2 / len(middle_touchpoints) if middle_touchpoints else 0
+                middle_weight = (
+                    0.2 / len(middle_touchpoints) if middle_touchpoints else 0
+                )
                 for tp in middle_touchpoints:
                     weights[tp.ad_id] += middle_weight
 
@@ -236,12 +269,22 @@ class AdvancedAnalytics:
         return weights
 
     def calculate_campaign_roi(
-        self, campaign_id: int, start_date: datetime | None = None, end_date: datetime | None = None
+        self,
+        campaign_id: int,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> CampaignROI:
         """
         Calculate comprehensive ROI metrics for a campaign.
         """
-        from database import Ad, AdGroup, AdMetric, Campaign, ClickTracking, ConversionTracking
+        from database import (
+            Ad,
+            AdGroup,
+            AdMetric,
+            Campaign,
+            ClickTracking,
+            ConversionTracking,
+        )
 
         # Get campaign
         campaign = self.db.query(Campaign).filter(Campaign.id == campaign_id).first()
@@ -255,7 +298,12 @@ class AdvancedAnalytics:
             end_date = campaign.end_date or datetime.utcnow()
 
         # Get ads for this campaign
-        ad_ids = self.db.query(Ad.id).join(AdGroup).filter(AdGroup.campaign_id == campaign_id).all()
+        ad_ids = (
+            self.db.query(Ad.id)
+            .join(AdGroup)
+            .filter(AdGroup.campaign_id == campaign_id)
+            .all()
+        )
         ad_ids = [a[0] for a in ad_ids]
 
         if not ad_ids:
@@ -282,7 +330,11 @@ class AdvancedAnalytics:
                 func.sum(AdMetric.click_count).label("clicks"),
                 func.sum(AdMetric.conversion_count).label("conversions"),
             )
-            .filter(AdMetric.ad_id.in_(ad_ids), AdMetric.date >= start_date.date(), AdMetric.date <= end_date.date())
+            .filter(
+                AdMetric.ad_id.in_(ad_ids),
+                AdMetric.date >= start_date.date(),
+                AdMetric.date <= end_date.date(),
+            )
             .first()
         )
 
@@ -295,7 +347,11 @@ class AdvancedAnalytics:
             self.db.query(func.sum(AdMetric.impression_count * Ad.bid_amount))
             .select_from(AdMetric)
             .join(Ad)
-            .filter(AdMetric.ad_id.in_(ad_ids), AdMetric.date >= start_date.date(), AdMetric.date <= end_date.date())
+            .filter(
+                AdMetric.ad_id.in_(ad_ids),
+                AdMetric.date >= start_date.date(),
+                AdMetric.date <= end_date.date(),
+            )
             .scalar()
             or 0
         )
@@ -317,7 +373,10 @@ class AdvancedAnalytics:
         if click_ids:
             total_revenue = (
                 self.db.query(func.sum(ConversionTracking.value))
-                .filter(ConversionTracking.click_id.in_(click_ids), ConversionTracking.status == "verified")
+                .filter(
+                    ConversionTracking.click_id.in_(click_ids),
+                    ConversionTracking.status == "verified",
+                )
                 .scalar()
                 or 0
             )
@@ -327,7 +386,11 @@ class AdvancedAnalytics:
         total_revenue = float(total_revenue)
 
         # Calculate ROI metrics
-        roi = ((total_revenue - total_spend) / total_spend * 100) if total_spend > 0 else 0
+        roi = (
+            ((total_revenue - total_spend) / total_spend * 100)
+            if total_spend > 0
+            else 0
+        )
         roas = (total_revenue / total_spend) if total_spend > 0 else 0
         cpa = (total_spend / conversions) if conversions > 0 else 0
         ctr = (clicks / impressions * 100) if impressions > 0 else 0
@@ -354,7 +417,9 @@ class AdvancedAnalytics:
             cvr=cvr,
         )
 
-    def analyze_trend(self, metric_name: str, campaign_id: int | None = None, days: int = 30) -> TrendAnalysis:
+    def analyze_trend(
+        self, metric_name: str, campaign_id: int | None = None, days: int = 30
+    ) -> TrendAnalysis:
         """
         Analyze trends for a specific metric over time.
         """
@@ -373,14 +438,21 @@ class AdvancedAnalytics:
         )
 
         if campaign_id:
-            ad_ids = self.db.query(Ad.id).join(AdGroup).filter(AdGroup.campaign_id == campaign_id).all()
+            ad_ids = (
+                self.db.query(Ad.id)
+                .join(AdGroup)
+                .filter(AdGroup.campaign_id == campaign_id)
+                .all()
+            )
             ad_ids = [a[0] for a in ad_ids]
             if ad_ids:
                 query = query.filter(AdMetric.ad_id.in_(ad_ids))
 
         # Get daily data
         daily_data = (
-            query.filter(AdMetric.date >= start_date.date(), AdMetric.date <= end_date.date())
+            query.filter(
+                AdMetric.date >= start_date.date(), AdMetric.date <= end_date.date()
+            )
             .group_by(AdMetric.date)
             .order_by(AdMetric.date)
             .all()
@@ -408,16 +480,24 @@ class AdvancedAnalytics:
             )
 
         # Calculate current and previous period values
-        current_period = [d for d in data_points if d["date"] >= mid_date.date().isoformat()]
-        previous_period = [d for d in data_points if d["date"] < mid_date.date().isoformat()]
+        current_period = [
+            d for d in data_points if d["date"] >= mid_date.date().isoformat()
+        ]
+        previous_period = [
+            d for d in data_points if d["date"] < mid_date.date().isoformat()
+        ]
 
         # Get values based on metric name
         metric_key = metric_name.lower()
         if metric_key not in ["impressions", "clicks", "conversions", "ctr", "cvr"]:
             metric_key = "impressions"
 
-        current_value = sum(d[metric_key] for d in current_period) / max(len(current_period), 1)
-        previous_value = sum(d[metric_key] for d in previous_period) / max(len(previous_period), 1)
+        current_value = sum(d[metric_key] for d in current_period) / max(
+            len(current_period), 1
+        )
+        previous_value = sum(d[metric_key] for d in previous_period) / max(
+            len(previous_period), 1
+        )
 
         # Calculate change
         if previous_value > 0:
@@ -437,7 +517,11 @@ class AdvancedAnalytics:
         forecast = None
         if len(data_points) >= 7:
             recent_values = [d[metric_key] for d in data_points[-7:]]
-            avg_daily_change = (recent_values[-1] - recent_values[0]) / 6 if len(recent_values) > 1 else 0
+            avg_daily_change = (
+                (recent_values[-1] - recent_values[0]) / 6
+                if len(recent_values) > 1
+                else 0
+            )
             forecast = recent_values[-1] + avg_daily_change * 7  # Forecast next week
 
         return TrendAnalysis(

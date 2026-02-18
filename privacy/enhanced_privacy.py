@@ -37,7 +37,9 @@ class EnhancedPrivacyControls:
     def __init__(self, db_session: Session):
         self.db = db_session
 
-    def apply_data_retention_policy(self, data_type: str, retention_period: DataRetentionPeriod) -> dict[str, Any]:
+    def apply_data_retention_policy(
+        self, data_type: str, retention_period: DataRetentionPeriod
+    ) -> dict[str, Any]:
         """Apply data retention policy based on data type and period"""
         result = {
             "data_type": data_type,
@@ -65,7 +67,9 @@ class EnhancedPrivacyControls:
         # For now, we'll just return the calculated policy
         return result
 
-    def _calculate_deletion_date(self, retention_period: DataRetentionPeriod) -> datetime:
+    def _calculate_deletion_date(
+        self, retention_period: DataRetentionPeriod
+    ) -> datetime:
         """Calculate deletion date based on retention period"""
         if retention_period == DataRetentionPeriod.TEMPORARY:
             return datetime.utcnow() + timedelta(hours=1)
@@ -106,7 +110,11 @@ class EnhancedPrivacyControls:
         total_conversions = self.db.query(DbConversionTracking).count()
 
         # Check for any data that exceeds retention policies
-        expired_metrics = self.db.query(DbAdMetric).filter(DbAdMetric.expires_at < datetime.utcnow()).count()
+        expired_metrics = (
+            self.db.query(DbAdMetric)
+            .filter(DbAdMetric.expires_at < datetime.utcnow())
+            .count()
+        )
 
         report = {
             "timestamp": datetime.utcnow().isoformat(),

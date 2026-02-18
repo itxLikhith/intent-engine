@@ -33,12 +33,23 @@ def create_sample_intent():
         declared=DeclaredIntent(
             query="How to set up E2E encrypted email on Android, no big tech solutions",
             constraints=[
-                Constraint(type=ConstraintType.INCLUSION, dimension="platform", value="Android", hardFilter=True),
                 Constraint(
-                    type=ConstraintType.EXCLUSION, dimension="provider", value=["Google", "Microsoft"], hardFilter=True
+                    type=ConstraintType.INCLUSION,
+                    dimension="platform",
+                    value="Android",
+                    hardFilter=True,
                 ),
                 Constraint(
-                    type=ConstraintType.INCLUSION, dimension="feature", value="end-to-end_encryption", hardFilter=True
+                    type=ConstraintType.EXCLUSION,
+                    dimension="provider",
+                    value=["Google", "Microsoft"],
+                    hardFilter=True,
+                ),
+                Constraint(
+                    type=ConstraintType.INCLUSION,
+                    dimension="feature",
+                    value="end-to-end_encryption",
+                    hardFilter=True,
                 ),
             ],
             negativePreferences=["no big tech"],
@@ -47,12 +58,19 @@ def create_sample_intent():
         inferred=InferredIntent(
             useCases=[UseCase.LEARNING, UseCase.TROUBLESHOOTING],
             temporalIntent=TemporalIntent(
-                horizon=TemporalHorizon.TODAY, recency=Recency.RECENT, frequency=Frequency.ONEOFF
+                horizon=TemporalHorizon.TODAY,
+                recency=Recency.RECENT,
+                frequency=Frequency.ONEOFF,
             ),
             resultType=None,
             ethicalSignals=[
-                EthicalSignal(dimension=EthicalDimension.PRIVACY, preference="privacy-first"),
-                EthicalSignal(dimension=EthicalDimension.OPENNESS, preference="open-source_preferred"),
+                EthicalSignal(
+                    dimension=EthicalDimension.PRIVACY, preference="privacy-first"
+                ),
+                EthicalSignal(
+                    dimension=EthicalDimension.OPENNESS,
+                    preference="open-source_preferred",
+                ),
             ],
         ),
     )
@@ -78,7 +96,15 @@ def demo_ranking():
             platform="Android",
             provider="ProtonMail",
             license="open-source",
-            tags=["Android", "Email", "Encryption", "Setup", "Guide", "Privacy", "Open Source"],
+            tags=[
+                "Android",
+                "Email",
+                "Encryption",
+                "Setup",
+                "Guide",
+                "Privacy",
+                "Open Source",
+            ],
             qualityScore=0.9,
             privacyRating=0.9,
             opensource=True,
@@ -150,7 +176,9 @@ def demo_ranking():
         print(f"  {i}. Title: {ranked_result.result.title}")
         print(f"     Score: {ranked_result.alignmentScore:.3f}")
         print(f"     Reasons: {', '.join(ranked_result.matchReasons)}")
-        print(f"     Platform: {ranked_result.result.platform}, Provider: {ranked_result.result.provider}")
+        print(
+            f"     Platform: {ranked_result.result.platform}, Provider: {ranked_result.result.provider}"
+        )
         print()
 
     print(
