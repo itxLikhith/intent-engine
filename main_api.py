@@ -7,8 +7,8 @@ This module implements the FastAPI service with all required endpoints for the I
 import logging
 import os
 import time
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, date, datetime, timedelta
+from typing import Any, Optional
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -107,7 +107,7 @@ def get_db():
 
 
 # Helper function to convert dict to UniversalIntent
-def convert_dict_to_universal_intent(intent_dict: Dict[str, Any]) -> UniversalIntent:
+def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIntent:
     """
     Convert intent dictionary to UniversalIntent dataclass.
     Reusable helper for /rank-results and /match-ads endpoints.
@@ -296,7 +296,7 @@ app = FastAPI(
 
 
 # Configure CORS from environment variables
-def get_cors_origins() -> List[str]:
+def get_cors_origins() -> list[str]:
     """
     Get CORS origins from environment variable.
     Returns a list of allowed origins.
@@ -310,7 +310,7 @@ def get_cors_origins() -> List[str]:
     return ["http://localhost:3000", "http://localhost:8080"]
 
 
-def get_cors_allow_methods() -> List[str]:
+def get_cors_allow_methods() -> list[str]:
     """
     Get allowed CORS methods from environment variable.
     """
@@ -318,7 +318,7 @@ def get_cors_allow_methods() -> List[str]:
     return [method.strip() for method in methods_str.split(",")]
 
 
-def get_cors_allow_headers() -> List[str]:
+def get_cors_allow_headers() -> list[str]:
     """
     Get allowed CORS headers from environment variable.
     """
@@ -409,11 +409,11 @@ async def startup_event():
 @app.get("/", response_model=HealthCheckResponse)
 async def health_check():
     """Health check endpoint"""
-    return HealthCheckResponse(status="healthy", timestamp=datetime.now(timezone.utc))
+    return HealthCheckResponse(status="healthy", timestamp=datetime.now(UTC))
 
 
-@app.post("/extract-intent", response_model=Dict[str, Any])
-async def extract_intent_endpoint(request: Dict[str, Any]):
+@app.post("/extract-intent", response_model=dict[str, Any])
+async def extract_intent_endpoint(request: dict[str, Any]):
     """
     Extract structured intent from user query
     """
@@ -876,10 +876,10 @@ async def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
     return {"message": "Campaign deleted successfully"}
 
 
-@app.get("/campaigns", response_model=List[Campaign])
+@app.get("/campaigns", response_model=list[Campaign])
 async def list_campaigns(
-    advertiser_id: Optional[int] = None,
-    status: Optional[str] = None,
+    advertiser_id: int | None = None,
+    status: str | None = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -946,9 +946,9 @@ async def update_ad_group(ad_group_id: int, ad_group_update: AdGroupUpdate, db: 
     return ad_group
 
 
-@app.get("/adgroups", response_model=List[AdGroup])
+@app.get("/adgroups", response_model=list[AdGroup])
 async def list_ad_groups(
-    campaign_id: Optional[int] = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+    campaign_id: int | None = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ):
     """
     List ad groups
@@ -1059,12 +1059,12 @@ async def delete_ad(ad_id: int, db: Session = Depends(get_db)):
     return {"message": "Ad deleted successfully"}
 
 
-@app.get("/ads", response_model=List[Ad])
+@app.get("/ads", response_model=list[Ad])
 async def list_ads(
-    advertiser_id: Optional[int] = None,
-    ad_group_id: Optional[int] = None,
-    status: Optional[str] = None,
-    approval_status: Optional[str] = None,
+    advertiser_id: int | None = None,
+    ad_group_id: int | None = None,
+    status: str | None = None,
+    approval_status: str | None = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -1114,7 +1114,7 @@ async def get_advertiser(advertiser_id: int, db: Session = Depends(get_db)):
     return advertiser
 
 
-@app.get("/advertisers", response_model=List[Advertiser])
+@app.get("/advertisers", response_model=list[Advertiser])
 async def list_advertisers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     List all advertisers
@@ -1191,11 +1191,11 @@ async def delete_creative_asset(creative_id: int, db: Session = Depends(get_db))
 
 
 # Reporting & Analytics Endpoints
-@app.get("/reports/campaign-performance", response_model=List[CampaignPerformanceReport])
+@app.get("/reports/campaign-performance", response_model=list[CampaignPerformanceReport])
 async def get_campaign_performance(
-    campaign_id: Optional[int] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    campaign_id: int | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     db: Session = Depends(get_db),
 ):
     """
@@ -1456,10 +1456,10 @@ async def get_click(click_id: int, db: Session = Depends(get_db)):
     return click
 
 
-@app.get("/click-tracking", response_model=List[ClickTracking])
+@app.get("/click-tracking", response_model=list[ClickTracking])
 async def list_clicks(
-    ad_id: Optional[int] = None,
-    session_id: Optional[str] = None,
+    ad_id: int | None = None,
+    session_id: str | None = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -1513,11 +1513,11 @@ async def get_conversion(conversion_id: int, db: Session = Depends(get_db)):
     return conversion
 
 
-@app.get("/conversion-tracking", response_model=List[ConversionTracking])
+@app.get("/conversion-tracking", response_model=list[ConversionTracking])
 async def list_conversions(
-    click_id: Optional[int] = None,
-    conversion_type: Optional[str] = None,
-    status: Optional[str] = None,
+    click_id: int | None = None,
+    conversion_type: str | None = None,
+    status: str | None = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -1595,12 +1595,12 @@ async def update_fraud_report(fraud_id: int, fraud_update: FraudDetectionCreate,
     return fraud_report
 
 
-@app.get("/fraud-detection", response_model=List[FraudDetection])
+@app.get("/fraud-detection", response_model=list[FraudDetection])
 async def list_fraud_reports(
-    event_type: Optional[str] = None,
-    severity: Optional[str] = None,
-    review_status: Optional[str] = None,
-    ad_id: Optional[int] = None,
+    event_type: str | None = None,
+    severity: str | None = None,
+    review_status: str | None = None,
+    ad_id: int | None = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -1626,7 +1626,7 @@ async def list_fraud_reports(
     return fraud_reports
 
 
-def log_ad_metrics(intent: UniversalIntent, matched_ads: List[Any]):
+def log_ad_metrics(intent: UniversalIntent, matched_ads: list[Any]):
     """
     Log aggregated metrics to ad_metrics table with TTL = 30 days
     This runs in the background to not block the main request
@@ -1725,8 +1725,8 @@ async def record_user_consent(
     user_id: str,
     consent_type: ConsentType,
     granted: bool,
-    consent_details: Optional[Dict[str, Any]] = None,
-    expires_in_days: Optional[int] = None,
+    consent_details: dict[str, Any] | None = None,
+    expires_in_days: int | None = None,
     db: Session = Depends(get_db),
 ):
     """Record user consent"""
@@ -1808,14 +1808,14 @@ async def get_consent_summary(db: Session = Depends(get_db)):
 # Audit Trail Endpoints
 @app.post("/audit-log", response_model=AuditEvent)
 async def log_audit_event(
-    user_id: Optional[str] = None,
+    user_id: str | None = None,
     event_type: AuditEventType = AuditEventType.ADMIN_ACTION,
-    resource_type: Optional[str] = None,
-    resource_id: Optional[int] = None,
-    action_description: Optional[str] = None,
-    ip_address: Optional[str] = None,
-    user_agent: Optional[str] = None,
-    metadata: Optional[Dict[str, Any]] = None,
+    resource_type: str | None = None,
+    resource_id: int | None = None,
+    action_description: str | None = None,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
+    metadata: dict[str, Any] | None = None,
     db: Session = Depends(get_db),
 ):
     """Manually log an audit event"""
@@ -1827,13 +1827,13 @@ async def log_audit_event(
     return audit_entry
 
 
-@app.get("/audit-events", response_model=List[AuditEvent])
+@app.get("/audit-events", response_model=list[AuditEvent])
 async def get_audit_events(
-    user_id: Optional[str] = None,
-    event_type: Optional[str] = None,
-    resource_type: Optional[str] = None,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[str] = None,
+    user_id: str | None = None,
+    event_type: str | None = None,
+    resource_type: str | None = None,
+    start_date: datetime | None = None,
+    end_date: str | None = None,
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
@@ -1890,7 +1890,7 @@ async def get_status():
 
 
 @app.post("/fraud/analyze-click", response_model=FraudAnalysisResponse)
-async def analyze_click_fraud(click_data: Dict[str, Any], db: Session = Depends(get_db)):
+async def analyze_click_fraud(click_data: dict[str, Any], db: Session = Depends(get_db)):
     """Analyze a click for potential fraud"""
     from fraud.detector import get_fraud_detector
 
@@ -1915,7 +1915,7 @@ async def analyze_click_fraud(click_data: Dict[str, Any], db: Session = Depends(
 
 
 @app.post("/fraud/analyze-conversion", response_model=FraudAnalysisResponse)
-async def analyze_conversion_fraud(conversion_data: Dict[str, Any], db: Session = Depends(get_db)):
+async def analyze_conversion_fraud(conversion_data: dict[str, Any], db: Session = Depends(get_db)):
     """Analyze a conversion for potential fraud"""
     from fraud.detector import get_fraud_detector
 
@@ -1972,8 +1972,8 @@ async def create_ab_test(test_data: ABTestCreate, db: Session = Depends(get_db))
     return test
 
 
-@app.get("/ab-tests", response_model=List[ABTestResponse])
-async def list_ab_tests(campaign_id: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
+@app.get("/ab-tests", response_model=list[ABTestResponse])
+async def list_ab_tests(campaign_id: int | None = None, status: str | None = None, db: Session = Depends(get_db)):
     """List all A/B tests"""
     from abtesting.service import get_ab_test_service
 
@@ -2024,7 +2024,7 @@ async def pause_ab_test(test_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/ab-tests/{test_id}/complete", response_model=ABTestResponse)
-async def complete_ab_test(test_id: int, winner_variant_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def complete_ab_test(test_id: int, winner_variant_id: int | None = None, db: Session = Depends(get_db)):
     """Complete an A/B test"""
     from abtesting.service import get_ab_test_service
 
@@ -2148,8 +2148,8 @@ async def get_conversion_attribution(conversion_id: int, model: str = "last_touc
 @app.get("/analytics/campaign-roi/{campaign_id}", response_model=CampaignROIResponse)
 async def get_campaign_roi(
     campaign_id: int,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
     db: Session = Depends(get_db),
 ):
     """Get ROI metrics for a campaign"""
@@ -2180,7 +2180,7 @@ async def get_campaign_roi(
 
 @app.get("/analytics/trends/{metric_name}", response_model=TrendAnalysisResponse)
 async def get_trend_analysis(
-    metric_name: str, campaign_id: Optional[int] = None, days: int = 30, db: Session = Depends(get_db)
+    metric_name: str, campaign_id: int | None = None, days: int = 30, db: Session = Depends(get_db)
 ):
     """Get trend analysis for a metric"""
     from analytics.advanced import get_advanced_analytics
@@ -2201,7 +2201,7 @@ async def get_trend_analysis(
 
 @app.get("/analytics/top-ads")
 async def get_top_performing_ads(
-    campaign_id: Optional[int] = None, metric: str = "ctr", limit: int = 10, db: Session = Depends(get_db)
+    campaign_id: int | None = None, metric: str = "ctr", limit: int = 10, db: Session = Depends(get_db)
 ):
     """Get top performing ads by metric"""
     from analytics.advanced import get_advanced_analytics

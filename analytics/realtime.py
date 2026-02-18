@@ -8,7 +8,6 @@ using WebSockets for live dashboard updates.
 import asyncio
 import json
 from datetime import datetime
-from typing import Dict, Optional, Set
 
 from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
@@ -18,7 +17,7 @@ class ConnectionManager:
     """Manages WebSocket connections for real-time analytics"""
 
     def __init__(self):
-        self.active_connections: Set[WebSocket] = set()
+        self.active_connections: set[WebSocket] = set()
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -27,7 +26,7 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: Dict):
+    async def broadcast(self, message: dict):
         """Broadcast message to all connected clients"""
         if not self.active_connections:
             return
@@ -54,7 +53,7 @@ class RealTimeAnalytics:
     def __init__(self, db_session: Session):
         self.db = db_session
 
-    async def get_live_metrics(self, campaign_id: Optional[int] = None) -> Dict:
+    async def get_live_metrics(self, campaign_id: int | None = None) -> dict:
         """Get current live metrics"""
         # Import database entities inside the method to avoid circular imports
         from database import Ad as DbAd

@@ -89,7 +89,7 @@ def demo_ranking():
             id="2",
             title="Tutanota Android Configuration",
             description=(
-                "Step-by-step tutorial for configuring Tutanota email client " "on Android with encryption features."
+                "Step-by-step tutorial for configuring Tutanota email client on Android with encryption features."
             ),
             platform="Android",
             provider="Tutanota",

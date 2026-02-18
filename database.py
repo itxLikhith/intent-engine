@@ -7,7 +7,7 @@ both SQLite (for local development) and PostgreSQL (for production).
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -301,7 +301,7 @@ class DatabaseManager:
         db = SessionLocal()
         try:
             # Find and delete expired metrics
-            expired_before = datetime.now(timezone.utc)
+            expired_before = datetime.now(UTC)
             deleted_count = db.query(AdMetric).filter(AdMetric.expires_at < expired_before).delete()
             db.commit()
             print(f"Cleaned up {deleted_count} expired ad metrics")

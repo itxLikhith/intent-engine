@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -44,7 +44,7 @@ class FraudSignal:
     severity: FraudSeverity
     confidence: float  # 0.0 to 1.0
     reason: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -53,7 +53,7 @@ class FraudAnalysisResult:
 
     is_fraudulent: bool
     risk_score: float  # 0.0 to 1.0
-    signals: List[FraudSignal]
+    signals: list[FraudSignal]
     recommended_action: str
 
 
@@ -111,7 +111,7 @@ class FraudDetector:
             "high_risk_threshold": 0.7,
         }
 
-    def analyze_click(self, click_data: Dict[str, Any]) -> FraudAnalysisResult:
+    def analyze_click(self, click_data: dict[str, Any]) -> FraudAnalysisResult:
         """
         Analyze a click event for potential fraud.
 
@@ -121,7 +121,7 @@ class FraudDetector:
         Returns:
             FraudAnalysisResult with risk assessment
         """
-        signals: List[FraudSignal] = []
+        signals: list[FraudSignal] = []
 
         # Run all detection algorithms
         signals.extend(self._check_click_velocity(click_data))
@@ -143,11 +143,11 @@ class FraudDetector:
             is_fraudulent=is_fraudulent, risk_score=risk_score, signals=signals, recommended_action=recommended_action
         )
 
-    def analyze_conversion(self, conversion_data: Dict[str, Any]) -> FraudAnalysisResult:
+    def analyze_conversion(self, conversion_data: dict[str, Any]) -> FraudAnalysisResult:
         """
         Analyze a conversion event for potential fraud.
         """
-        signals: List[FraudSignal] = []
+        signals: list[FraudSignal] = []
 
         # Check time between click and conversion
         signals.extend(self._check_conversion_timing(conversion_data))
@@ -164,11 +164,11 @@ class FraudDetector:
             is_fraudulent=is_fraudulent, risk_score=risk_score, signals=signals, recommended_action=recommended_action
         )
 
-    def analyze_impression(self, impression_data: Dict[str, Any]) -> FraudAnalysisResult:
+    def analyze_impression(self, impression_data: dict[str, Any]) -> FraudAnalysisResult:
         """
         Analyze an impression event for potential fraud.
         """
-        signals: List[FraudSignal] = []
+        signals: list[FraudSignal] = []
 
         # Check impression velocity
         signals.extend(self._check_impression_velocity(impression_data))
@@ -185,7 +185,7 @@ class FraudDetector:
             is_fraudulent=is_fraudulent, risk_score=risk_score, signals=signals, recommended_action=recommended_action
         )
 
-    def _check_click_velocity(self, click_data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_click_velocity(self, click_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for abnormal click velocity patterns.
         """
@@ -286,7 +286,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_bot_user_agent(self, data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_bot_user_agent(self, data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check if user agent indicates bot traffic.
         """
@@ -336,7 +336,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_ip_anomalies(self, click_data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_ip_anomalies(self, click_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for IP-based anomalies like datacenter IPs, VPNs, proxies.
         """
@@ -370,7 +370,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_click_patterns(self, click_data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_click_patterns(self, click_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for suspicious click patterns (e.g., clicks without impressions).
         """
@@ -422,7 +422,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_device_fingerprint(self, click_data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_device_fingerprint(self, click_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for device fingerprint anomalies.
         """
@@ -450,7 +450,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_conversion_timing(self, conversion_data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_conversion_timing(self, conversion_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for suspicious conversion timing.
         """
@@ -476,7 +476,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_conversion_patterns(self, conversion_data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_conversion_patterns(self, conversion_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for suspicious conversion patterns.
         """
@@ -506,7 +506,7 @@ class FraudDetector:
 
         return signals
 
-    def _check_impression_velocity(self, impression_data: Dict[str, Any]) -> List[FraudSignal]:
+    def _check_impression_velocity(self, impression_data: dict[str, Any]) -> list[FraudSignal]:
         """
         Check for abnormal impression velocity.
         """
@@ -517,7 +517,7 @@ class FraudDetector:
 
         return signals
 
-    def _calculate_risk_score(self, signals: List[FraudSignal]) -> float:
+    def _calculate_risk_score(self, signals: list[FraudSignal]) -> float:
         """
         Calculate overall risk score based on detected signals.
         """
@@ -543,7 +543,7 @@ class FraudDetector:
 
         return min(max_score + multiple_signal_bonus, 1.0)
 
-    def _get_recommended_action(self, risk_score: float, signals: List[FraudSignal]) -> str:
+    def _get_recommended_action(self, risk_score: float, signals: list[FraudSignal]) -> str:
         """
         Get recommended action based on risk score and signals.
         """
@@ -556,7 +556,7 @@ class FraudDetector:
         else:
             return "allow"
 
-    def run_batch_analysis(self, hours: int = 24) -> Dict[str, Any]:
+    def run_batch_analysis(self, hours: int = 24) -> dict[str, Any]:
         """
         Run batch fraud analysis on recent events.
         Returns summary statistics.

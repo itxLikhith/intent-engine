@@ -5,8 +5,8 @@ This module implements privacy and compliance features for the Intent Engine,
 ensuring user data is handled appropriately and in compliance with regulations.
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from ads.matcher import AdMetadata
 from core.schema import UniversalIntent
@@ -38,7 +38,7 @@ class PrivacyComplianceEngine:
             "ip_address",
         }
 
-    def validate_ad_targeting(self, ad: AdMetadata) -> Dict[str, Any]:
+    def validate_ad_targeting(self, ad: AdMetadata) -> dict[str, Any]:
         """
         Validate that an ad doesn't use forbidden targeting dimensions
         Returns a compliance report
@@ -111,9 +111,8 @@ class PrivacyComplianceEngine:
             # Make sure both datetimes are timezone-aware or naive
             if expiry_time.tzinfo is not None:
                 # If expiry_time is timezone-aware, make current time timezone-aware too
-                from datetime import timezone
 
-                current_time = datetime.now(timezone.utc)
+                current_time = datetime.now(UTC)
             else:
                 # If expiry_time is naive, make current time naive too
                 current_time = datetime.utcnow().replace(tzinfo=None)
@@ -128,7 +127,7 @@ class PrivacyComplianceEngine:
 privacy_engine = PrivacyComplianceEngine()
 
 
-def validate_advertiser_constraints(ad: AdMetadata) -> Dict[str, Any]:
+def validate_advertiser_constraints(ad: AdMetadata) -> dict[str, Any]:
     """
     Public function to validate advertiser constraints for compliance
     """

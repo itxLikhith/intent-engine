@@ -28,7 +28,6 @@ from ranking.ranker import (
 
 
 class TestIntentRanker(unittest.TestCase):
-
     def setUp(self):
         """Set up test data - use deepcopy to prevent fixture mutations"""
         # Create a sample intent for testing - deep copy for each test

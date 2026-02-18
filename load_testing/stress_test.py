@@ -13,7 +13,6 @@ import asyncio
 import os
 import statistics
 import time
-from typing import Dict
 
 import aiohttp
 import psutil
@@ -40,7 +39,7 @@ class StressTestSuite:
         self.base_url = base_url
         self.results = []
 
-    def get_memory_usage(self) -> Dict[str, float]:
+    def get_memory_usage(self) -> dict[str, float]:
         """Get current memory usage"""
         process = psutil.Process(os.getpid())
         mem_info = process.memory_info()
@@ -52,10 +51,10 @@ class StressTestSuite:
 
     async def test_concurrent_intent_extraction(self, concurrency: int = 100, duration: int = 60):
         """Test intent extraction under high concurrent load"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Stress Test: Concurrent Intent Extraction")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         queries = [
             "best laptop for programming",
@@ -102,7 +101,7 @@ class StressTestSuite:
                             results["failed_requests"] += 1
                             results["errors"].append(f"Request {request_id}: HTTP {response.status}")
 
-                except asyncio.TimeoutError as e:
+                except TimeoutError as e:
                     results["total_requests"] += 1
                     results["failed_requests"] += 1
                     results["errors"].append(f"Request {request_id}: Timeout - {str(e)}")
@@ -147,7 +146,7 @@ class StressTestSuite:
             if tasks:
                 try:
                     await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=10.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # FIX: Cancel remaining tasks gracefully
                     for task in tasks:
                         if not task.done():
@@ -174,9 +173,9 @@ class StressTestSuite:
 
     async def test_memory_leaks(self, iterations: int = 1000):
         """Test for memory leaks under sustained load"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Memory Leak Test: {iterations} iterations")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         memory_samples = []
         session = None
@@ -232,9 +231,9 @@ class StressTestSuite:
 
     async def test_cache_overflow(self, unique_queries: int = 5000):
         """Test cache behavior with many unique queries"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Cache Overflow Test: {unique_queries} unique queries")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {
             "first_pass": {"total": 0, "avg_time": 0},
@@ -371,10 +370,10 @@ class StressTestSuite:
 
     async def test_ranking_with_embeddings(self, concurrency: int = 30, duration: int = 20):
         """Test ranking endpoint which uses embedding cache"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Stress Test: Ranking with Embeddings (uses cache)")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # First, get a valid intent from the extract-intent endpoint
         async with aiohttp.ClientSession() as session:
@@ -479,13 +478,13 @@ class StressTestSuite:
         self.print_stress_results("Ranking with Embeddings", results)
         return results
 
-    def print_stress_results(self, test_name: str, results: Dict):
+    def print_stress_results(self, test_name: str, results: dict):
         """Print formatted stress test results"""
         print(f"\n{test_name} Results:")
         print(f"  Total requests: {results['total_requests']}")
         print(f"  Successful: {results['successful_requests']}")
         print(f"  Failed: {results['failed_requests']}")
-        print(f"  Success rate: {(results['successful_requests']/results['total_requests']*100):.1f}%")
+        print(f"  Success rate: {(results['successful_requests'] / results['total_requests'] * 100):.1f}%")
         print(f"  Duration: {results['duration']:.2f}s")
         print(f"  RPS: {results['rps']:.2f}")
 

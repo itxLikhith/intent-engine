@@ -6,7 +6,7 @@ This module implements additional privacy controls beyond the basic compliance c
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -37,7 +37,7 @@ class EnhancedPrivacyControls:
     def __init__(self, db_session: Session):
         self.db = db_session
 
-    def apply_data_retention_policy(self, data_type: str, retention_period: DataRetentionPeriod) -> Dict[str, Any]:
+    def apply_data_retention_policy(self, data_type: str, retention_period: DataRetentionPeriod) -> dict[str, Any]:
         """Apply data retention policy based on data type and period"""
         result = {
             "data_type": data_type,
@@ -79,7 +79,7 @@ class EnhancedPrivacyControls:
             # For permanent, set far future date
             return datetime.utcnow() + timedelta(days=365 * 100)
 
-    def anonymize_user_data(self, data_type: str, identifier: str) -> Dict[str, Any]:
+    def anonymize_user_data(self, data_type: str, identifier: str) -> dict[str, Any]:
         """Anonymize specific user data"""
         result = {
             "data_type": data_type,
@@ -92,7 +92,7 @@ class EnhancedPrivacyControls:
         # For now, we'll just return the anonymization record
         return result
 
-    def get_privacy_compliance_report(self) -> Dict[str, Any]:
+    def get_privacy_compliance_report(self) -> dict[str, Any]:
         """Generate a privacy compliance report"""
         # Import database entities inside the method to avoid circular imports
         from database import Ad as DbAd
@@ -125,7 +125,7 @@ class EnhancedPrivacyControls:
 
         return report
 
-    def _generate_privacy_recommendations(self, expired_count: int) -> List[str]:
+    def _generate_privacy_recommendations(self, expired_count: int) -> list[str]:
         """Generate privacy recommendations based on current state"""
         recommendations = []
 
@@ -138,7 +138,7 @@ class EnhancedPrivacyControls:
 
         return recommendations
 
-    def enforce_data_minimization(self, data_category: str) -> Dict[str, Any]:
+    def enforce_data_minimization(self, data_category: str) -> dict[str, Any]:
         """Enforce data minimization principle for a specific category"""
         minimization_rules = {
             "click_tracking": ["ip_hash", "user_agent_hash"],

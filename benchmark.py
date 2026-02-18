@@ -8,7 +8,7 @@ before and after optimizations.
 import json
 import statistics
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 
@@ -22,7 +22,7 @@ class PerformanceBenchmark:
         self.base_url = base_url
         self.results = {}
 
-    def benchmark_intent_extraction(self, iterations: int = 10) -> Dict[str, Any]:
+    def benchmark_intent_extraction(self, iterations: int = 10) -> dict[str, Any]:
         """Benchmark intent extraction endpoint"""
         print(f"\nBenchmarking Intent Extraction ({iterations} iterations)...")
 
@@ -55,7 +55,7 @@ class PerformanceBenchmark:
 
         return self._calculate_stats(times)
 
-    def benchmark_ranking(self, iterations: int = 10) -> Dict[str, Any]:
+    def benchmark_ranking(self, iterations: int = 10) -> dict[str, Any]:
         """Benchmark ranking endpoint"""
         print(f"\nBenchmarking Result Ranking ({iterations} iterations)...")
 
@@ -101,7 +101,7 @@ class PerformanceBenchmark:
 
         return self._calculate_stats(times)
 
-    def benchmark_url_ranking(self, iterations: int = 10) -> Dict[str, Any]:
+    def benchmark_url_ranking(self, iterations: int = 10) -> dict[str, Any]:
         """Benchmark URL ranking endpoint"""
         print(f"\nBenchmarking URL Ranking ({iterations} iterations)...")
 
@@ -130,13 +130,13 @@ class PerformanceBenchmark:
                 times.append(elapsed)
                 result = response.json()
                 if i == 0:
-                    print(f"  Cache hit rate: {result.get('cache_hit_rate', 0)*100:.1f}%")
+                    print(f"  Cache hit rate: {result.get('cache_hit_rate', 0) * 100:.1f}%")
             else:
                 print(f"  Failed: {response.status_code}")
 
         return self._calculate_stats(times)
 
-    def benchmark_ad_matching(self, iterations: int = 10) -> Dict[str, Any]:
+    def benchmark_ad_matching(self, iterations: int = 10) -> dict[str, Any]:
         """Benchmark ad matching endpoint"""
         print(f"\nBenchmarking Ad Matching ({iterations} iterations)...")
 
@@ -183,7 +183,7 @@ class PerformanceBenchmark:
 
         return self._calculate_stats(times)
 
-    def _calculate_stats(self, times: List[float]) -> Dict[str, Any]:
+    def _calculate_stats(self, times: list[float]) -> dict[str, Any]:
         """Calculate statistics from timing data"""
         if not times:
             return {"error": "No successful requests"}
@@ -199,13 +199,13 @@ class PerformanceBenchmark:
             "p99_ms": round(self._percentile(times, 99), 2),
         }
 
-    def _percentile(self, data: List[float], percentile: int) -> float:
+    def _percentile(self, data: list[float], percentile: int) -> float:
         """Calculate percentile"""
         sorted_data = sorted(data)
         index = int(len(sorted_data) * (percentile / 100))
         return sorted_data[min(index, len(sorted_data) - 1)]
 
-    def run_all_benchmarks(self) -> Dict[str, Any]:
+    def run_all_benchmarks(self) -> dict[str, Any]:
         """Run all benchmarks"""
         print("=" * 60)
         print("Intent Engine Performance Benchmark")

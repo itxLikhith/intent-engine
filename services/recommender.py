@@ -6,7 +6,7 @@ This module implements service recommendation logic based on user intent.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -28,11 +28,11 @@ class ServiceMetadata:
 
     id: str
     name: str
-    supportedGoals: List[str]  # List of supported IntentGoal values
-    primaryUseCases: List[str]  # List of primary use cases
-    temporalPatterns: List[str]  # List of temporal patterns
-    ethicalAlignment: List[str]  # List of ethical alignments
-    description: Optional[str] = None  # Optional description
+    supportedGoals: list[str]  # List of supported IntentGoal values
+    primaryUseCases: list[str]  # List of primary use cases
+    temporalPatterns: list[str]  # List of temporal patterns
+    ethicalAlignment: list[str]  # List of ethical alignments
+    description: str | None = None  # Optional description
 
 
 @dataclass
@@ -41,7 +41,7 @@ class ServiceRecommendation:
 
     service: ServiceMetadata
     serviceScore: float
-    matchReasons: List[str]
+    matchReasons: list[str]
 
 
 @dataclass
@@ -49,15 +49,15 @@ class ServiceRecommendationRequest:
     """Request object for service recommendation API"""
 
     intent: UniversalIntent
-    availableServices: List[ServiceMetadata]
-    options: Optional[Dict[str, Any]] = None  # RecommendationOptions
+    availableServices: list[ServiceMetadata]
+    options: dict[str, Any] | None = None  # RecommendationOptions
 
 
 @dataclass
 class ServiceRecommendationResponse:
     """Response object for service recommendation API"""
 
-    recommendations: List[ServiceRecommendation]
+    recommendations: list[ServiceRecommendation]
 
 
 class EmbeddingCache:
@@ -89,7 +89,7 @@ class EmbeddingCache:
             self.tokenizer = None
             self.model = None
 
-    def encode_text(self, text: str) -> Optional[np.ndarray]:
+    def encode_text(self, text: str) -> np.ndarray | None:
         """Encode text to embedding vector using the sentence transformer model"""
         if self.model is None or self.tokenizer is None:
             # Return random vector for mock implementation
@@ -142,7 +142,7 @@ class ServiceScoringEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def compute_service_match(self, intent: UniversalIntent, service: ServiceMetadata) -> Tuple[float, List[str]]:
+    def compute_service_match(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """
         Compute match score between intent and service
         """
@@ -183,14 +183,14 @@ class ServiceScoringEngine:
                 adjusted_weights = [remaining_weight]
             weights = adjusted_weights
 
-        service_score = sum(score * weight for score, weight in zip(scores, weights))
+        service_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
 
         # Clamp the score between 0 and 1
         service_score = max(0.0, min(1.0, service_score))
 
         return service_score, reasons
 
-    def _compute_goal_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> Tuple[float, List[str]]:
+    def _compute_goal_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on goal matching"""
         reasons = []
 
@@ -229,7 +229,7 @@ class ServiceScoringEngine:
 
                 return 0.1, reasons  # Low score if no match
 
-    def _compute_use_case_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> Tuple[float, List[str]]:
+    def _compute_use_case_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on use case matching"""
         reasons = []
 
@@ -276,7 +276,7 @@ class ServiceScoringEngine:
         else:
             return 0.0, reasons
 
-    def _compute_temporal_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> Tuple[float, List[str]]:
+    def _compute_temporal_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on temporal pattern matching"""
         reasons = []
 
@@ -317,7 +317,7 @@ class ServiceScoringEngine:
 
         return score, reasons
 
-    def _compute_ethical_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> Tuple[float, List[str]]:
+    def _compute_ethical_matching(self, intent: UniversalIntent, service: ServiceMetadata) -> tuple[float, list[str]]:
         """Compute score based on ethical alignment matching"""
         reasons = []
 

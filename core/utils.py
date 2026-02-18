@@ -7,8 +7,8 @@ This module contains shared utilities used across all components of the Intent E
 import logging
 import re
 from collections import OrderedDict
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import numpy as np
 
@@ -49,7 +49,7 @@ class EmbeddingCache:
             self.tokenizer = None
             self.model = None
 
-    def encode_text(self, text: str) -> Optional[np.ndarray]:
+    def encode_text(self, text: str) -> np.ndarray | None:
         """Encode text to embedding vector using the sentence transformer model"""
         if self.model is None or self.tokenizer is None:
             # Return random vector for mock implementation
@@ -92,7 +92,7 @@ class EmbeddingCache:
             logger.error(f"Error encoding text: {e}")
             return None
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics"""
         total = self.hits + self.misses
         hit_rate = self.hits / total if total > 0 else 0.0
@@ -122,7 +122,7 @@ class EmbeddingCache:
         return float(dot_product / (norm_vec1 * norm_vec2))
 
 
-def extract_price_range(text: str) -> Optional[tuple]:
+def extract_price_range(text: str) -> tuple | None:
     """
     Extract price range from text using regex patterns
     Returns (operator, value) tuple or None
@@ -163,10 +163,10 @@ def normalize_datetime(dt_str: str) -> datetime:
             return datetime.fromisoformat(dt_str)
         else:
             # Naive datetime, treat as UTC
-            return datetime.fromisoformat(dt_str).replace(tzinfo=timezone.utc)
+            return datetime.fromisoformat(dt_str).replace(tzinfo=UTC)
     except ValueError:
         # If parsing fails, return current time
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
 
 def calculate_expiration_time(hours: int = 8) -> str:

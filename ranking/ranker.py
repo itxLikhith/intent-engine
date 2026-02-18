@@ -7,7 +7,8 @@ This module implements Algorithms 2 and 3 for constraint satisfaction and intent
 import logging
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC
+from typing import Any
 
 import numpy as np
 
@@ -33,17 +34,17 @@ class SearchResult:
     id: str
     title: str
     description: str
-    platform: Optional[str] = None
-    provider: Optional[str] = None
-    license: Optional[str] = None
-    price: Optional[float] = None
-    tags: Optional[List[str]] = None
-    qualityScore: Optional[float] = 0.5  # Default quality score
-    recency: Optional[str] = None  # Publication date or update date
-    complexity: Optional[str] = None  # beginner, intermediate, advanced
-    compatibility: Optional[List[str]] = None  # Compatible platforms
-    privacyRating: Optional[float] = None  # Privacy rating if available
-    opensource: Optional[bool] = None  # Whether it's open source
+    platform: str | None = None
+    provider: str | None = None
+    license: str | None = None
+    price: float | None = None
+    tags: list[str] | None = None
+    qualityScore: float | None = 0.5  # Default quality score
+    recency: str | None = None  # Publication date or update date
+    complexity: str | None = None  # beginner, intermediate, advanced
+    compatibility: list[str] | None = None  # Compatible platforms
+    privacyRating: float | None = None  # Privacy rating if available
+    opensource: bool | None = None  # Whether it's open source
 
 
 @dataclass
@@ -52,7 +53,7 @@ class RankedResult:
 
     result: SearchResult
     alignmentScore: float
-    matchReasons: List[str]
+    matchReasons: list[str]
 
 
 @dataclass
@@ -60,15 +61,15 @@ class RankingRequest:
     """Request object for ranking API"""
 
     intent: UniversalIntent
-    candidates: List[SearchResult]
-    options: Optional[Dict[str, Any]] = None  # RankingOptions
+    candidates: list[SearchResult]
+    options: dict[str, Any] | None = None  # RankingOptions
 
 
 @dataclass
 class RankingResponse:
     """Response object for ranking API"""
 
-    rankedResults: List[RankedResult]
+    rankedResults: list[RankedResult]
 
 
 class EmbeddingCache:
@@ -117,7 +118,7 @@ class EmbeddingCache:
 
         return f"emb:{hashlib.md5(text.encode()).hexdigest()}"
 
-    def _get_from_redis(self, text: str) -> Optional[np.ndarray]:
+    def _get_from_redis(self, text: str) -> np.ndarray | None:
         """Try to get embedding from Redis"""
         if self.redis is None:
             return None
@@ -165,7 +166,7 @@ class EmbeddingCache:
             self.tokenizer = None
             self.model = None
 
-    def encode_text(self, text: str) -> Optional[np.ndarray]:
+    def encode_text(self, text: str) -> np.ndarray | None:
         """Encode text to embedding vector using the sentence transformer model with caching"""
         if self.model is None or self.tokenizer is None:
             # Return random vector for mock implementation
@@ -208,7 +209,7 @@ class EmbeddingCache:
             logger.error(f"Error encoding text: {e}")
             return None
 
-    def encode_batch(self, texts: List[str]) -> List[Optional[np.ndarray]]:
+    def encode_batch(self, texts: list[str]) -> list[np.ndarray | None]:
         """
         Encode a batch of texts to embedding vectors efficiently.
 
@@ -228,7 +229,7 @@ class EmbeddingCache:
         # Filter out cached texts (check both local and Redis cache)
         uncached_texts = []
         uncached_indices = []
-        results: List[Optional[np.ndarray]] = [None] * len(texts)
+        results: list[np.ndarray | None] = [None] * len(texts)
 
         for i, text in enumerate(texts):
             # Check local cache first
@@ -302,7 +303,7 @@ class ConstraintSatisfactionEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def satisfies_constraints(self, result: SearchResult, constraints: List[Constraint]) -> bool:
+    def satisfies_constraints(self, result: SearchResult, constraints: list[Constraint]) -> bool:
         """
         Check if a result satisfies all hard constraints
         Implements Algorithm 2: satisfiesConstraints()
@@ -324,37 +325,43 @@ class ConstraintSatisfactionEngine:
 
         if dimension == "platform":
             if constraint_type == ConstraintType.INCLUSION:
-                if isinstance(value, str) and result.platform != value:
-                    return False
+                if isinstance(value, str):
+                    if result.platform != value:
+                        return False
                 elif isinstance(value, list) and result.platform not in value:
                     return False
             elif constraint_type == ConstraintType.EXCLUSION:
-                if isinstance(value, str) and result.platform == value:
-                    return False
+                if isinstance(value, str):
+                    if result.platform == value:
+                        return False
                 elif isinstance(value, list) and result.platform in value:
                     return False
 
         elif dimension == "provider":
             if constraint_type == ConstraintType.INCLUSION:
-                if isinstance(value, str) and result.provider != value:
-                    return False
+                if isinstance(value, str):
+                    if result.provider != value:
+                        return False
                 elif isinstance(value, list) and result.provider not in value:
                     return False
             elif constraint_type == ConstraintType.EXCLUSION:
-                if isinstance(value, str) and result.provider == value:
-                    return False
+                if isinstance(value, str):
+                    if result.provider == value:
+                        return False
                 elif isinstance(value, list) and result.provider in value:
                     return False
 
         elif dimension == "license":
             if constraint_type == ConstraintType.INCLUSION:
-                if isinstance(value, str) and result.license != value:
-                    return False
+                if isinstance(value, str):
+                    if result.license != value:
+                        return False
                 elif isinstance(value, list) and result.license not in value:
                     return False
             elif constraint_type == ConstraintType.EXCLUSION:
-                if isinstance(value, str) and result.license == value:
-                    return False
+                if isinstance(value, str):
+                    if result.license == value:
+                        return False
                 elif isinstance(value, list) and result.license in value:
                     return False
 
@@ -367,30 +374,28 @@ class ConstraintSatisfactionEngine:
                     price_limit = float(price_limit)
 
                     if constraint_type == ConstraintType.RANGE:
+                        # Check price constraints
+                        violates = False
                         if operator == "<=" and result.price and result.price > price_limit:
-                            return False
+                            violates = True
                         elif operator == ">=" and result.price and result.price < price_limit:
-                            return False
+                            violates = True
                         elif operator == "<" and result.price and result.price >= price_limit:
-                            return False
+                            violates = True
                         elif operator == ">" and result.price and result.price <= price_limit:
+                            violates = True
+                        if violates:
                             return False
 
         elif dimension == "format":
             # Assuming format could be file format or document type
-            if constraint_type == ConstraintType.INCLUSION:
-                # This would depend on specific implementation
-                pass
-            elif constraint_type == ConstraintType.EXCLUSION:
+            if constraint_type == ConstraintType.INCLUSION or constraint_type == ConstraintType.EXCLUSION:
                 # This would depend on specific implementation
                 pass
 
         elif dimension == "recency":
             # Handle recency constraints
-            if constraint_type == ConstraintType.INCLUSION:
-                # This would depend on specific implementation
-                pass
-            elif constraint_type == ConstraintType.EXCLUSION:
+            if constraint_type == ConstraintType.INCLUSION or constraint_type == ConstraintType.EXCLUSION:
                 # This would depend on specific implementation
                 pass
 
@@ -403,7 +408,7 @@ class IntentAlignmentEngine:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """
         Compute alignment score between a result and user intent
         Implements Algorithm 3: computeIntentAlignment()
@@ -454,7 +459,7 @@ class IntentAlignmentEngine:
                 adjusted_weights = [remaining_weight]
             weights = adjusted_weights
 
-        alignment_score = sum(score * weight for score, weight in zip(scores, weights))
+        alignment_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
 
         # Clamp the score between 0 and 1
         alignment_score = max(0.0, min(1.0, alignment_score))
@@ -463,7 +468,7 @@ class IntentAlignmentEngine:
 
     def _compute_query_content_alignment(
         self, result: SearchResult, intent: UniversalIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute alignment based on query-content similarity"""
         reasons = []
 
@@ -507,7 +512,7 @@ class IntentAlignmentEngine:
             else:
                 return 0.5, reasons  # Neutral if no query words
 
-    def _compute_use_case_alignment(self, result: SearchResult, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def _compute_use_case_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on use case similarity"""
         reasons = []
 
@@ -544,7 +549,7 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_ethical_alignment(self, result: SearchResult, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def _compute_ethical_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on ethical signals"""
         reasons = []
 
@@ -578,7 +583,7 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_skill_alignment(self, result: SearchResult, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def _compute_skill_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on skill level"""
         reasons = []
 
@@ -627,7 +632,7 @@ class IntentAlignmentEngine:
 
         return score, reasons
 
-    def _compute_temporal_alignment(self, result: SearchResult, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def _compute_temporal_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment based on temporal intent"""
         reasons = []
 
@@ -640,7 +645,7 @@ class IntentAlignmentEngine:
         # Check recency alignment
         if temporal_intent.recency == Recency.RECENT and result.recency:
             # If user wants recent content, check if result is recent
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             try:
                 # Assume result.recency is in ISO format or similar
@@ -650,10 +655,10 @@ class IntentAlignmentEngine:
                     result_date = datetime.fromisoformat(result.recency)
                 else:
                     # Naive datetime, treat as UTC
-                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=timezone.utc)
+                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=UTC)
 
                 # Make sure both datetimes have timezone info
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 days_old = (now - result_date).days
 
                 if days_old <= 30:  # Recent if within 30 days
@@ -668,7 +673,7 @@ class IntentAlignmentEngine:
         # Check horizon alignment (today, week, month, etc.)
         if temporal_intent.horizon == TemporalHorizon.TODAY and result.recency:
             # If user wants today's content, check if result is very recent
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             try:
                 # Same date parsing logic as above
@@ -678,10 +683,10 @@ class IntentAlignmentEngine:
                     result_date = datetime.fromisoformat(result.recency)
                 else:
                     # Naive datetime, treat as UTC
-                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=timezone.utc)
+                    result_date = datetime.fromisoformat(result.recency).replace(tzinfo=UTC)
 
                 # Make sure both datetimes have timezone info
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 days_old = (now - result_date).days
 
                 if days_old <= 1:  # Within 1 day

@@ -12,7 +12,6 @@ import asyncio
 import statistics
 import time
 from datetime import datetime
-from typing import Dict
 
 import aiohttp
 
@@ -28,10 +27,10 @@ class DatabaseStressTest:
 
     async def test_campaign_crud_operations(self, iterations: int = 100):
         """Test create, read, update, delete operations on campaigns"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Database Stress Test: Campaign CRUD Operations")
         print(f"Iterations: {iterations}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {
             "creates": {"success": 0, "failed": 0, "times": []},
@@ -136,10 +135,10 @@ class DatabaseStressTest:
 
     async def test_concurrent_database_access(self, concurrency: int = 50, duration: int = 30):
         """Test concurrent database read/write operations"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Database Stress Test: Concurrent Database Access")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {"total_requests": 0, "successful": 0, "failed": 0, "response_times": [], "errors": []}
 
@@ -199,10 +198,10 @@ class DatabaseStressTest:
 
     async def test_connection_cleanup(self, iterations: int = 200):
         """Test that database connections are properly cleaned up"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Database Stress Test: Connection Cleanup")
         print(f"Iterations: {iterations}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {"total": 0, "success": 0, "failed": 0, "times": []}
 
@@ -232,7 +231,7 @@ class DatabaseStressTest:
         print(f"  Total requests: {results['total']}")
         print(f"  Successful: {results['success']}")
         print(f"  Failed: {results['failed']}")
-        print(f"  Success rate: {(results['success']/results['total']*100):.1f}%")
+        print(f"  Success rate: {(results['success'] / results['total'] * 100):.1f}%")
 
         if results["times"]:
             print("\n  Response Times:")
@@ -246,7 +245,7 @@ class DatabaseStressTest:
             last_quarter_avg = statistics.mean(results["times"][-len(results["times"]) // 4 :])
 
             if last_quarter_avg > first_quarter_avg * 2:
-                print(f"\n  [WARN] Response times increased {last_quarter_avg/first_quarter_avg:.1f}x")
+                print(f"\n  [WARN] Response times increased {last_quarter_avg / first_quarter_avg:.1f}x")
                 print("  [WARN] Possible connection pool exhaustion detected!")
             else:
                 print("\n  [OK] Connection pool stable (no exhaustion detected)")
@@ -255,9 +254,9 @@ class DatabaseStressTest:
 
     async def test_transaction_rollback(self):
         """Test transaction rollback behavior"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Database Stress Test: Transaction Rollback")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Note: This test requires API endpoints that support transactions
         # For now, we'll test error handling with invalid data
@@ -297,7 +296,7 @@ class DatabaseStressTest:
 
         return results
 
-    def _print_crud_results(self, test_name: str, results: Dict):
+    def _print_crud_results(self, test_name: str, results: dict):
         """Print CRUD test results"""
         print(f"\n{test_name} Results:")
         for operation, data in results.items():
@@ -311,18 +310,18 @@ class DatabaseStressTest:
             print(f"    Success: {success}")
             print(f"    Failed: {failed}")
             if total > 0:
-                print(f"    Success rate: {(success/total*100):.1f}%")
+                print(f"    Success rate: {(success / total * 100):.1f}%")
             if times:
                 print(f"    Avg time: {statistics.mean(times):.2f}ms")
                 print(f"    Max time: {max(times):.2f}ms")
 
-    def _print_concurrent_results(self, test_name: str, results: Dict):
+    def _print_concurrent_results(self, test_name: str, results: dict):
         """Print concurrent test results"""
         print(f"\n{test_name} Results:")
         print(f"  Total requests: {results['total_requests']}")
         print(f"  Successful: {results['successful']}")
         print(f"  Failed: {results['failed']}")
-        print(f"  Success rate: {(results['successful']/results['total_requests']*100):.1f}%")
+        print(f"  Success rate: {(results['successful'] / results['total_requests'] * 100):.1f}%")
         print(f"  Duration: {results['duration']:.2f}s")
         print(f"  RPS: {results['rps']:.2f}")
 

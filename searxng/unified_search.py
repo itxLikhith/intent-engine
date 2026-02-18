@@ -16,7 +16,7 @@ import logging
 import time
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, List, Optional
+from typing import Any
 
 from core.schema import UniversalIntent
 from extraction.extractor import IntentExtractionRequest, extract_intent
@@ -213,7 +213,7 @@ class UnifiedSearchService:
             confidence=0.8,  # Default confidence
         )
 
-    async def _search_searxng(self, request: UnifiedSearchRequest) -> List[SearXNGResult]:
+    async def _search_searxng(self, request: UnifiedSearchRequest) -> list[SearXNGResult]:
         """Search SearXNG and return results."""
         try:
             logger.debug(f"_search_searxng: calling SearXNG client with query='{request.query}'")
@@ -235,8 +235,8 @@ class UnifiedSearchService:
             return []
 
     async def _rank_with_intent(
-        self, results: List[SearXNGResult], universal_intent: UniversalIntent, request: UnifiedSearchRequest
-    ) -> List[RankedSearchResult]:
+        self, results: list[SearXNGResult], universal_intent: UniversalIntent, request: UnifiedSearchRequest
+    ) -> list[RankedSearchResult]:
         """
         Rank search results based on intent alignment.
 
@@ -307,7 +307,7 @@ class UnifiedSearchService:
         logger.debug(f"_rank_with_intent returning {len(ranked_results)} results")
         return ranked_results
 
-    def _convert_to_ranked_results(self, results: List[SearXNGResult]) -> List[RankedSearchResult]:
+    def _convert_to_ranked_results(self, results: list[SearXNGResult]) -> list[RankedSearchResult]:
         """Convert SearXNG results to RankedSearchResult without intent ranking."""
         return [
             RankedSearchResult(
@@ -330,8 +330,8 @@ class UnifiedSearchService:
         ]
 
     def _apply_privacy_filters(
-        self, results: List[RankedSearchResult], request: UnifiedSearchRequest
-    ) -> List[RankedSearchResult]:
+        self, results: list[RankedSearchResult], request: UnifiedSearchRequest
+    ) -> list[RankedSearchResult]:
         """Apply privacy-based filtering to results."""
         filtered = []
 
@@ -368,7 +368,7 @@ class UnifiedSearchService:
 
         return filtered
 
-    def _generate_match_reasons(self, ranked_result: Any, universal_intent: UniversalIntent) -> List[str]:
+    def _generate_match_reasons(self, ranked_result: Any, universal_intent: UniversalIntent) -> list[str]:
         """Generate human-readable match reasons for a result."""
         reasons = []
 
@@ -404,7 +404,7 @@ class UnifiedSearchService:
 
 
 # Singleton instance
-_unified_search_service: Optional[UnifiedSearchService] = None
+_unified_search_service: UnifiedSearchService | None = None
 
 
 def get_unified_search_service() -> UnifiedSearchService:

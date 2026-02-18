@@ -14,12 +14,11 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_url_analysis_cache
-
 from core.schema import (
     EthicalDimension,
     UniversalIntent,
@@ -33,22 +32,22 @@ class URLResult:
     """Represents a URL with its metadata and scores"""
 
     url: str
-    title: Optional[str] = None
-    description: Optional[str] = None
-    domain: Optional[str] = None
-    favicon: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
+    domain: str | None = None
+    favicon: str | None = None
 
     # Privacy-focused attributes
     privacy_score: float = 0.5
     tracker_count: int = 0
-    cookie_policy: Optional[str] = None
-    data_retention_days: Optional[int] = None
+    cookie_policy: str | None = None
+    data_retention_days: int | None = None
     encryption_enabled: bool = True
 
     # Content attributes
-    content_type: Optional[str] = None
-    language: Optional[str] = None
-    recency: Optional[str] = None
+    content_type: str | None = None
+    language: str | None = None
+    recency: str | None = None
 
     # Ethics and quality
     is_open_source: bool = False
@@ -69,9 +68,9 @@ class URLRankingRequest:
     """Request for URL ranking"""
 
     query: str
-    urls: List[str]
-    intent: Optional[UniversalIntent] = None
-    options: Optional[Dict[str, Any]] = None
+    urls: list[str]
+    intent: UniversalIntent | None = None
+    options: dict[str, Any] | None = None
 
 
 @dataclass
@@ -79,7 +78,7 @@ class URLRankingResponse:
     """Response from URL ranking"""
 
     query: str
-    ranked_urls: List[URLResult]
+    ranked_urls: list[URLResult]
     processing_time_ms: float
     total_urls: int
     filtered_count: int = 0
@@ -428,7 +427,7 @@ class URLRanker:
             cache_hit_rate=cache_hit_rate,
         )
 
-    async def _analyze_urls_parallel(self, urls: List[str]) -> List[URLResult]:
+    async def _analyze_urls_parallel(self, urls: list[str]) -> list[URLResult]:
         """Analyze multiple URLs in parallel"""
         # Create tasks for parallel execution
         tasks = [
@@ -451,8 +450,8 @@ class URLRanker:
         return valid_results
 
     def _filter_urls(
-        self, results: List[URLResult], min_privacy_score: float, exclude_big_tech: bool
-    ) -> List[URLResult]:
+        self, results: list[URLResult], min_privacy_score: float, exclude_big_tech: bool
+    ) -> list[URLResult]:
         """Filter URLs based on criteria"""
         filtered = []
 
@@ -469,7 +468,7 @@ class URLRanker:
 
         return filtered
 
-    async def _calculate_relevance_scores(self, results: List[URLResult], query: str) -> None:
+    async def _calculate_relevance_scores(self, results: list[URLResult], query: str) -> None:
         """Calculate semantic relevance scores for all URLs"""
         if not results or not query:
             return
@@ -489,7 +488,7 @@ class URLRanker:
         content_embs = self.embedding_cache.encode_batch(contents)
 
         # Calculate similarities
-        for i, (result, content_emb) in enumerate(zip(results, content_embs)):
+        for i, (result, content_emb) in enumerate(zip(results, content_embs, strict=False)):
             if content_emb is not None:
                 similarity = self.embedding_cache.cosine_similarity(query_emb, content_emb)
                 result.relevance_score = (similarity + 1) / 2  # Normalize to 0-1
@@ -508,7 +507,7 @@ class URLRanker:
         return len(matches) / len(query_words)
 
     def _calculate_final_scores(
-        self, results: List[URLResult], weights: Dict[str, float], intent: Optional[UniversalIntent]
+        self, results: list[URLResult], weights: dict[str, float], intent: UniversalIntent | None
     ) -> None:
         """Calculate final weighted scores"""
         for result in results:
@@ -546,8 +545,8 @@ class URLRanker:
         return min(1.0, score)
 
     def _apply_intent_boosts(
-        self, scores: Dict[str, float], result: URLResult, intent: UniversalIntent
-    ) -> Dict[str, float]:
+        self, scores: dict[str, float], result: URLResult, intent: UniversalIntent
+    ) -> dict[str, float]:
         """Apply intent-based score boosts"""
         # Check for privacy-focused queries
         if intent.declared.query:

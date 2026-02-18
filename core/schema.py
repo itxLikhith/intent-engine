@@ -7,7 +7,7 @@ used across all components of the Intent Engine.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 # Define enums matching the TypeScript definitions from the docs
@@ -123,7 +123,7 @@ class Constraint:
 
     type: ConstraintType
     dimension: str  # 'language', 'region', 'price', 'license', 'format', 'recency'
-    value: Union[str, int, float, List[Union[str, int, float]], List[int]]  # Single value, range, or list
+    value: str | int | float | list[str | int | float] | list[int]  # Single value, range, or list
     hardFilter: bool  # Must exclude results violating this
 
 
@@ -140,22 +140,22 @@ class TemporalIntent:
 class DocumentContext:
     """Context from open documents"""
 
-    docId: Optional[str] = None
-    content: Optional[str] = None  # First 1000 chars only, not persisted
-    lastEditTime: Optional[str] = None
-    collaborators: Optional[int] = None  # Count only, not names
-    contentType: Optional[ContentType] = None
+    docId: str | None = None
+    content: str | None = None  # First 1000 chars only, not persisted
+    lastEditTime: str | None = None
+    collaborators: int | None = None  # Count only, not names
+    contentType: ContentType | None = None
 
 
 @dataclass
 class MeetingContext:
     """Context from calendar/meetings"""
 
-    meetingId: Optional[str] = None
-    subject: Optional[str] = None
-    participantCount: Optional[int] = None
-    isRecurring: Optional[bool] = None
-    timeZone: Optional[str] = None
+    meetingId: str | None = None
+    subject: str | None = None
+    participantCount: int | None = None
+    isRecurring: bool | None = None
+    timeZone: str | None = None
 
 
 @dataclass
@@ -170,12 +170,12 @@ class EthicalSignal:
 class DeclaredIntent:
     """User-declared intent components"""
 
-    query: Optional[str] = None  # Free-form text
-    goal: Optional[IntentGoal] = None  # Structured goal
-    constraints: List[Constraint] = field(default_factory=list)  # Hard filters
-    negativePreferences: List[str] = field(default_factory=list)  # "not X", "no Y"
+    query: str | None = None  # Free-form text
+    goal: IntentGoal | None = None  # Structured goal
+    constraints: list[Constraint] = field(default_factory=list)  # Hard filters
+    negativePreferences: list[str] = field(default_factory=list)  # "not X", "no Y"
     urgency: Urgency = Urgency.FLEXIBLE
-    budget: Optional[str] = None  # "under 1000", "premium", null
+    budget: str | None = None  # "under 1000", "premium", null
     skillLevel: SkillLevel = SkillLevel.INTERMEDIATE
 
 
@@ -183,23 +183,23 @@ class DeclaredIntent:
 class InferredIntent:
     """Inferred intent components"""
 
-    useCases: List[UseCase] = field(default_factory=list)  # [comparison, learning, troubleshooting, ...]
-    temporalIntent: Optional[TemporalIntent] = None
-    documentContext: Optional[DocumentContext] = None  # From open docs/emails
-    meetingContext: Optional[MeetingContext] = None  # From calendar/Meet
-    resultType: Optional[ResultType] = None
+    useCases: list[UseCase] = field(default_factory=list)  # [comparison, learning, troubleshooting, ...]
+    temporalIntent: TemporalIntent | None = None
+    documentContext: DocumentContext | None = None  # From open docs/emails
+    meetingContext: MeetingContext | None = None  # From calendar/Meet
+    resultType: ResultType | None = None
     complexity: Complexity = Complexity.MODERATE
-    ethicalSignals: List[EthicalSignal] = field(default_factory=list)  # Privacy, sustainability, etc.
+    ethicalSignals: list[EthicalSignal] = field(default_factory=list)  # Privacy, sustainability, etc.
 
 
 @dataclass
 class SessionFeedback:
     """Feedback captured during the session"""
 
-    clicked: Optional[List[str]] = None  # URLs clicked
-    dwell: Optional[int] = None  # Seconds on result
-    reformulated: Optional[bool] = None  # User refined query
-    bounced: Optional[bool] = None  # Left immediately
+    clicked: list[str] | None = None  # URLs clicked
+    dwell: int | None = None  # Seconds on result
+    reformulated: bool | None = None  # User refined query
+    bounced: bool | None = None  # Left immediately
 
 
 @dataclass
@@ -210,7 +210,7 @@ class UniversalIntent:
     intentId: str
 
     # Product context (which service generated this)
-    context: Dict[str, Any]
+    context: dict[str, Any]
 
     # Declared intent (user-supplied constraints and goals)
     declared: DeclaredIntent
@@ -230,9 +230,9 @@ class IntentExtractionRequest:
     """Request object for intent extraction API"""
 
     product: str  # 'search' | 'docs' | 'mail' | 'calendar' | 'meet' | 'forms' | 'diary' | 'sites'
-    input: Dict[str, str]  # TextInput | FormInput | DocumentInput | EventInput
-    context: Dict[str, Any]  # ExtractionContext
-    options: Optional[Dict[str, Any]] = None  # ExtractionOptions
+    input: dict[str, str]  # TextInput | FormInput | DocumentInput | EventInput
+    context: dict[str, Any]  # ExtractionContext
+    options: dict[str, Any] | None = None  # ExtractionOptions
 
 
 @dataclass
@@ -240,4 +240,4 @@ class IntentExtractionResponse:
     """Response object for intent extraction API"""
 
     intent: UniversalIntent
-    extractionMetrics: Dict[str, Any]  # confidence, extractedDimensions, warnings
+    extractionMetrics: dict[str, Any]  # confidence, extractedDimensions, warnings

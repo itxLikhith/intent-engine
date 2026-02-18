@@ -55,8 +55,8 @@ def create_test_ads(count=20):
     for i in range(count):
         ads.append(
             AdMetadata(
-                id=f"ad_{i+1}",
-                title=f"Email Service {i+1}",
+                id=f"ad_{i + 1}",
+                title=f"Email Service {i + 1}",
                 description=(
                     "Secure, open-source email for Android devices" if i % 2 == 0 else "General service description"
                 ),
@@ -72,7 +72,7 @@ def create_test_ads(count=20):
                 forbiddenDimensions=[] if i % 7 != 0 else ["age", "location"],  # Some ads have forbidden dims
                 qualityScore=0.7 + (i % 4) * 0.1,
                 ethicalTags=["privacy", "open_source"] if i % 2 == 0 else ["basic_service"],
-                advertiser=f"Advertiser_{i+1}",
+                advertiser=f"Advertiser_{i + 1}",
             )
         )
     return ads

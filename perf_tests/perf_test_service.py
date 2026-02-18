@@ -52,8 +52,8 @@ def create_test_services(count=10):
     for i in range(count):
         services.append(
             ServiceMetadata(
-                id=f"service_{i+1}",
-                name=f"Service {i+1}",
+                id=f"service_{i + 1}",
+                name=f"Service {i + 1}",
                 supportedGoals=["CREATE", "COLLABORATE", "EDIT"] if i % 2 == 0 else ["FIND_INFORMATION", "LEARN"],
                 primaryUseCases=(
                     ["writing", "research", "drafting"] if i % 3 == 0 else ["searching", "discovery", "learning"]
@@ -62,7 +62,7 @@ def create_test_services(count=10):
                     ["long_session", "recurring_edit"] if i % 4 == 0 else ["quick_lookup", "one_time_task"]
                 ),
                 ethicalAlignment=["open_format", "local_first"] if i % 5 == 0 else ["encrypted", "privacy_first"],
-                description=f"Description for service {i+1}",
+                description=f"Description for service {i + 1}",
             )
         )
     return services

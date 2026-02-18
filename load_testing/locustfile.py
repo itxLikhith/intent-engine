@@ -441,7 +441,6 @@ def on_quitting(environment, **kwargs):
 
 
 if __name__ == "__main__":
-
     # Allow running with: python locustfile.py
     # This is just for testing the file structure
     print("Load testing configuration loaded successfully!")

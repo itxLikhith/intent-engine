@@ -296,12 +296,12 @@ def run_all_tests():
     success &= test_reporting_endpoints()
     success &= test_advanced_ad_matching()
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     if success:
         print("All tests PASSED!")
     else:
         print("Some tests FAILED!")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
 
     return success
 

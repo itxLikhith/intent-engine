@@ -10,7 +10,6 @@ import json
 import sys
 
 from config.model_cache import initialize_models
-
 from extraction.extractor import IntentExtractionRequest, extract_intent
 
 
@@ -162,7 +161,7 @@ def cli_main():
         query = args.query
         if not query:
             if args.input_file:
-                with open(args.input_file, "r") as f:
+                with open(args.input_file) as f:
                     query = f.read().strip()
             else:
                 print("Error: Either --query or --input-file must be provided for 'extract' command")

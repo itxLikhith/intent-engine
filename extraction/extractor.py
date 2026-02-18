@@ -8,8 +8,7 @@ It extracts structured intent from free-form user queries using hybrid parsing (
 import logging
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from datetime import UTC, datetime, timedelta
 
 from core.schema import (
     Complexity,
@@ -92,7 +91,7 @@ class ConstraintExtractor:
             r"\b(ad[-\s]*free|no\s+ads|ad[-\s]*less)\b": ("feature", "ad-free"),
         }
 
-    def extract_constraints(self, text: str) -> List[Constraint]:
+    def extract_constraints(self, text: str) -> list[Constraint]:
         """
         Extract constraints from the input text using regex patterns
         """
@@ -157,7 +156,7 @@ class ConstraintExtractor:
 
         return constraints
 
-    def extract_negative_preferences(self, text: str) -> List[str]:
+    def extract_negative_preferences(self, text: str) -> list[str]:
         """
         Extract negative preferences from the text
         """
@@ -221,7 +220,7 @@ class GoalClassifier:
             compiled_list = [re.compile(p, re.IGNORECASE) for p in patterns]
             self.compiled_patterns[goal] = compiled_list
 
-    def classify_goal(self, text: str) -> Optional[IntentGoal]:
+    def classify_goal(self, text: str) -> IntentGoal | None:
         """
         Classify the goal from the input text using regex patterns
         """
@@ -336,7 +335,7 @@ class SemanticInferenceEngine:
             ],
         }
 
-    def infer_use_cases(self, query: str) -> List[UseCase]:
+    def infer_use_cases(self, query: str) -> list[UseCase]:
         """
         Infer use cases based on semantic similarity to example texts
         This is a simplified version - in production would use embeddings
@@ -353,7 +352,7 @@ class SemanticInferenceEngine:
 
         return inferred_use_cases
 
-    def infer_ethical_signals(self, query: str) -> List[EthicalSignal]:
+    def infer_ethical_signals(self, query: str) -> list[EthicalSignal]:
         """
         Infer ethical signals based on semantic similarity to example texts
         This is a simplified version - in production would use embeddings
@@ -380,7 +379,7 @@ class SemanticInferenceEngine:
 
         return inferred_signals
 
-    def infer_result_type(self, query: str) -> Optional[ResultType]:
+    def infer_result_type(self, query: str) -> ResultType | None:
         """
         Infer the expected result type based on query content
         """
@@ -488,16 +487,16 @@ class IntentExtractor:
         query: str,
         session_id: str,
         user_locale: str,
-        goal: Optional[IntentGoal] = None,
-        constraints: Optional[List[Constraint]] = None,
-        negative_preferences: Optional[List[str]] = None,
+        goal: IntentGoal | None = None,
+        constraints: list[Constraint] | None = None,
+        negative_preferences: list[str] | None = None,
         urgency: Urgency = Urgency.FLEXIBLE,
         skill_level: SkillLevel = SkillLevel.INTERMEDIATE,
-        use_cases: Optional[List[UseCase]] = None,
-        temporal_intent: Optional[TemporalIntent] = None,
-        result_type: Optional[ResultType] = None,
+        use_cases: list[UseCase] | None = None,
+        temporal_intent: TemporalIntent | None = None,
+        result_type: ResultType | None = None,
         complexity: Complexity = Complexity.MODERATE,
-        ethical_signals: Optional[List[EthicalSignal]] = None,
+        ethical_signals: list[EthicalSignal] | None = None,
     ) -> UniversalIntent:
         """
         Create a UniversalIntent object with proper structure
@@ -505,7 +504,7 @@ class IntentExtractor:
         intent_id = f"{session_id}_{uuid.uuid4().hex[:8]}"
 
         # Calculate expiration time (8 hours from now)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_at = (now + timedelta(hours=8)).isoformat().replace("+00:00", "Z")
 
         context_dict = {

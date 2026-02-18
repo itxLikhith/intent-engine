@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -32,10 +32,10 @@ class AttributionResult:
     """Result of attribution analysis for a conversion"""
 
     conversion_id: int
-    touchpoints: List[Dict[str, Any]]
-    attribution_weights: Dict[int, float]  # ad_id -> weight
+    touchpoints: list[dict[str, Any]]
+    attribution_weights: dict[int, float]  # ad_id -> weight
     total_value: float
-    attributed_values: Dict[int, float]  # ad_id -> attributed value
+    attributed_values: dict[int, float]  # ad_id -> attributed value
 
 
 @dataclass
@@ -66,8 +66,8 @@ class TrendAnalysis:
     previous_value: float
     change_percent: float
     trend_direction: str  # "up", "down", "stable"
-    data_points: List[Dict[str, Any]]
-    forecast_next_period: Optional[float]
+    data_points: list[dict[str, Any]]
+    forecast_next_period: float | None
 
 
 class AdvancedAnalytics:
@@ -150,8 +150,8 @@ class AdvancedAnalytics:
         )
 
     def _calculate_attribution_weights(
-        self, touchpoints: List, model: AttributionModel, conversion_time: Optional[datetime]
-    ) -> Dict[int, float]:
+        self, touchpoints: list, model: AttributionModel, conversion_time: datetime | None
+    ) -> dict[int, float]:
         """
         Calculate attribution weights for touchpoints based on model.
         """
@@ -236,7 +236,7 @@ class AdvancedAnalytics:
         return weights
 
     def calculate_campaign_roi(
-        self, campaign_id: int, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        self, campaign_id: int, start_date: datetime | None = None, end_date: datetime | None = None
     ) -> CampaignROI:
         """
         Calculate comprehensive ROI metrics for a campaign.
@@ -354,7 +354,7 @@ class AdvancedAnalytics:
             cvr=cvr,
         )
 
-    def analyze_trend(self, metric_name: str, campaign_id: Optional[int] = None, days: int = 30) -> TrendAnalysis:
+    def analyze_trend(self, metric_name: str, campaign_id: int | None = None, days: int = 30) -> TrendAnalysis:
         """
         Analyze trends for a specific metric over time.
         """
@@ -451,8 +451,8 @@ class AdvancedAnalytics:
         )
 
     def get_top_performing_ads(
-        self, campaign_id: Optional[int] = None, metric: str = "ctr", limit: int = 10
-    ) -> List[Dict[str, Any]]:
+        self, campaign_id: int | None = None, metric: str = "ctr", limit: int = 10
+    ) -> list[dict[str, Any]]:
         """
         Get top performing ads by specified metric.
         """

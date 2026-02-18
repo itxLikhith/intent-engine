@@ -16,12 +16,11 @@ import hashlib
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 from config.optimized_cache import get_embedding_cache
 from config.query_cache import get_ranking_cache
-
 from core.schema import (
     Constraint,
     ConstraintType,
@@ -44,17 +43,17 @@ class SearchResult:
     id: str
     title: str
     description: str
-    platform: Optional[str] = None
-    provider: Optional[str] = None
-    license: Optional[str] = None
-    price: Optional[float] = None
-    tags: Optional[List[str]] = None
-    qualityScore: Optional[float] = 0.5
-    recency: Optional[str] = None
-    complexity: Optional[str] = None
-    compatibility: Optional[List[str]] = None
-    privacyRating: Optional[float] = None
-    opensource: Optional[bool] = None
+    platform: str | None = None
+    provider: str | None = None
+    license: str | None = None
+    price: float | None = None
+    tags: list[str] | None = None
+    qualityScore: float | None = 0.5
+    recency: str | None = None
+    complexity: str | None = None
+    compatibility: list[str] | None = None
+    privacyRating: float | None = None
+    opensource: bool | None = None
 
 
 @dataclass
@@ -63,7 +62,7 @@ class RankedResult:
 
     result: SearchResult
     alignmentScore: float
-    matchReasons: List[str]
+    matchReasons: list[str]
 
 
 @dataclass
@@ -71,15 +70,15 @@ class RankingRequest:
     """Request object for ranking API"""
 
     intent: UniversalIntent
-    candidates: List[SearchResult]
-    options: Optional[Dict[str, Any]] = None
+    candidates: list[SearchResult]
+    options: dict[str, Any] | None = None
 
 
 @dataclass
 class RankingResponse:
     """Response object for ranking API"""
 
-    rankedResults: List[RankedResult]
+    rankedResults: list[RankedResult]
     cache_hit: bool = False
     processing_time_ms: float = 0.0
 
@@ -90,7 +89,7 @@ class OptimizedConstraintSatisfactionEngine:
     def __init__(self):
         self.embedding_cache = get_embedding_cache()
 
-    def satisfies_constraints(self, result: SearchResult, constraints: List[Constraint]) -> bool:
+    def satisfies_constraints(self, result: SearchResult, constraints: list[Constraint]) -> bool:
         """Check if a result satisfies all hard constraints"""
         for constraint in constraints:
             if not constraint.hardFilter:
@@ -139,7 +138,7 @@ class OptimizedConstraintSatisfactionEngine:
 
         return True
 
-    def _semantic_match(self, value1: Optional[str], value2: str) -> bool:
+    def _semantic_match(self, value1: str | None, value2: str) -> bool:
         """Check if two values match semantically"""
         if not value1 or not value2:
             return False
@@ -200,7 +199,7 @@ class OptimizedIntentAlignmentEngine:
     def __init__(self):
         self.embedding_cache = get_embedding_cache()
 
-    def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def compute_intent_alignment(self, result: SearchResult, intent: UniversalIntent) -> tuple[float, list[str]]:
         """Compute alignment score with improved weighting"""
         scores = []
         reasons = []
@@ -248,7 +247,7 @@ class OptimizedIntentAlignmentEngine:
 
     def _compute_query_content_alignment(
         self, result: SearchResult, intent: UniversalIntent, declared: DeclaredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute semantic similarity between query and result"""
         reasons = []
 
@@ -305,7 +304,7 @@ class OptimizedIntentAlignmentEngine:
 
     def _compute_use_case_alignment(
         self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute use case alignment"""
         reasons = []
 
@@ -344,7 +343,7 @@ class OptimizedIntentAlignmentEngine:
 
     def _compute_ethical_alignment(
         self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute ethical signal alignment"""
         reasons = []
 
@@ -382,7 +381,7 @@ class OptimizedIntentAlignmentEngine:
 
     def _compute_skill_alignment(
         self, result: SearchResult, intent: UniversalIntent, declared: DeclaredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute skill level alignment"""
         reasons = []
 
@@ -419,7 +418,7 @@ class OptimizedIntentAlignmentEngine:
 
     def _compute_temporal_alignment(
         self, result: SearchResult, intent: UniversalIntent, inferred: InferredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute temporal intent alignment"""
         reasons = []
         score = 0.5
@@ -433,7 +432,7 @@ class OptimizedIntentAlignmentEngine:
             # Parse recency date
             result_date = self._parse_date(result.recency)
             if result_date:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 days_old = (now - result_date).days
 
                 # Check recency preferences
@@ -457,7 +456,7 @@ class OptimizedIntentAlignmentEngine:
 
         return max(0.0, min(1.0, score)), reasons
 
-    def _parse_date(self, date_str: str) -> Optional[datetime]:
+    def _parse_date(self, date_str: str) -> datetime | None:
         """Parse date string to datetime"""
         try:
             if date_str.endswith("Z"):
@@ -465,7 +464,7 @@ class OptimizedIntentAlignmentEngine:
             elif "+" in date_str or date_str.count("-") > 2:
                 return datetime.fromisoformat(date_str)
             else:
-                return datetime.fromisoformat(date_str).replace(tzinfo=timezone.utc)
+                return datetime.fromisoformat(date_str).replace(tzinfo=UTC)
         except Exception:
             return None
 
@@ -477,7 +476,7 @@ class ResultDeduplicator:
         self.similarity_threshold = similarity_threshold
         self.embedding_cache = get_embedding_cache()
 
-    def deduplicate(self, results: List[RankedResult]) -> List[RankedResult]:
+    def deduplicate(self, results: list[RankedResult]) -> list[RankedResult]:
         """Remove duplicate results based on content similarity"""
         if not results:
             return results
@@ -557,7 +556,7 @@ class OptimizedIntentRanker:
 
         return response
 
-    def _filter_candidates(self, request: RankingRequest) -> List[SearchResult]:
+    def _filter_candidates(self, request: RankingRequest) -> list[SearchResult]:
         """Filter candidates based on constraints"""
         filtered = []
         for candidate in request.candidates:

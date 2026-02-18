@@ -5,7 +5,6 @@ This module handles constraint parsing and validation logic.
 """
 
 import re
-from typing import List
 
 from ..core.schema import Constraint, ConstraintType
 
@@ -63,7 +62,7 @@ class ConstraintExtractor:
             r"\b(ad[-\s]*free|no\s+ads|ad[-\s]*less)\b": ("feature", "ad-free"),
         }
 
-    def extract_constraints(self, text: str) -> List[Constraint]:
+    def extract_constraints(self, text: str) -> list[Constraint]:
         """
         Extract constraints from the input text using regex patterns
         """
@@ -125,7 +124,7 @@ class ConstraintExtractor:
 
         return constraints
 
-    def extract_negative_preferences(self, text: str) -> List[str]:
+    def extract_negative_preferences(self, text: str) -> list[str]:
         """
         Extract negative preferences from the text
         """

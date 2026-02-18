@@ -15,7 +15,6 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import List
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -36,7 +35,7 @@ def reset_database():
     logger.info("Database reset complete")
 
 
-def seed_advertisers(db: Session) -> List[Advertiser]:
+def seed_advertisers(db: Session) -> list[Advertiser]:
     """Create sample advertisers"""
     logger.info("Seeding advertisers...")
 
@@ -64,7 +63,7 @@ def seed_advertisers(db: Session) -> List[Advertiser]:
     return advertisers
 
 
-def seed_campaigns(db: Session, advertisers: List[Advertiser]) -> List[Campaign]:
+def seed_campaigns(db: Session, advertisers: list[Advertiser]) -> list[Campaign]:
     """Create sample campaigns"""
     logger.info("Seeding campaigns...")
 
@@ -131,7 +130,7 @@ def seed_campaigns(db: Session, advertisers: List[Advertiser]) -> List[Campaign]
     return campaigns
 
 
-def seed_ad_groups(db: Session, campaigns: List[Campaign]) -> List[AdGroup]:
+def seed_ad_groups(db: Session, campaigns: list[Campaign]) -> list[AdGroup]:
     """Create sample ad groups"""
     logger.info("Seeding ad groups...")
 
@@ -172,7 +171,7 @@ def seed_ad_groups(db: Session, campaigns: List[Campaign]) -> List[AdGroup]:
     return ad_groups
 
 
-def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup]) -> List[Ad]:
+def seed_ads(db: Session, advertisers: list[Advertiser], ad_groups: list[AdGroup]) -> list[Ad]:
     """Create sample ads"""
     logger.info("Seeding ads...")
 
@@ -321,7 +320,7 @@ def seed_ads(db: Session, advertisers: List[Advertiser], ad_groups: List[AdGroup
     return ads
 
 
-def seed_creative_assets(db: Session, ads: List[Ad]) -> List[CreativeAsset]:
+def seed_creative_assets(db: Session, ads: list[Ad]) -> list[CreativeAsset]:
     """Create sample creative assets"""
     logger.info("Seeding creative assets...")
 

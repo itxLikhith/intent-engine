@@ -13,7 +13,6 @@ import math
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Tuple
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Session, relationship
@@ -98,9 +97,9 @@ class VariantStats:
     conversions: int
     ctr: float
     conversion_rate: float
-    confidence_interval: Tuple[float, float]
+    confidence_interval: tuple[float, float]
     is_winner: bool
-    lift_vs_control: Optional[float]
+    lift_vs_control: float | None
 
 
 @dataclass
@@ -110,10 +109,10 @@ class TestResults:
     test_id: int
     status: str
     total_impressions: int
-    variants: List[VariantStats]
+    variants: list[VariantStats]
     is_significant: bool
-    winner_variant_id: Optional[int]
-    p_value: Optional[float]
+    winner_variant_id: int | None
+    p_value: float | None
     recommended_action: str
 
 
@@ -201,7 +200,7 @@ class ABTestService:
         self.db.refresh(test)
         return test
 
-    def complete_test(self, test_id: int, winner_variant_id: Optional[int] = None) -> ABTest:
+    def complete_test(self, test_id: int, winner_variant_id: int | None = None) -> ABTest:
         """
         Complete an A/B test and optionally declare a winner.
         """
@@ -224,7 +223,7 @@ class ABTestService:
         self.db.refresh(test)
         return test
 
-    def assign_variant(self, test_id: int, user_identifier: str) -> Optional[ABTestVariant]:
+    def assign_variant(self, test_id: int, user_identifier: str) -> ABTestVariant | None:
         """
         Assign a user to a variant using consistent hashing.
         This ensures the same user always sees the same variant.
@@ -260,7 +259,7 @@ class ABTestService:
 
         return variant
 
-    def _select_variant_weighted(self, variants: List[ABTestVariant], seed: str) -> Optional[ABTestVariant]:
+    def _select_variant_weighted(self, variants: list[ABTestVariant], seed: str) -> ABTestVariant | None:
         """
         Select a variant based on traffic weights using deterministic hashing.
         """
@@ -409,7 +408,7 @@ class ABTestService:
             recommended_action=recommended_action,
         )
 
-    def _calculate_confidence_interval(self, successes: int, trials: int, confidence: float) -> Tuple[float, float]:
+    def _calculate_confidence_interval(self, successes: int, trials: int, confidence: float) -> tuple[float, float]:
         """
         Calculate Wilson score confidence interval.
         """
@@ -472,7 +471,7 @@ class ABTestService:
         """
         return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
-    def get_all_tests(self, campaign_id: Optional[int] = None, status: Optional[str] = None) -> List[ABTest]:
+    def get_all_tests(self, campaign_id: int | None = None, status: str | None = None) -> list[ABTest]:
         """
         Get all A/B tests with optional filters.
         """
@@ -486,7 +485,7 @@ class ABTestService:
 
         return query.all()
 
-    def get_test(self, test_id: int) -> Optional[ABTest]:
+    def get_test(self, test_id: int) -> ABTest | None:
         """
         Get a specific test by ID.
         """

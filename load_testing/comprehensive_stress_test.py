@@ -35,7 +35,7 @@ import time
 import traceback
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import aiohttp
 import psutil
@@ -51,8 +51,8 @@ class TestResults:
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
-    response_times: List[float] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
+    response_times: list[float] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     start_memory_mb: float = 0.0
     end_memory_mb: float = 0.0
     duration_seconds: float = 0.0
@@ -91,7 +91,7 @@ class ComprehensiveStressTestSuite:
 
     def __init__(self, base_url: str = BASE_URL):
         self.base_url = base_url
-        self.all_results: List[TestResults] = []
+        self.all_results: list[TestResults] = []
         self.session_id = f"stress-test-{int(time.time())}"
 
         # Diverse test queries
@@ -140,7 +140,7 @@ class ComprehensiveStressTestSuite:
             "https://freecodecamp.org",
         ]
 
-    def get_memory_usage(self) -> Dict[str, float]:
+    def get_memory_usage(self) -> dict[str, float]:
         """Get current memory usage"""
         process = psutil.Process(os.getpid())
         mem_info = process.memory_info()
@@ -152,10 +152,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_intent_extraction(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test intent extraction endpoint"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: Intent Extraction")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="Intent Extraction")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -220,10 +220,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_url_ranking(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test URL ranking endpoint"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: URL Ranking")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="URL Ranking")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -289,10 +289,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_rank_results(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test result ranking endpoint"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: Result Ranking")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="Result Ranking")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -385,10 +385,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_ad_matching(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test ad matching endpoint"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: Ad Matching")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="Ad Matching")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -481,10 +481,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_service_recommendation(self, concurrency: int = 50, duration: int = 30) -> TestResults:
         """Stress test service recommendation endpoint"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: Service Recommendation")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="Service Recommendation")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -591,10 +591,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_campaign_management(self, concurrency: int = 20, duration: int = 30) -> TestResults:
         """Stress test campaign management endpoints"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: Campaign Management")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="Campaign Management")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -693,10 +693,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_reporting_endpoints(self, concurrency: int = 20, duration: int = 30) -> TestResults:
         """Stress test reporting endpoints"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: Reporting Endpoints")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="Reporting Endpoints")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -750,11 +750,11 @@ class ComprehensiveStressTestSuite:
         self.all_results.append(results)
         return results
 
-    async def test_memory_leaks(self, iterations: int = 500) -> Dict[str, Any]:
+    async def test_memory_leaks(self, iterations: int = 500) -> dict[str, Any]:
         """Test for memory leaks under sustained load"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"MEMORY LEAK TEST: {iterations} iterations")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         memory_samples = []
         successful = 0
@@ -812,10 +812,10 @@ class ComprehensiveStressTestSuite:
 
     async def test_concurrent_all_endpoints(self, concurrency: int = 100, duration: int = 60) -> TestResults:
         """Stress test all endpoints simultaneously"""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("STRESS TEST: All Endpoints Combined")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         results = TestResults(test_name="All Endpoints Combined")
         results.start_memory_mb = self.get_memory_usage()["rss_mb"]
@@ -1029,9 +1029,9 @@ class ComprehensiveStressTestSuite:
         with open(output_file, "w") as f:
             json.dump(report, f, indent=2)
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"STRESS TEST REPORT GENERATED: {output_file}")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print("\nOverall Summary:")
         print(f"  Total Tests Run: {report['summary']['total_tests']}")
         print(f"  Total Requests: {report['summary']['total_requests']:,}")

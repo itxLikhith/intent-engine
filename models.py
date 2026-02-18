@@ -5,7 +5,7 @@ This module defines Pydantic models for all entities and requests used in the AP
 """
 
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ from core.schema import UniversalIntent
 # Database entity models
 class AdvertiserBase(BaseModel):
     name: str
-    contact_email: Optional[str] = None
+    contact_email: str | None = None
 
 
 class AdvertiserCreate(AdvertiserBase):
@@ -32,8 +32,8 @@ class Advertiser(AdvertiserBase):
 
 class CampaignBase(BaseModel):
     name: str
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
     budget: float = 0.0
     daily_budget: float = 0.0
     status: str = "active"
@@ -44,19 +44,19 @@ class CampaignCreate(CampaignBase):
 
 
 class CampaignUpdate(BaseModel):
-    name: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    budget: Optional[float] = None
-    daily_budget: Optional[float] = None
-    status: Optional[str] = None
+    name: str | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    budget: float | None = None
+    daily_budget: float | None = None
+    status: str | None = None
 
 
 class Campaign(CampaignBase):
     id: int
     advertiser_id: int
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -64,7 +64,7 @@ class Campaign(CampaignBase):
 
 class AdGroupBase(BaseModel):
     name: str
-    targeting_settings: Optional[Dict[str, Any]] = None
+    targeting_settings: dict[str, Any] | None = None
     bid_strategy: str = "manual"
 
 
@@ -73,16 +73,16 @@ class AdGroupCreate(AdGroupBase):
 
 
 class AdGroupUpdate(BaseModel):
-    name: Optional[str] = None
-    targeting_settings: Optional[Dict[str, Any]] = None
-    bid_strategy: Optional[str] = None
+    name: str | None = None
+    targeting_settings: dict[str, Any] | None = None
+    bid_strategy: str | None = None
 
 
 class AdGroup(AdGroupBase):
     id: int
     campaign_id: int
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -90,14 +90,14 @@ class AdGroup(AdGroupBase):
 
 class AdBase(BaseModel):
     advertiser_id: int
-    ad_group_id: Optional[int] = None
+    ad_group_id: int | None = None
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     url: str
-    targeting_constraints: Optional[Dict[str, Any]] = None  # e.g., [{"dimension": "device_type", "value": "mobile"}]
-    ethical_tags: Optional[List[str]] = None  # e.g., ["privacy", "open_source"]
+    targeting_constraints: dict[str, Any] | None = None  # e.g., [{"dimension": "device_type", "value": "mobile"}]
+    ethical_tags: list[str] | None = None  # e.g., ["privacy", "open_source"]
     quality_score: float = 0.5
-    creative_format: Optional[str] = None  # Banner, native, video, etc.
+    creative_format: str | None = None  # Banner, native, video, etc.
     bid_amount: float = 0.0  # Current bid amount
     status: str = "active"  # active, paused, disapproved
     approval_status: str = "pending"  # pending, approved, rejected
@@ -108,18 +108,18 @@ class AdCreate(AdBase):
 
 
 class AdUpdate(BaseModel):
-    advertiser_id: Optional[int] = None
-    ad_group_id: Optional[int] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
-    url: Optional[str] = None
-    targeting_constraints: Optional[Dict[str, Any]] = None
-    ethical_tags: Optional[List[str]] = None
-    quality_score: Optional[float] = None
-    creative_format: Optional[str] = None
-    bid_amount: Optional[float] = None
-    status: Optional[str] = None
-    approval_status: Optional[str] = None
+    advertiser_id: int | None = None
+    ad_group_id: int | None = None
+    title: str | None = None
+    description: str | None = None
+    url: str | None = None
+    targeting_constraints: dict[str, Any] | None = None
+    ethical_tags: list[str] | None = None
+    quality_score: float | None = None
+    creative_format: str | None = None
+    bid_amount: float | None = None
+    status: str | None = None
+    approval_status: str | None = None
 
 
 class Ad(AdBase):
@@ -133,8 +133,8 @@ class Ad(AdBase):
 class CreativeAssetBase(BaseModel):
     asset_type: str  # image, video, text, html
     asset_url: str
-    dimensions: Optional[Dict[str, Any]] = None  # {"width": 300, "height": 250}
-    checksum: Optional[str] = None
+    dimensions: dict[str, Any] | None = None  # {"width": 300, "height": 250}
+    checksum: str | None = None
 
 
 class CreativeAssetCreate(CreativeAssetBase):
@@ -142,10 +142,10 @@ class CreativeAssetCreate(CreativeAssetBase):
 
 
 class CreativeAssetUpdate(BaseModel):
-    asset_type: Optional[str] = None
-    asset_url: Optional[str] = None
-    dimensions: Optional[Dict[str, Any]] = None
-    checksum: Optional[str] = None
+    asset_type: str | None = None
+    asset_url: str | None = None
+    dimensions: dict[str, Any] | None = None
+    checksum: str | None = None
 
 
 class CreativeAsset(CreativeAssetBase):
@@ -160,16 +160,16 @@ class CreativeAsset(CreativeAssetBase):
 class AdMetricBase(BaseModel):
     ad_id: int
     date: date
-    intent_goal: Optional[str] = None  # e.g., "LEARN"
-    intent_use_case: Optional[str] = None  # e.g., "learning"
+    intent_goal: str | None = None  # e.g., "LEARN"
+    intent_use_case: str | None = None  # e.g., "learning"
     impression_count: int = 0
     click_count: int = 0
     conversion_count: int = 0
-    ctr: Optional[float] = None  # NEW: Click-through rate
-    cpm: Optional[float] = None  # NEW: Cost per thousand impressions
-    cpc: Optional[float] = None  # NEW: Cost per click
-    roas: Optional[float] = None  # NEW: Return on ad spend
-    engagement_rate: Optional[float] = None  # NEW: Interaction rate
+    ctr: float | None = None  # NEW: Click-through rate
+    cpm: float | None = None  # NEW: Cost per thousand impressions
+    cpc: float | None = None  # NEW: Cost per click
+    roas: float | None = None  # NEW: Return on ad spend
+    engagement_rate: float | None = None  # NEW: Interaction rate
     expires_at: datetime  # 30 days from creation
 
 
@@ -187,10 +187,10 @@ class AdMetric(AdMetricBase):
 
 class ClickTrackingBase(BaseModel):
     ad_id: int
-    session_id: Optional[str] = None  # Anonymous session identifier
-    ip_hash: Optional[str] = None  # Hashed IP for fraud detection
-    user_agent_hash: Optional[str] = None  # Hashed user agent
-    referring_url: Optional[str] = None  # Source of click
+    session_id: str | None = None  # Anonymous session identifier
+    ip_hash: str | None = None  # Hashed IP for fraud detection
+    user_agent_hash: str | None = None  # Hashed user agent
+    referring_url: str | None = None  # Source of click
 
 
 class ClickTrackingCreate(ClickTrackingBase):
@@ -207,8 +207,8 @@ class ClickTracking(ClickTrackingBase):
 
 class ConversionTrackingBase(BaseModel):
     click_id: int  # Foreign key to click tracking
-    conversion_type: Optional[str] = None  # Purchase, signup, download, etc.
-    value: Optional[float] = None  # Conversion value (if applicable)
+    conversion_type: str | None = None  # Purchase, signup, download, etc.
+    value: float | None = None  # Conversion value (if applicable)
     status: str = "pending"  # Verified, pending, rejected
 
 
@@ -225,12 +225,12 @@ class ConversionTracking(ConversionTrackingBase):
 
 
 class FraudDetectionBase(BaseModel):
-    event_id: Optional[int] = None  # ID of suspicious event
-    event_type: Optional[str] = None  # Click, impression, conversion
-    reason: Optional[str] = None  # Reason for flagging
-    severity: Optional[str] = None  # Low, medium, high risk
+    event_id: int | None = None  # ID of suspicious event
+    event_type: str | None = None  # Click, impression, conversion
+    reason: str | None = None  # Reason for flagging
+    severity: str | None = None  # Low, medium, high risk
     review_status: str = "pending"  # Pending, reviewed, action_taken
-    ad_id: Optional[int] = None  # Optional link to ad
+    ad_id: int | None = None  # Optional link to ad
 
 
 class FraudDetectionCreate(FraudDetectionBase):
@@ -247,39 +247,39 @@ class FraudDetection(FraudDetectionBase):
 
 # Request models for API endpoints
 class RankingRequest(BaseModel):
-    intent: Dict[str, Any]  # UniversalIntent as dict (converted from JSON)
-    candidates: List[Dict[str, Any]]  # SearchResult equivalent as dict
-    options: Optional[Dict[str, Any]] = None
+    intent: dict[str, Any]  # UniversalIntent as dict (converted from JSON)
+    candidates: list[dict[str, Any]]  # SearchResult equivalent as dict
+    options: dict[str, Any] | None = None
 
 
 class ServiceRecommendationRequest(BaseModel):
-    intent: Dict[str, Any]  # UniversalIntent as dict (converted from JSON)
-    available_services: List[Dict[str, Any]]  # ServiceMetadata equivalent as dict
-    options: Optional[Dict[str, Any]] = None
+    intent: dict[str, Any]  # UniversalIntent as dict (converted from JSON)
+    available_services: list[dict[str, Any]]  # ServiceMetadata equivalent as dict
+    options: dict[str, Any] | None = None
 
 
 class AdMatchingRequest(BaseModel):
-    intent: Dict[str, Any]  # UniversalIntent as dict (converted from JSON)
-    ad_inventory: List[Dict[str, Any]]  # AdMetadata equivalent as dict
-    config: Optional[Dict[str, Any]] = None
+    intent: dict[str, Any]  # UniversalIntent as dict (converted from JSON)
+    ad_inventory: list[dict[str, Any]]  # AdMetadata equivalent as dict
+    config: dict[str, Any] | None = None
 
 
 class AdMatchingWithCampaignRequest(AdMatchingRequest):
-    campaign_context: Optional[Dict[str, Any]] = None  # Additional campaign-specific context
+    campaign_context: dict[str, Any] | None = None  # Additional campaign-specific context
 
 
 # Response models for API endpoints
 class RankingResponse(BaseModel):
-    ranked_results: List[Dict[str, Any]]  # RankedResult equivalent as dict
+    ranked_results: list[dict[str, Any]]  # RankedResult equivalent as dict
 
 
 class ServiceRecommendationResponse(BaseModel):
-    recommendations: List[Dict[str, Any]]  # ServiceRecommendation equivalent as dict
+    recommendations: list[dict[str, Any]]  # ServiceRecommendation equivalent as dict
 
 
 class AdMatchingResponse(BaseModel):
-    matched_ads: List[Dict[str, Any]]  # MatchedAd equivalent as dict
-    metrics: Dict[str, int]
+    matched_ads: list[dict[str, Any]]  # MatchedAd equivalent as dict
+    metrics: dict[str, int]
 
 
 # Reporting models
@@ -314,10 +314,10 @@ class ConsentRecord(BaseModel):
     user_id: str
     consent_type: str
     granted: bool
-    consent_details: Optional[Dict[str, Any]] = None
+    consent_details: dict[str, Any] | None = None
     granted_at: datetime
-    expires_at: Optional[datetime] = None
-    withdrawn_at: Optional[datetime] = None
+    expires_at: datetime | None = None
+    withdrawn_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -329,8 +329,8 @@ class ConsentRequest(BaseModel):
     user_id: str
     consent_type: str
     granted: bool
-    consent_details: Optional[Dict[str, Any]] = None
-    expires_in_days: Optional[int] = None
+    consent_details: dict[str, Any] | None = None
+    expires_in_days: int | None = None
 
 
 class ConsentSummary(BaseModel):
@@ -338,21 +338,21 @@ class ConsentSummary(BaseModel):
     total_consents: int
     granted_consents: int
     denied_consents: int
-    by_type: Dict[str, int]
+    by_type: dict[str, int]
     overall_compliance_rate: float
 
 
 # Models for Audit Trail
 class AuditEvent(BaseModel):
     id: int
-    user_id: Optional[str] = None
+    user_id: str | None = None
     event_type: str
-    resource_type: Optional[str] = None
-    resource_id: Optional[int] = None
-    action_description: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    resource_type: str | None = None
+    resource_id: int | None = None
+    action_description: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    metadata: dict[str, Any] | None = None
     timestamp: datetime
     created_at: datetime
 
@@ -361,21 +361,21 @@ class AuditEvent(BaseModel):
 
 
 class AuditEventRequest(BaseModel):
-    user_id: Optional[str] = None
+    user_id: str | None = None
     event_type: str
-    resource_type: Optional[str] = None
-    resource_id: Optional[int] = None
-    action_description: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    resource_type: str | None = None
+    resource_id: int | None = None
+    action_description: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class AuditStats(BaseModel):
     timestamp: str
     total_events: int
-    events_by_type: Dict[str, int]
-    daily_counts: List[Dict[str, Any]]
+    events_by_type: dict[str, int]
+    daily_counts: list[dict[str, Any]]
     recent_activity: int
 
 
@@ -389,15 +389,15 @@ class DataRetentionPolicy(BaseModel):
 
 class PrivacyComplianceReport(BaseModel):
     timestamp: str
-    data_summary: Dict[str, int]
-    compliance_status: Dict[str, Any]
-    recommendations: List[str]
+    data_summary: dict[str, int]
+    compliance_status: dict[str, Any]
+    recommendations: list[str]
 
 
 # A/B Testing Models
 class ABTestBase(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     campaign_id: int
     traffic_allocation: float = 1.0
     min_sample_size: int = 1000
@@ -410,23 +410,23 @@ class ABTestCreate(ABTestBase):
 
 
 class ABTestUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    traffic_allocation: Optional[float] = None
-    min_sample_size: Optional[int] = None
-    confidence_level: Optional[float] = None
-    primary_metric: Optional[str] = None
-    status: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    traffic_allocation: float | None = None
+    min_sample_size: int | None = None
+    confidence_level: float | None = None
+    primary_metric: str | None = None
+    status: str | None = None
 
 
 class ABTestResponse(ABTestBase):
     id: int
     status: str
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    winner_variant_id: Optional[int] = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    winner_variant_id: int | None = None
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -460,10 +460,10 @@ class ABTestResultsResponse(BaseModel):
     test_id: int
     status: str
     total_impressions: int
-    variants: List[Dict[str, Any]]
+    variants: list[dict[str, Any]]
     is_significant: bool
-    winner_variant_id: Optional[int] = None
-    p_value: Optional[float] = None
+    winner_variant_id: int | None = None
+    p_value: float | None = None
     recommended_action: str
 
 
@@ -471,7 +471,7 @@ class ABTestResultsResponse(BaseModel):
 class FraudAnalysisResponse(BaseModel):
     is_fraudulent: bool
     risk_score: float
-    signals: List[Dict[str, Any]]
+    signals: list[dict[str, Any]]
     recommended_action: str
 
 
@@ -481,27 +481,27 @@ class FraudScanSummary(BaseModel):
     high_risk_count: int
     medium_risk_count: int
     low_risk_count: int
-    fraud_types: Dict[str, int]
+    fraud_types: dict[str, int]
     new_fraud_reports: int
 
 
 # URL Ranking Models
 class URLRankingAPIRequest(BaseModel):
     query: str
-    urls: List[str]
-    intent: Optional[UniversalIntent] = None
-    options: Optional[Dict[str, Any]] = None
+    urls: list[str]
+    intent: UniversalIntent | None = None
+    options: dict[str, Any] | None = None
 
 
 class URLRankedResult(BaseModel):
     url: str
-    title: Optional[str] = None
-    description: Optional[str] = None
-    domain: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
+    domain: str | None = None
     privacy_score: float = 0.5
     tracker_count: int = 0
     encryption_enabled: bool = True
-    content_type: Optional[str] = None
+    content_type: str | None = None
     is_open_source: bool = False
     is_non_profit: bool = False
     relevance_score: float = 0.0
@@ -510,7 +510,7 @@ class URLRankedResult(BaseModel):
 
 class URLRankingAPIResponse(BaseModel):
     query: str
-    ranked_urls: List[URLRankedResult]
+    ranked_urls: list[URLRankedResult]
     processing_time_ms: float
     total_urls: int
     filtered_count: int = 0
@@ -519,10 +519,10 @@ class URLRankingAPIResponse(BaseModel):
 # Advanced Analytics Models
 class AttributionResultResponse(BaseModel):
     conversion_id: int
-    touchpoints: List[Dict[str, Any]]
-    attribution_weights: Dict[str, float]
+    touchpoints: list[dict[str, Any]]
+    attribution_weights: dict[str, float]
     total_value: float
-    attributed_values: Dict[str, float]
+    attributed_values: dict[str, float]
 
 
 class CampaignROIResponse(BaseModel):
@@ -547,8 +547,8 @@ class TrendAnalysisResponse(BaseModel):
     previous_value: float
     change_percent: float
     trend_direction: str
-    data_points: List[Dict[str, Any]]
-    forecast_next_period: Optional[float] = None
+    data_points: list[dict[str, Any]]
+    forecast_next_period: float | None = None
 
 
 # Unified Search Models (SearXNG Integration)
@@ -556,15 +556,15 @@ class UnifiedSearchRequest(BaseModel):
     """Request model for unified privacy search with intent ranking."""
 
     query: str
-    categories: Optional[List[str]] = None
-    engines: Optional[List[str]] = None
+    categories: list[str] | None = None
+    engines: list[str] | None = None
     language: str = "en"
     safe_search: int = 0
-    time_range: Optional[str] = None
+    time_range: str | None = None
     extract_intent: bool = True
     rank_results: bool = True
-    weights: Optional[Dict[str, float]] = None
-    min_privacy_score: Optional[float] = None
+    weights: dict[str, float] | None = None
+    min_privacy_score: float | None = None
     exclude_big_tech: bool = False
 
 
@@ -579,20 +579,20 @@ class RankedSearchResult(BaseModel):
     ranked_score: float
     rank: int
     category: str
-    thumbnail: Optional[str] = None
-    published_date: Optional[str] = None
-    intent_goal: Optional[str] = None
-    match_reasons: List[str] = []
-    privacy_score: Optional[float] = None
-    ethical_alignment: Optional[float] = None
+    thumbnail: str | None = None
+    published_date: str | None = None
+    intent_goal: str | None = None
+    match_reasons: list[str] = []
+    privacy_score: float | None = None
+    ethical_alignment: float | None = None
 
 
 class ExtractedIntent(BaseModel):
     """Extracted intent from search query for API response."""
 
     goal: str
-    constraints: List[Dict[str, Any]]
-    use_cases: List[str]
+    constraints: list[dict[str, Any]]
+    use_cases: list[str]
     result_type: str
     complexity: str
     confidence: float
@@ -602,12 +602,12 @@ class UnifiedSearchResponse(BaseModel):
     """Response model for unified search endpoint."""
 
     query: str
-    results: List[RankedSearchResult]
+    results: list[RankedSearchResult]
     total_results: int
     processing_time_ms: float
-    extracted_intent: Optional[ExtractedIntent] = None
-    engines_used: List[str] = []
-    categories_searched: List[str] = []
+    extracted_intent: ExtractedIntent | None = None
+    engines_used: list[str] = []
+    categories_searched: list[str] = []
     ranking_applied: bool = False
     results_ranked: int = 0
     privacy_enhanced: bool = True

@@ -6,7 +6,7 @@ This module implements ethical ad matching based on user intent without tracking
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -30,13 +30,13 @@ class AdMetadata:
     id: str
     title: str
     description: str
-    targetingConstraints: Dict[str, List[str]]  # Platform, provider, license, etc.
-    forbiddenDimensions: List[str]  # Must be empty or only safe fields
+    targetingConstraints: dict[str, list[str]]  # Platform, provider, license, etc.
+    forbiddenDimensions: list[str]  # Must be empty or only safe fields
     qualityScore: float  # Quality score of the ad
-    ethicalTags: List[str]  # Privacy, open_source, no_tracking, etc.
-    advertiser: Optional[str] = None  # Name of advertiser
-    category: Optional[str] = None  # Category of the ad
-    creative_format: Optional[str] = None  # Creative format of the ad (banner, native, video, etc.)
+    ethicalTags: list[str]  # Privacy, open_source, no_tracking, etc.
+    advertiser: str | None = None  # Name of advertiser
+    category: str | None = None  # Category of the ad
+    creative_format: str | None = None  # Creative format of the ad (banner, native, video, etc.)
 
 
 @dataclass
@@ -45,7 +45,7 @@ class MatchedAd:
 
     ad: AdMetadata
     adRelevanceScore: float
-    matchReasons: List[str]
+    matchReasons: list[str]
 
 
 @dataclass
@@ -53,16 +53,16 @@ class AdMatchingRequest:
     """Request object for ad matching API"""
 
     intent: UniversalIntent
-    adInventory: List[AdMetadata]
-    config: Optional[Dict[str, Any]] = None  # MatchingConfig
+    adInventory: list[AdMetadata]
+    config: dict[str, Any] | None = None  # MatchingConfig
 
 
 @dataclass
 class AdMatchingResponse:
     """Response object for ad matching API"""
 
-    matchedAds: List[MatchedAd]
-    metrics: Dict[str, int]
+    matchedAds: list[MatchedAd]
+    metrics: dict[str, int]
 
 
 class EmbeddingCache:
@@ -94,7 +94,7 @@ class EmbeddingCache:
             self.tokenizer = None
             self.model = None
 
-    def encode_text(self, text: str) -> Optional[np.ndarray]:
+    def encode_text(self, text: str) -> np.ndarray | None:
         """Encode text to embedding vector using the sentence transformer model"""
         if self.model is None or self.tokenizer is None:
             # Return random vector for mock implementation
@@ -165,7 +165,7 @@ class AdFairnessChecker:
             "ip_address",
         }
 
-    def validate_advertiser_constraints(self, ad: AdMetadata) -> Tuple[bool, str]:
+    def validate_advertiser_constraints(self, ad: AdMetadata) -> tuple[bool, str]:
         """
         Validate that an ad doesn't use forbidden targeting dimensions
         Returns (isValid, reason)
@@ -183,7 +183,7 @@ class AdConstraintMatcher:
     def __init__(self):
         pass
 
-    def satisfies_user_constraints(self, ad: AdMetadata, constraints: List[Constraint]) -> Tuple[bool, List[str]]:
+    def satisfies_user_constraints(self, ad: AdMetadata, constraints: list[Constraint]) -> tuple[bool, list[str]]:
         """
         Check if an ad satisfies user constraints
         Returns (satisfies, list_of_reasons)
@@ -242,7 +242,7 @@ class AdRelevanceScorer:
     def __init__(self):
         self.embedding_cache = EmbeddingCache()
 
-    def compute_ad_relevance(self, ad: AdMetadata, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def compute_ad_relevance(self, ad: AdMetadata, intent: UniversalIntent) -> tuple[float, list[str]]:
         """
         Compute relevance score between ad and user intent
         Returns (relevance_score, list_of_reasons)
@@ -286,7 +286,7 @@ class AdRelevanceScorer:
                 adjusted_weights = [remaining_weight]
             weights = adjusted_weights
 
-        relevance_score = sum(score * weight for score, weight in zip(scores, weights))
+        relevance_score = sum(score * weight for score, weight in zip(scores, weights, strict=False))
 
         # Clamp the score between 0 and 1
         relevance_score = max(0.0, min(1.0, relevance_score))
@@ -295,7 +295,7 @@ class AdRelevanceScorer:
 
     def _compute_semantic_similarity(
         self, ad: AdMetadata, intent: UniversalIntent, declared: DeclaredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute semantic similarity between ad and user query"""
         reasons = []
 
@@ -343,7 +343,7 @@ class AdRelevanceScorer:
 
     def _compute_ethical_alignment(
         self, ad: AdMetadata, intent: UniversalIntent, inferred: InferredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute alignment based on ethical signals"""
         reasons = []
 
@@ -376,7 +376,7 @@ class AdRelevanceScorer:
 
     def _compute_goal_alignment(
         self, ad: AdMetadata, intent: UniversalIntent, declared: DeclaredIntent
-    ) -> Tuple[float, List[str]]:
+    ) -> tuple[float, list[str]]:
         """Compute alignment based on user goal"""
         reasons = []
 

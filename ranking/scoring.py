@@ -4,8 +4,6 @@ Intent Engine - Scoring Module
 This module contains scoring algorithms for alignment, quality, and ethical evaluation.
 """
 
-from typing import List, Tuple
-
 from ..core.schema import (
     EthicalDimension,
     UniversalIntent,
@@ -70,14 +68,14 @@ class QualityScorer:
         weights = [0.4, 0.2, 0.2, 0.2]  # [relevance, freshness, authority, engagement]
         scores = [relevance, freshness, authority, engagement]
 
-        quality_score = sum(w * s for w, s in zip(weights, scores))
+        quality_score = sum(w * s for w, s in zip(weights, scores, strict=False))
         return min(1.0, max(0.0, quality_score))
 
 
 class EthicalScorer:
     """Scores ethical alignment of results"""
 
-    def compute_ethical_score(self, result_metadata: dict, intent: UniversalIntent) -> Tuple[float, List[str]]:
+    def compute_ethical_score(self, result_metadata: dict, intent: UniversalIntent) -> tuple[float, list[str]]:
         """
         Compute ethical score based on user preferences and result properties
         Returns (score, list_of_reasons)

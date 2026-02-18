@@ -6,7 +6,7 @@ This module implements granular consent controls for user privacy preferences.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.orm import Session
@@ -62,8 +62,8 @@ class ConsentManager:
         user_id: str,
         consent_type: ConsentType,
         granted: bool,
-        consent_details: Optional[Dict] = None,
-        expires_in_days: Optional[int] = None,
+        consent_details: dict | None = None,
+        expires_in_days: int | None = None,
     ) -> UserConsent:
         """Record a user's consent decision"""
         from sqlalchemy.exc import IntegrityError
@@ -110,7 +110,7 @@ class ConsentManager:
             else:
                 raise
 
-    def get_user_consent(self, user_id: str, consent_type: ConsentType) -> Optional[UserConsent]:
+    def get_user_consent(self, user_id: str, consent_type: ConsentType) -> UserConsent | None:
         """Get a user's consent for a specific type"""
         consent = (
             self.db.query(UserConsent)
@@ -126,7 +126,7 @@ class ConsentManager:
 
         return consent
 
-    def get_all_user_consents(self, user_id: str) -> List[UserConsent]:
+    def get_all_user_consents(self, user_id: str) -> list[UserConsent]:
         """Get all consents for a user"""
         consents = self.db.query(UserConsent).filter(UserConsent.user_id == user_id).all()
 
@@ -176,7 +176,7 @@ class ConsentManager:
 
         return consent.granted
 
-    def get_consent_summary(self) -> Dict[str, Any]:
+    def get_consent_summary(self) -> dict[str, Any]:
         """Get a summary of all consents in the system"""
         total_consents = self.db.query(UserConsent).count()
         granted_consents = self.db.query(UserConsent).filter(UserConsent.granted is True).count()

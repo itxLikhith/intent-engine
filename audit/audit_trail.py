@@ -6,7 +6,7 @@ This module implements comprehensive logging of all operations for compliance an
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import JSON, Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import Session
@@ -64,14 +64,14 @@ class AuditTrailManager:
 
     def log_event(
         self,
-        user_id: Optional[str],
+        user_id: str | None,
         event_type: AuditEventType,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[int] = None,
-        action_description: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        metadata: Optional[Dict] = None,
+        resource_type: str | None = None,
+        resource_id: int | None = None,
+        action_description: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        metadata: dict | None = None,
     ) -> AuditTrail:
         """Log an event to the audit trail"""
         audit_entry = AuditTrail(
@@ -93,14 +93,14 @@ class AuditTrailManager:
 
     def get_audit_events(
         self,
-        user_id: Optional[str] = None,
-        event_type: Optional[AuditEventType] = None,
-        resource_type: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        user_id: str | None = None,
+        event_type: AuditEventType | None = None,
+        resource_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[AuditTrail]:
+    ) -> list[AuditTrail]:
         """Retrieve audit events with optional filters"""
         query = self.db.query(AuditTrail)
 
@@ -122,7 +122,7 @@ class AuditTrailManager:
         events = query.order_by(AuditTrail.timestamp.desc()).offset(offset).limit(limit).all()
         return events
 
-    def get_user_audit_events(self, user_id: str, limit: int = 50) -> List[AuditTrail]:
+    def get_user_audit_events(self, user_id: str, limit: int = 50) -> list[AuditTrail]:
         """Get audit events for a specific user"""
         events = (
             self.db.query(AuditTrail)
@@ -134,7 +134,7 @@ class AuditTrailManager:
 
         return events
 
-    def get_recent_events(self, hours: int = 24) -> List[AuditTrail]:
+    def get_recent_events(self, hours: int = 24) -> list[AuditTrail]:
         """Get recent audit events within the specified hours"""
         from datetime import timedelta
 
@@ -149,7 +149,7 @@ class AuditTrailManager:
 
         return events
 
-    def get_event_statistics(self) -> Dict[str, Any]:
+    def get_event_statistics(self) -> dict[str, Any]:
         """Get statistics about audit events"""
         from sqlalchemy import func
 

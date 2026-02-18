@@ -21,7 +21,6 @@ from extraction.extractor import (
 
 
 class TestIntentExtractor(unittest.TestCase):
-
     def setUp(self):
         """Set up test fixtures with deepcopy to prevent mutations"""
         self.base_request = IntentExtractionRequest(

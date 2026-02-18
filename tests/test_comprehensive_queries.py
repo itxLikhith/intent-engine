@@ -10,7 +10,7 @@ import statistics
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 
@@ -39,9 +39,9 @@ class TestQuery:
     query: str
     category: QueryCategory
     expected_goal: str
-    expected_use_cases: List[str]
+    expected_use_cases: list[str]
     expected_complexity: str
-    expected_constraints: List[str]
+    expected_constraints: list[str]
 
 
 # DIVERSE TEST QUERIES - NOT JUST EMAIL!
@@ -476,7 +476,7 @@ class ComprehensiveQueryTestSuite:
         self.base_url = base_url
         self.results = []
 
-    def test_intent_extraction(self, test_query: TestQuery) -> Dict[str, Any]:
+    def test_intent_extraction(self, test_query: TestQuery) -> dict[str, Any]:
         """Test intent extraction for a specific query"""
         print(f"\nTesting: {test_query.query[:60]}...")
 
@@ -522,7 +522,7 @@ class ComprehensiveQueryTestSuite:
             "latency_ms": elapsed,
         }
 
-    def test_url_ranking(self, test_query: TestQuery, urls: List[str]) -> Dict[str, Any]:
+    def test_url_ranking(self, test_query: TestQuery, urls: list[str]) -> dict[str, Any]:
         """Test URL ranking for a query"""
         print(f"  Ranking {len(urls)} URLs...")
 
@@ -553,7 +553,7 @@ class ComprehensiveQueryTestSuite:
             "latency_ms": elapsed,
         }
 
-    def run_all_tests(self) -> Dict[str, Any]:
+    def run_all_tests(self) -> dict[str, Any]:
         """Run comprehensive test suite"""
         print("=" * 70)
         print("COMPREHENSIVE QUERY TEST SUITE")
@@ -575,9 +575,9 @@ class ComprehensiveQueryTestSuite:
         ]
 
         for category, queries in DIVERSE_TEST_QUERIES.items():
-            print(f"\n{'='*70}")
+            print(f"\n{'=' * 70}")
             print(f"CATEGORY: {category.value.upper()}")
-            print(f"{'='*70}")
+            print(f"{'=' * 70}")
 
             category_results = []
 
@@ -606,9 +606,7 @@ class ComprehensiveQueryTestSuite:
                 "avg_latency_ms": avg_latency,
             }
 
-            print(
-                f"\n  Category Summary: {passed}/{len(category_results)} passed, " f"avg latency: {avg_latency:.0f}ms"
-            )
+            print(f"\n  Category Summary: {passed}/{len(category_results)} passed, avg latency: {avg_latency:.0f}ms")
 
         # Overall summary
         print("\n" + "=" * 70)
@@ -622,14 +620,14 @@ class ComprehensiveQueryTestSuite:
         avg_latency = statistics.mean([r["latency_ms"] for r in all_results])
 
         print(f"\nTotal Queries Tested: {total}")
-        print(f"Passed: {passed} ({passed/total*100:.1f}%)")
-        print(f"Partial: {partial} ({partial/total*100:.1f}%)")
-        print(f"Failed: {failed} ({failed/total*100:.1f}%)")
+        print(f"Passed: {passed} ({passed / total * 100:.1f}%)")
+        print(f"Partial: {partial} ({partial / total * 100:.1f}%)")
+        print(f"Failed: {failed} ({failed / total * 100:.1f}%)")
         print(f"Average Latency: {avg_latency:.0f}ms")
 
         print("\nCategory Breakdown:")
         for cat, stats in category_stats.items():
-            print(f"  {cat:20s}: {stats['passed']}/{stats['total']} passed, " f"{stats['avg_latency_ms']:.0f}ms avg")
+            print(f"  {cat:20s}: {stats['passed']}/{stats['total']} passed, {stats['avg_latency_ms']:.0f}ms avg")
 
         print("=" * 70)
 

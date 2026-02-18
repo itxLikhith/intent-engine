@@ -1,7 +1,7 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 #
-# ULTRA-SIMPLE CONFIG: Only critical checks, let CI handle all formatting
+# Simplified config: Only Ruff for linting + formatting, plus basic checks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -9,15 +9,18 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-added-large-files
       - id: check-toml
+      - id: check-added-large-files
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: detect-private-key
 
-  # Only black - it works reliably without failing after fixing
-  - repo: https://github.com/psf/black
-    rev: 26.1.0
+  # Ruff for linting and formatting (replaces Black, isort, Flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.0
     hooks:
-      - id: black
-        args: [--line-length=120]
+      # Run the linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      # Run the formatter
+      - id: ruff-format

@@ -17,7 +17,6 @@ import asyncio
 import statistics
 import time
 from datetime import datetime
-from typing import Dict, List
 
 import aiohttp
 
@@ -67,9 +66,9 @@ class SearchEngineStressTest:
 
     async def test_basic_search_throughput(self, iterations: int = 100):
         """Test basic search throughput without intent extraction"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Basic Search Throughput Test: {iterations} requests")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {
             "total_requests": 0,
@@ -113,9 +112,9 @@ class SearchEngineStressTest:
 
     async def test_intent_extraction_only(self, iterations: int = 50):
         """Test intent extraction endpoint performance"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Intent Extraction Performance Test: {iterations} requests")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {
             "total_requests": 0,
@@ -168,9 +167,9 @@ class SearchEngineStressTest:
 
     async def test_search_with_separate_intent(self, iterations: int = 30):
         """Test search with pre-extracted intent (2-step process)"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Search + Intent (2-Step) Test: {iterations} requests")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {
             "total_requests": 0,
@@ -248,10 +247,10 @@ class SearchEngineStressTest:
 
     async def test_concurrent_search(self, concurrency: int = 30, duration: int = 30):
         """Test search under high concurrent load"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Concurrent Search Stress Test")
         print(f"Concurrency: {concurrency} | Duration: {duration}s")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results = {
             "total_requests": 0,
@@ -313,9 +312,9 @@ class SearchEngineStressTest:
 
     async def test_privacy_filter_performance(self, iterations: int = 50):
         """Test performance with privacy filters enabled"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Privacy Filter Performance Test: {iterations} requests")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         test_configs = [
             {"name": "No Filters", "exclude_big_tech": False, "min_privacy_score": None},
@@ -374,15 +373,15 @@ class SearchEngineStressTest:
 
                 print(f"    Avg response time: {statistics.mean(results['response_times']):.2f}ms")
                 print(f"    Avg results returned: {statistics.mean(results['result_counts']):.1f}")
-                print(f"    Success rate: {results['successful_requests']/results['total_requests']*100:.1f}%")
+                print(f"    Success rate: {results['successful_requests'] / results['total_requests'] * 100:.1f}%")
 
         return all_results
 
-    async def test_large_result_handling(self, num_results_list: List[int] = [10, 50, 100]):
+    async def test_large_result_handling(self, num_results_list: list[int] = [10, 50, 100]):
         """Test handling of different result set sizes"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Large Result Set Handling Test")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         results_by_size = {}
 
@@ -431,9 +430,9 @@ class SearchEngineStressTest:
 
     async def test_search_result_quality(self, iterations: int = 20):
         """Test search result quality and completeness"""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Search Result Quality Test: {iterations} queries")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         quality_metrics = {
             "total_results_returned": [],
@@ -493,7 +492,7 @@ class SearchEngineStressTest:
 
         return quality_metrics
 
-    def _print_test_results(self, test_name: str, results: Dict):
+    def _print_test_results(self, test_name: str, results: dict):
         """Print formatted test results"""
         print(f"\n{test_name} Results:")
         print(f"  Total requests: {results['total_requests']}")
@@ -521,7 +520,7 @@ class SearchEngineStressTest:
             p95_idx = int(len(sorted_times) * 0.95)
             p99_idx = int(len(sorted_times) * 0.99)
             print(f"    95th percentile: {sorted_times[p95_idx]:.2f}ms")
-            print(f"    99th percentile: {sorted_times[min(p99_idx, len(sorted_times)-1)]:.2f}ms")
+            print(f"    99th percentile: {sorted_times[min(p99_idx, len(sorted_times) - 1)]:.2f}ms")
 
         if results.get("errors"):
             print(f"\n  [WARN] Errors ({len(results['errors'])}):")

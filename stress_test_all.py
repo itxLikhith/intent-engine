@@ -18,7 +18,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import aiohttp
 import psutil
@@ -32,7 +32,7 @@ class TestConfig:
     num_requests: int = 500
     test_duration: int = 60  # seconds
     timeout: int = 30
-    cors_test_origins: List[str] = field(
+    cors_test_origins: list[str] = field(
         default_factory=lambda: [
             "http://localhost:3000",
             "http://localhost:8080",
@@ -55,8 +55,8 @@ class TestResult:
     p95_latency_ms: float = 0.0
     p99_latency_ms: float = 0.0
     requests_per_second: float = 0.0
-    errors: List[str] = field(default_factory=list)
-    status_codes: Dict[int, int] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    status_codes: dict[int, int] = field(default_factory=dict)
     success_rate: float = 0.0
 
 
@@ -65,8 +65,8 @@ class StressTester:
 
     def __init__(self, config: TestConfig):
         self.config = config
-        self.results: List[TestResult] = []
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.results: list[TestResult] = []
+        self.session: aiohttp.ClientSession | None = None
         self.stop_event = asyncio.Event()
         self.db_connections_active = 0
         self.db_connections_max = 0
@@ -89,7 +89,7 @@ class StressTester:
             await self.session.close()
 
     async def make_request(
-        self, method: str, endpoint: str, data: Optional[Dict] = None, headers: Optional[Dict] = None
+        self, method: str, endpoint: str, data: dict | None = None, headers: dict | None = None
     ) -> tuple:
         """Make a single HTTP request and return (status, latency, error)"""
         url = f"{self.config.base_url}{endpoint}"
@@ -110,7 +110,7 @@ class StressTester:
                 async with self.session.options(url, headers=headers) as response:
                     latency = (time.perf_counter() - start_time) * 1000
                     return response.status, latency, None
-        except asyncio.TimeoutError:
+        except TimeoutError:
             latency = (time.perf_counter() - start_time) * 1000
             return 0, latency, "Timeout"
         except aiohttp.ClientError as e:
@@ -128,18 +128,18 @@ class StressTester:
         test_name: str,
         method: str,
         endpoint: str,
-        data: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-        num_requests: Optional[int] = None,
+        data: dict | None = None,
+        headers: dict | None = None,
+        num_requests: int | None = None,
     ) -> TestResult:
         """Run a load test with specified parameters"""
         result = TestResult(test_name=test_name)
-        latencies: List[float] = []
+        latencies: list[float] = []
         num_requests = num_requests or self.config.num_requests
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Endpoint: {method} {endpoint}")
         print(f"Requests: {num_requests}")
         print(f"Workers: {self.config.num_workers}")
@@ -188,9 +188,9 @@ class StressTester:
 
     def _print_result(self, result: TestResult, duration: float):
         """Print test results in a formatted way"""
-        print(f"\n{'-'*60}")
+        print(f"\n{'-' * 60}")
         print(f"Results: {result.test_name}")
-        print(f"{'-'*60}")
+        print(f"{'-' * 60}")
         print(f"Duration: {duration:.2f}s")
         print(f"Total Requests: {result.total_requests}")
         print(f"Successful: {result.successful_requests} ({result.success_rate:.1f}%)")
@@ -245,12 +245,12 @@ class StressTester:
     async def _test_mixed_db_operations(self):
         """Test mixed read/write database operations"""
         result = TestResult(test_name="PostgreSQL - Mixed Read/Write Operations")
-        latencies: List[float] = []
+        latencies: list[float] = []
         num_ops = 100
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {result.test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         async def mixed_worker(worker_id: int):
             for i in range(num_ops // self.config.num_workers + 1):
@@ -317,12 +317,12 @@ class StressTester:
     async def _test_query_caching(self):
         """Test query caching behavior"""
         result = TestResult(test_name="Redis - Query Caching Performance")
-        latencies_first: List[float] = []
-        latencies_cached: List[float] = []
+        latencies_first: list[float] = []
+        latencies_cached: list[float] = []
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {result.test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         query = "best laptop for programming"
         test_data = {"product": "search", "input": {"text": query}}
@@ -370,11 +370,11 @@ class StressTester:
     async def _test_cache_invalidation(self):
         """Test cache behavior with varying queries"""
         result = TestResult(test_name="Redis - Cache Invalidation Under Load")
-        latencies: List[float] = []
+        latencies: list[float] = []
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {result.test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         queries = [
             "best laptop for programming",
@@ -423,9 +423,9 @@ class StressTester:
         """Test CORS with different origins"""
         result = TestResult(test_name="CORS - Origin Validation")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {result.test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         for origin in self.config.cors_test_origins:
             headers = {"Origin": origin}
@@ -451,9 +451,9 @@ class StressTester:
         """Test CORS headers handling"""
         result = TestResult(test_name="CORS - Custom Headers")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {result.test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         test_headers = [
             {"Authorization": "Bearer token123"},
@@ -482,11 +482,11 @@ class StressTester:
     async def _test_cors_preflight(self):
         """Test CORS preflight OPTIONS requests"""
         result = TestResult(test_name="CORS - Preflight (OPTIONS)")
-        latencies: List[float] = []
+        latencies: list[float] = []
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {result.test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         endpoints = ["/extract-intent", "/campaigns", "/match-ads", "/rank-results"]
 
@@ -550,12 +550,12 @@ class StressTester:
     async def _test_sustained_load(self):
         """Test sustained load over time"""
         result = TestResult(test_name="API - Sustained Load (30s)")
-        latencies: List[float] = []
+        latencies: list[float] = []
         duration = 30  # seconds
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Running: {result.test_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Duration: {duration}s with {self.config.num_workers} workers")
 
         start_time = time.time()
@@ -598,7 +598,7 @@ class StressTester:
 
     # ==================== SYSTEM MONITORING ====================
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    def get_system_metrics(self) -> dict[str, Any]:
         """Get current system metrics"""
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),

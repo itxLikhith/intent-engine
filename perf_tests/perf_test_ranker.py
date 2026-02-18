@@ -67,7 +67,7 @@ def create_test_candidates(count=10):
         candidates.append(
             SearchResult(
                 id=str(i + 1),
-                title=f"Email Setup Guide {i+1}",
+                title=f"Email Setup Guide {i + 1}",
                 description="Guide to setting up encrypted email on Android devices",
                 platform="Android",
                 provider="ProtonMail" if i % 2 == 0 else "Tutanota",  # Alternate providers

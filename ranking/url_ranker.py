@@ -11,7 +11,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import numpy as np
@@ -34,22 +34,22 @@ class URLResult:
     """Represents a URL with its metadata and scores"""
 
     url: str
-    title: Optional[str] = None
-    description: Optional[str] = None
-    domain: Optional[str] = None
-    favicon: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
+    domain: str | None = None
+    favicon: str | None = None
 
     # Privacy-focused attributes
     privacy_score: float = 0.5  # 0-1: How privacy-friendly
     tracker_count: int = 0  # Number of known trackers
-    cookie_policy: Optional[str] = None  # "minimal", "strict", "lenient"
-    data_retention_days: Optional[int] = None
+    cookie_policy: str | None = None  # "minimal", "strict", "lenient"
+    data_retention_days: int | None = None
     encryption_enabled: bool = True  # HTTPS support
 
     # Content attributes
-    content_type: Optional[str] = None  # "article", "tool", "forum", "docs", etc.
-    language: Optional[str] = None
-    recency: Optional[str] = None  # ISO date string
+    content_type: str | None = None  # "article", "tool", "forum", "docs", etc.
+    language: str | None = None
+    recency: str | None = None  # ISO date string
 
     # Quality attributes
     quality_score: float = 0.5
@@ -59,8 +59,8 @@ class URLResult:
     # Ethical attributes
     is_open_source: bool = False
     is_non_profit: bool = False
-    advertising_policy: Optional[str] = None  # "no_ads", "minimal_ads", "ad_supported"
-    ethical_tags: List[str] = field(default_factory=list)
+    advertising_policy: str | None = None  # "no_ads", "minimal_ads", "ad_supported"
+    ethical_tags: list[str] = field(default_factory=list)
 
     # Computed scores
     relevance_score: float = 0.0
@@ -72,9 +72,9 @@ class URLRankingRequest:
     """Request for ranking URLs"""
 
     query: str  # The search query
-    urls: List[str]  # List of URLs to rank
-    intent: Optional[UniversalIntent] = None  # Optional structured intent
-    options: Optional[Dict[str, Any]] = None  # Ranking options
+    urls: list[str]  # List of URLs to rank
+    intent: UniversalIntent | None = None  # Optional structured intent
+    options: dict[str, Any] | None = None  # Ranking options
 
 
 @dataclass
@@ -82,7 +82,7 @@ class URLRankingResponse:
     """Response with ranked URLs"""
 
     query: str
-    ranked_urls: List[URLResult]
+    ranked_urls: list[URLResult]
     processing_time_ms: float
     total_urls: int
     filtered_count: int = 0
@@ -98,8 +98,8 @@ class URLAnalysisResult:
     description: str
     privacy_score: float
     content_type: str
-    quality_indicators: Dict[str, Any]
-    error: Optional[str] = None
+    quality_indicators: dict[str, Any]
+    error: str | None = None
 
 
 class PrivacyDatabase:
@@ -305,7 +305,7 @@ class PrivacyDatabase:
         "download": ["download", "release", "file"],
     }
 
-    def get_domain_info(self, url: str) -> Dict[str, Any]:
+    def get_domain_info(self, url: str) -> dict[str, Any]:
         """Get privacy and content info for a domain"""
         parsed = urlparse(url)
         domain = parsed.netloc.lower()
@@ -349,7 +349,7 @@ class PrivacyDatabase:
 class URLAnalyzer:
     """Analyzes individual URLs for privacy and content characteristics"""
 
-    def __init__(self, embedding_cache: Optional[EmbeddingCache] = None):
+    def __init__(self, embedding_cache: EmbeddingCache | None = None):
         self.privacy_db = PrivacyDatabase()
         self.embedding_cache = embedding_cache or EmbeddingCache()
 
@@ -539,7 +539,7 @@ class URLRanker:
             filtered_count=len(urls) - len(scored_urls),
         )
 
-    async def _analyze_urls_parallel(self, urls: List[str]) -> List[URLResult]:
+    async def _analyze_urls_parallel(self, urls: list[str]) -> list[URLResult]:
         """Analyze URLs in parallel using asyncio to_thread"""
 
         async def analyze_single(url: str) -> URLResult:
@@ -569,12 +569,12 @@ class URLRanker:
 
     def _apply_filters(
         self,
-        urls: List[URLResult],
-        constraints: List[Constraint],
+        urls: list[URLResult],
+        constraints: list[Constraint],
         min_privacy_score: float,
         exclude_big_tech: bool,
-        negative_preferences: Optional[List[str]],
-    ) -> List[URLResult]:
+        negative_preferences: list[str] | None,
+    ) -> list[URLResult]:
         """Apply filtering constraints to URLs"""
         filtered = []
 
@@ -602,7 +602,7 @@ class URLRanker:
 
         return filtered
 
-    def _satisfies_constraints(self, url_result: URLResult, constraints: List[Constraint]) -> bool:
+    def _satisfies_constraints(self, url_result: URLResult, constraints: list[Constraint]) -> bool:
         """Check if URL satisfies hard constraints"""
         for constraint in constraints:
             if not constraint.hardFilter:
@@ -630,14 +630,17 @@ class URLRanker:
             elif dimension == "privacy":
                 if constraint.type == ConstraintType.INCLUSION:
                     if isinstance(value, str) and url_result.privacy_score is not None:
+                        violates = False
                         if "high" in value.lower() and url_result.privacy_score < 0.7:
-                            return False
+                            violates = True
                         elif "medium" in value.lower() and url_result.privacy_score < 0.5:
+                            violates = True
+                        if violates:
                             return False
 
         return True
 
-    def _satisfies_negative_preferences(self, url_result: URLResult, preferences: List[str]) -> bool:
+    def _satisfies_negative_preferences(self, url_result: URLResult, preferences: list[str]) -> bool:
         """Check if URL satisfies negative preferences like 'no google'"""
         for pref in preferences:
             pref_lower = pref.lower().replace("no ", "").replace("not ", "")
@@ -652,8 +655,8 @@ class URLRanker:
         return True
 
     async def _score_urls(
-        self, urls: List[URLResult], query: str, weights: Dict[str, float], ethical_signals: List[Any]
-    ) -> List[URLResult]:
+        self, urls: list[URLResult], query: str, weights: dict[str, float], ethical_signals: list[Any]
+    ) -> list[URLResult]:
         """Score URLs based on multiple factors using batch processing for efficiency"""
         import asyncio
 
@@ -728,7 +731,7 @@ class URLRanker:
         matches = query_words.intersection(content_words)
         return min(1.0, len(matches) / len(query_words)) * 0.5 + 0.3
 
-    def _calculate_relevance(self, url: URLResult, query: str, query_embedding: Optional[np.ndarray]) -> float:
+    def _calculate_relevance(self, url: URLResult, query: str, query_embedding: np.ndarray | None) -> float:
         """Calculate relevance score between query and URL"""
         # Combine title and description for content
         content = f"{url.title or ''} {url.description or ''} {url.content_type or ''}"
@@ -773,7 +776,7 @@ class URLRanker:
 
         return max(0.0, min(1.0, score))
 
-    def _calculate_ethics(self, url: URLResult, ethical_signals: List[Any]) -> float:
+    def _calculate_ethics(self, url: URLResult, ethical_signals: list[Any]) -> float:
         """Calculate ethical alignment score"""
         score = 0.5  # Base score
 

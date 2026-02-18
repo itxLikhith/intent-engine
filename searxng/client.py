@@ -10,7 +10,7 @@ import json
 import logging
 import os
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -34,8 +34,8 @@ class SearXNGResult:
     engine: str
     score: float
     category: str
-    thumbnail: Optional[str] = None
-    published_date: Optional[str] = None
+    thumbnail: str | None = None
+    published_date: str | None = None
     position: int = 0
 
 
@@ -44,13 +44,13 @@ class SearXNGResponse:
     """Represents a complete search response from SearXNG"""
 
     query: str
-    results: List[SearXNGResult]
+    results: list[SearXNGResult]
     number_of_results: int
-    suggestions: List[str]
-    corrections: List[str]
-    infoboxes: List[Dict[str, Any]]
+    suggestions: list[str]
+    corrections: list[str]
+    infoboxes: list[dict[str, Any]]
     processing_time: float
-    engines: List[str]
+    engines: list[str]
 
 
 class SearXNGClient:
@@ -102,7 +102,9 @@ class SearXNGClient:
             max_keepalive_connections=20,  # Keep connections alive for reuse
         )
         self._client = httpx.AsyncClient(
-            timeout=timeout_config, limits=limits, http2=True  # Enable HTTP/2 for better performance
+            timeout=timeout_config,
+            limits=limits,
+            http2=True,  # Enable HTTP/2 for better performance
         )
 
         logger.info(
@@ -113,13 +115,13 @@ class SearXNGClient:
     async def search(
         self,
         query: str,
-        categories: Optional[List[str]] = None,
-        engines: Optional[List[str]] = None,
+        categories: list[str] | None = None,
+        engines: list[str] | None = None,
         language: str = "en",
         pageno: int = 1,
         safe_search: int = 0,
         format: str = "json",
-        time_range: Optional[str] = None,
+        time_range: str | None = None,
     ) -> SearXNGResponse:
         """
         Perform a search query on SearXNG.
@@ -232,7 +234,7 @@ class SearXNGClient:
             logger.error(f"Error parsing SearXNG response: {e}")
             raise
 
-    def _parse_results(self, raw_results: List[Dict[str, Any]]) -> List[SearXNGResult]:
+    def _parse_results(self, raw_results: list[dict[str, Any]]) -> list[SearXNGResult]:
         """Parse raw search results into SearXNGResult objects."""
         results = []
         for idx, raw in enumerate(raw_results):
@@ -259,7 +261,7 @@ class SearXNGClient:
         results.sort(key=lambda r: r.score if r.score is not None else 0.0, reverse=True)
         return results
 
-    def get_engines(self) -> List[Dict[str, Any]]:
+    def get_engines(self) -> list[dict[str, Any]]:
         """
         Get list of available search engines.
 
@@ -298,10 +300,10 @@ class SearXNGClient:
 
 
 # Singleton instance
-_searxng_client: Optional[SearXNGClient] = None
+_searxng_client: SearXNGClient | None = None
 
 
-def get_searxng_client(base_url: Optional[str] = None) -> SearXNGClient:
+def get_searxng_client(base_url: str | None = None) -> SearXNGClient:
     """
     Get or create SearXNG client singleton.
 

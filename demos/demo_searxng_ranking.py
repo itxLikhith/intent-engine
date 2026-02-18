@@ -16,7 +16,7 @@ Usage:
 import argparse
 import io
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
@@ -35,7 +35,7 @@ def query_searxng(
     num_results: int = 25,
     categories: str = "general",
     searxng_url: str = SEARXNG_URL,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Query SearXNG and return search results."""
     params = {
         "q": query,
@@ -82,14 +82,14 @@ def query_searxng(
 
 def rank_urls(
     query: str,
-    urls: List[str],
+    urls: list[str],
     exclude_big_tech: bool = False,
     min_privacy_score: float = 0.0,
-    custom_weights: Optional[Dict[str, float]] = None,
+    custom_weights: dict[str, float] | None = None,
     ranking_api_url: str = RANKING_API_URL,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Send URLs to our /rank-urls API endpoint for privacy-aware ranking."""
-    options: Dict[str, Any] = {}
+    options: dict[str, Any] = {}
     if exclude_big_tech:
         options["exclude_big_tech"] = True
     if min_privacy_score > 0:
@@ -122,7 +122,7 @@ def rank_urls(
     return resp.json()
 
 
-def print_searxng_results(results: List[Dict[str, Any]]) -> None:
+def print_searxng_results(results: list[dict[str, Any]]) -> None:
     """Print raw SearXNG results for comparison."""
     print("\n" + "=" * 80)
     print("📋 ORIGINAL SearXNG Results (before re-ranking)")
@@ -139,8 +139,8 @@ def print_searxng_results(results: List[Dict[str, Any]]) -> None:
 
 
 def print_ranked_results(
-    ranking_response: Dict[str, Any],
-    searxng_results: List[Dict[str, Any]],
+    ranking_response: dict[str, Any],
+    searxng_results: list[dict[str, Any]],
 ) -> None:
     """Print the re-ranked results with privacy scores."""
     ranked = ranking_response.get("ranked_urls", [])
@@ -149,14 +149,14 @@ def print_ranked_results(
     filtered = ranking_response.get("filtered_count", 0)
 
     # Build a lookup from URL -> SearXNG metadata for enrichment
-    searxng_lookup: Dict[str, Dict[str, Any]] = {}
+    searxng_lookup: dict[str, dict[str, Any]] = {}
     for r in searxng_results:
         searxng_lookup[r.get("url", "")] = r
 
     print("\n" + "=" * 80)
     print("🛡️  PRIVACY-RANKED Results (re-ranked by Intent Engine)")
     print("=" * 80)
-    print(f"   Query: \"{ranking_response.get('query', '')}\"")
+    print(f'   Query: "{ranking_response.get("query", "")}"')
     print(f"   Total URLs: {total} | Filtered out: {filtered} | Ranked: {len(ranked)}")
     print(f"   Processing time: {proc_time:.1f}ms")
 
