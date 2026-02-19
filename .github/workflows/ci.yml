@@ -14,15 +14,17 @@ env:
   IMAGE_NAME: anony45/intent-engine-api
 
 jobs:
-  # ============================================================================
-  # Job 1: Code Quality - Lint & Format
-  # ============================================================================
+
+# ============================================================================
+# Job 1: Code Quality - Lint & Format
+# ============================================================================
   code-quality:
     name: Code Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,12 +47,11 @@ jobs:
         run: ruff check . --output-format=github
         continue-on-error: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/master' }}
 
-      - name: Auto-fix on push (main/master only)
+      - name: Auto-fix on push (master only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           ruff check . --fix --unsafe-fixes || true
           ruff format . || true
-          
           if [[ -n $(git status --porcelain) ]]; then
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
@@ -60,13 +61,14 @@ jobs:
             git push
           fi
 
-  # ============================================================================
-  # Job 2: Security Scanning
-  # ============================================================================
+# ============================================================================
+# Job 2: Security Scanning
+# ============================================================================
   security:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
@@ -76,14 +78,14 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
-      - name: Install safety
+      - name: Install security tools
         run: pip install safety bandit
 
-      - name: Check dependencies for vulnerabilities
+      - name: Dependency vulnerability scan
         run: safety check -r requirements.txt --output json || true
         continue-on-error: true
 
-      - name: Run bandit security scan
+      - name: Bandit security scan
         run: bandit -r . -f json -o bandit-report.json || true
         continue-on-error: true
 
@@ -92,17 +94,17 @@ jobs:
         if: always()
         with:
           name: security-reports
-          path: |
-            bandit-report.json
+          path: bandit-report.json
 
-  # ============================================================================
-  # Job 3: Unit Tests with Coverage
-  # ============================================================================
+# ============================================================================
+# Job 3: Unit Tests with Coverage
+# ============================================================================
   test:
     name: Tests & Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [code-quality]
+
     services:
       postgres:
         image: postgres:15-alpine
@@ -117,6 +119,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+
       redis:
         image: valkey/valkey:8-alpine
         options: >-
@@ -186,14 +189,15 @@ jobs:
             coverage.xml
             htmlcov/
 
-  # ============================================================================
-  # Job 4: Integration Tests (Docker)
-  # ============================================================================
+# ============================================================================
+# Job 4: Integration Tests (Docker)
+# ============================================================================
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [test]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -225,13 +229,20 @@ jobs:
             sleep 10
           done
           echo "API failed to start"
+          docker compose logs
           exit 1
+
+      - name: Initialize database
+        run: |
+          docker compose exec -T api python init_db_direct.py
+          docker compose exec -T api python seed_sample_data.py
+          sleep 5
 
       - name: Run integration tests
         run: |
           pip install requests pytest
-          pytest tests/comprehensive_test.py
-          pytest tests/api_integration_test.py
+          pytest tests/comprehensive_test.py -v
+          pytest tests/api_integration_test.py -v
           python test_complete_workflow.py || true
 
       - name: Show logs on failure
@@ -242,23 +253,23 @@ jobs:
         if: always()
         run: docker compose down -v
 
-  # ============================================================================
-  # Job 5: Build & Push Docker Image (on tags or main)
-  # ============================================================================
+# ============================================================================
+# Job 5: Build & Push Docker Image
+# ============================================================================
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: [integration-test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+
     permissions:
       contents: read
       packages: write
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -266,122 +277,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=sha-
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      - name: Generate SBOM
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-          format: spdx-json
-          output-file: sbom.spdx.json
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.spdx.json
-
-  # ============================================================================
-  # Job 6: Create GitHub Release (on tags)
-  # ============================================================================
-  release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [build-and-push]
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Generate changelog
-        id: changelog
-        uses: mikepenz/release-changelog-builder-action@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          configuration: |
-            {
-              "categories": [
-                {
-                  "title": "## 🚀 Features",
-                  "labels": ["feature", "enhancement"]
-                },
-                {
-                  "title": "## 🐛 Bug Fixes",
-                  "labels": ["fix", "bug"]
-                },
-                {
-                  "title": "## 📝 Documentation",
-                  "labels": ["docs", "documentation"]
-                },
-                {
-                  "title": "## 🔒 Security",
-                  "labels": ["security"]
-                },
-                {
-                  "title": "## 🧪 Tests",
-                  "labels": ["test", "testing"]
-                }
-              ]
-            }
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          body: |
-            ${{ steps.changelog.outputs.changelog }}
-            
-            ## 🐳 Docker Image
-            - `docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}`
-            - `docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest`
-            
-            ## 📦 Installation
-            ```bash
-            docker compose up -d
-            ```
-          draft: false
-          prerelease: false
-          files: |
-            sbom.spdx.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # ============================================================================
-  # Job 7: Notify (on failure)
-  # ============================================================================
+# ============================================================================
+# Job 6: Notify on Failure
+# ============================================================================
   notify:
     name: Notify on Failure
     runs-on: ubuntu-latest
-    needs: [code-quality, security, test, integration-test, build-and-push, release]
+    needs: [code-quality, security, test, integration-test, build-and-push]
     if: failure()
+
     steps:
-      - name: Send failure notification
+      - name: Print failure context
         run: |
           echo "Workflow failed: ${{ github.workflow }}"
           echo "Repository: ${{ github.repository }}"
           echo "Branch: ${{ github.ref }}"
           echo "Commit: ${{ github.sha }}"
-          # Add Slack/Discord/Email notification here if needed
