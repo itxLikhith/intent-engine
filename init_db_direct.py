@@ -3,9 +3,12 @@
 
 import os
 
-os.environ["DATABASE_URL"] = (
-    "postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine"
-)
+if not os.getenv("DATABASE_URL"):
+    host = os.getenv("POSTGRES_HOST", "postgres")
+    user = os.getenv("POSTGRES_USER", "intent_user")
+    password = os.getenv("POSTGRES_PASSWORD", "intent_secure_password_change_in_prod")
+    db = os.getenv("POSTGRES_DB", "intent_engine")
+    os.environ["DATABASE_URL"] = f"postgresql://{user}:{password}@{host}:5432/{db}"
 
 from database import Base, engine
 
