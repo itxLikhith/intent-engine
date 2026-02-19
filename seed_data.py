@@ -462,7 +462,7 @@ def seed_creative_assets(db: Session, ads: list[Ad]) -> list[CreativeAsset]:
                     "ad_id": ad.id,
                     "asset_type": "image",
                     "asset_url": f"/assets/banners/ad_{ad.id}_300x250.jpg",
-                    "dimensions": {"width": 300, "height": 250},
+                    "payload": {"width": 300, "height": 250},
                 }
             )
             assets_data.append(
@@ -470,7 +470,7 @@ def seed_creative_assets(db: Session, ads: list[Ad]) -> list[CreativeAsset]:
                     "ad_id": ad.id,
                     "asset_type": "image",
                     "asset_url": f"/assets/banners/ad_{ad.id}_728x90.jpg",
-                    "dimensions": {"width": 728, "height": 90},
+                    "payload": {"width": 728, "height": 90},
                 }
             )
         elif ad.creative_format == "video":
@@ -479,7 +479,7 @@ def seed_creative_assets(db: Session, ads: list[Ad]) -> list[CreativeAsset]:
                     "ad_id": ad.id,
                     "asset_type": "video",
                     "asset_url": f"/assets/videos/ad_{ad.id}_30s.mp4",
-                    "dimensions": {"width": 1920, "height": 1080, "duration": 30},
+                    "payload": {"width": 1920, "height": 1080, "duration": 30},
                 }
             )
         elif ad.creative_format == "native":
@@ -488,7 +488,7 @@ def seed_creative_assets(db: Session, ads: list[Ad]) -> list[CreativeAsset]:
                     "ad_id": ad.id,
                     "asset_type": "html",
                     "asset_url": f"/assets/native/ad_{ad.id}.html",
-                    "dimensions": {"responsive": True},
+                    "payload": {"responsive": True},
                 }
             )
 
@@ -498,7 +498,7 @@ def seed_creative_assets(db: Session, ads: list[Ad]) -> list[CreativeAsset]:
             ad_id=data["ad_id"],
             asset_type=data["asset_type"],
             asset_url=data["asset_url"],
-            dimensions=data["dimensions"],
+            payload=data["payload"],
             checksum=f"checksum_{data['ad_id']}_{data['asset_type']}",
         )
         db.add(asset)

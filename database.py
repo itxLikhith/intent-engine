@@ -246,6 +246,8 @@ class AdMetric(Base):
     cpc = Column(Float)  # NEW: Cost per click
     roas = Column(Float)  # NEW: Return on ad spend
     engagement_rate = Column(Float)  # NEW: Interaction rate
+    spend = Column(Float, default=0.0)
+    revenue = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False, index=True)  # 30 days from creation
 

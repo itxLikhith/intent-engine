@@ -86,7 +86,7 @@ def init_sample_data():
             ad_id=ad.id,
             asset_type="image",
             asset_url="https://example.com/assets/vpn-banner-300x250.png",
-            dimensions={"width": 300, "height": 250},
+            payload={"width": 300, "height": 250},
             checksum="a1b2c3d4e5f6",
         )
         db.add(creative)

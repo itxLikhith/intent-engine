@@ -1380,7 +1380,7 @@ async def upload_creative_asset(creative: CreativeAssetCreate, db: Session = Dep
         ad_id=creative.ad_id,
         asset_type=creative.asset_type,
         asset_url=creative.asset_url,
-        dimensions=creative.dimensions,
+        payload=creative.payload,
         checksum=creative.checksum,
     )
     db.add(db_creative)
@@ -1452,13 +1452,13 @@ async def get_campaign_performance(
         db.query(
             DbCampaign.id.label("campaign_id"),
             DbCampaign.name.label("campaign_name"),
-            func.sum(DbAdMetric.impression_count).label("impressions"),
-            func.sum(DbAdMetric.click_count).label("clicks"),
-            func.sum(DbAdMetric.conversion_count).label("conversions"),
-            func.avg(DbAdMetric.ctr).label("ctr"),
-            func.avg(DbAdMetric.cpc).label("cpc"),
-            func.sum(DbAdMetric.impression_count * DbAd.bid_amount).label("cost"),
-            func.avg(DbAdMetric.roas).label("roas"),
+            func.coalesce(func.sum(DbAdMetric.impression_count), 0).label("impressions"),
+            func.coalesce(func.sum(DbAdMetric.click_count), 0).label("clicks"),
+            func.coalesce(func.sum(DbAdMetric.conversion_count), 0).label("conversions"),
+            func.coalesce(func.avg(DbAdMetric.ctr), 0.0).label("ctr"),
+            func.coalesce(func.avg(DbAdMetric.cpc), 0.0).label("cpc"),
+            func.coalesce(func.sum(DbAdMetric.impression_count * DbAd.bid_amount), 0.0).label("cost"),
+            func.coalesce(func.avg(DbAdMetric.roas), 0.0).label("roas"),
         )
         .select_from(DbCampaign)
         .join(DbAdGroup, DbCampaign.id == DbAdGroup.campaign_id)
@@ -1483,13 +1483,13 @@ async def get_campaign_performance(
             CampaignPerformanceReport(
                 campaign_id=result.campaign_id,
                 campaign_name=result.campaign_name,
-                impressions=result.impressions or 0,
-                clicks=result.clicks or 0,
-                conversions=result.conversions or 0,
-                ctr=result.ctr or 0.0,
-                cpc=result.cpc or 0.0,
-                cost=result.cost or 0.0,
-                roas=result.roas or 0.0,
+                impressions=result.impressions,
+                clicks=result.clicks,
+                conversions=result.conversions,
+                ctr=result.ctr,
+                cpc=result.cpc,
+                cost=result.cost,
+                roas=result.roas,
             )
         )
 
