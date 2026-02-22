@@ -204,36 +204,69 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # FIX 1: Add load: true so the image is available to the Docker daemon
       - name: Build test image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
+          load: true
           tags: intent-engine-test:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # FIX 2: Use --wait so compose blocks until every service is healthy,
+      #         not just "started". Remove the brittle sleep 60.
       - name: Start services
         run: |
-          docker compose -f docker-compose.yml up -d
-          sleep 60
+          docker compose -f docker-compose.yml up -d --wait --wait-timeout 120
+          echo "All services report healthy."
 
+      # FIX 3: Verify every container is still running + API responds,
+      #         with retries and early exit on a stopped container.
       - name: Wait for API to be ready
         run: |
           for i in {1..30}; do
-            if curl -s http://localhost:8000/ | grep -q "healthy"; then
-              echo "API is ready!"
-              exit 0
+            # Abort immediately if the container exited
+            STATUS=$(docker compose ps api --format '{{.State}}' 2>/dev/null || echo "missing")
+            if [[ "$STATUS" == "exited" || "$STATUS" == "dead" || "$STATUS" == "missing" ]]; then
+              echo "API container is not running (state: $STATUS)"
+              docker compose logs api --tail=100
+              exit 1
             fi
-            echo "Waiting for API... ($i/30)"
+
+            if curl -sf http://localhost:8000/ | grep -q "healthy"; then
+              echo "API is ready!"
+              # Wait a few extra seconds to confirm it stays up
+              sleep 5
+              STATUS=$(docker compose ps api --format '{{.State}}' 2>/dev/null || echo "missing")
+              if [[ "$STATUS" == "running" ]]; then
+                echo "API confirmed stable."
+                exit 0
+              fi
+            fi
+            echo "Waiting for API... ($i/30)  container state=$STATUS"
             sleep 10
           done
-          echo "API failed to start"
+          echo "API failed to become ready"
+          docker compose ps
           docker compose logs
           exit 1
 
+      # FIX 4: Check container status right before exec;
+      #         dump logs on failure for easier debugging.
       - name: Initialize database
         run: |
+          echo "=== Container status before init ==="
+          docker compose ps
+
+          # Fail fast if the api container is not running
+          if ! docker compose ps api --format '{{.State}}' | grep -q "running"; then
+            echo "ERROR: API container is not running!"
+            docker compose logs api --tail=200
+            exit 1
+          fi
+
           docker compose exec -T api python init_db_direct.py
           docker compose exec -T api python seed_sample_data.py
           sleep 5
@@ -247,7 +280,12 @@ jobs:
 
       - name: Show logs on failure
         if: failure()
-        run: docker compose logs
+        run: |
+          echo "=== Container status ==="
+          docker compose ps -a
+          echo ""
+          echo "=== All service logs ==="
+          docker compose logs --tail=200
 
       - name: Cleanup
         if: always()
