@@ -3,6 +3,7 @@
 
 import os
 import sys
+
 from sqlalchemy import text
 
 # ---------------------------------------------------------
@@ -13,7 +14,7 @@ user = os.getenv("POSTGRES_USER", "intent_user")
 password = os.getenv("POSTGRES_PASSWORD", "intent_secure_password_change_in_prod")
 db = os.getenv("POSTGRES_DB", "intent_engine")
 host = "postgres"  # Direct container name
-port = "5432"      # Direct port
+port = "5432"  # Direct port
 
 os.environ["DATABASE_URL"] = f"postgresql://{user}:{password}@{host}:{port}/{db}"
 
@@ -22,12 +23,12 @@ os.environ["DATABASE_URL"] = f"postgresql://{user}:{password}@{host}:{port}/{db}
 # ---------------------------------------------------------
 try:
     from database import Base, engine
-    
+
     # Import models explicitly so Base knows what to create
     try:
         import models
     except ImportError:
-        pass 
+        pass
 
     print(f"Connecting to: {engine.url}")
 
@@ -42,7 +43,7 @@ try:
 
     print("2. Creating tables from Python models...")
     Base.metadata.create_all(bind=engine)
-    
+
     print("✅ Database initialized successfully!")
 
 except Exception as e:
