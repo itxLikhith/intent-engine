@@ -192,6 +192,9 @@ jobs:
 # ============================================================================
 # Job 4: Integration Tests (Docker)
 # ============================================================================
+# ============================================================================
+# Job 4: Integration Tests (Docker)
+# ============================================================================
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
@@ -204,7 +207,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # FIX 1: Add load: true so the image is available to the Docker daemon
+      # FIX 1: load into daemon so `docker compose` can use the cached layers
       - name: Build test image
         uses: docker/build-push-action@v5
         with:
@@ -215,31 +218,54 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # FIX 2: Use --wait so compose blocks until every service is healthy,
-      #         not just "started". Remove the brittle sleep 60.
+      # FIX 2: Ensure required config files exist so pgbouncer doesn't crash
+      - name: Create required config files
+        run: |
+          mkdir -p pgbouncer searxng data
+
+          # pgbouncer config
+          cat > pgbouncer/pgbouncer.ini << 'EOF'
+          [databases]
+          intent_engine = host=postgres port=5432 dbname=intent_engine
+
+          [pgbouncer]
+          listen_addr = 0.0.0.0
+          listen_port = 6543
+          auth_type = md5
+          auth_file = /etc/pgbouncer/userlist.txt
+          pool_mode = transaction
+          max_client_conn = 100
+          default_pool_size = 20
+          min_pool_size = 5
+          reserve_pool_size = 5
+          EOF
+
+          cat > pgbouncer/userlist.txt << 'EOF'
+          "intent_user" "intent_secure_password_change_in_prod"
+          EOF
+
+      # FIX 3: --wait blocks until healthchecks pass; no blind sleep
+      #         Default profile only (no --profile monitoring → skips Prometheus/Grafana)
       - name: Start services
         run: |
-          docker compose -f docker-compose.yml up -d --wait --wait-timeout 120
+          docker compose -f docker-compose.yml up -d --wait --wait-timeout 180
           echo "All services report healthy."
 
-      # FIX 3: Verify every container is still running + API responds,
-      #         with retries and early exit on a stopped container.
+      # FIX 4: Correct service name → intent-engine-api (not "api")
       - name: Wait for API to be ready
         run: |
           for i in {1..30}; do
-            # Abort immediately if the container exited
-            STATUS=$(docker compose ps api --format '{{.State}}' 2>/dev/null || echo "missing")
+            STATUS=$(docker compose ps intent-engine-api --format '{{.State}}' 2>/dev/null || echo "missing")
             if [[ "$STATUS" == "exited" || "$STATUS" == "dead" || "$STATUS" == "missing" ]]; then
               echo "API container is not running (state: $STATUS)"
-              docker compose logs api --tail=100
+              docker compose logs intent-engine-api --tail=100
               exit 1
             fi
 
             if curl -sf http://localhost:8000/ | grep -q "healthy"; then
               echo "API is ready!"
-              # Wait a few extra seconds to confirm it stays up
               sleep 5
-              STATUS=$(docker compose ps api --format '{{.State}}' 2>/dev/null || echo "missing")
+              STATUS=$(docker compose ps intent-engine-api --format '{{.State}}' 2>/dev/null || echo "missing")
               if [[ "$STATUS" == "running" ]]; then
                 echo "API confirmed stable."
                 exit 0
@@ -249,26 +275,24 @@ jobs:
             sleep 10
           done
           echo "API failed to become ready"
-          docker compose ps
+          docker compose ps -a
           docker compose logs
           exit 1
 
-      # FIX 4: Check container status right before exec;
-      #         dump logs on failure for easier debugging.
+      # FIX 5: Correct service name → intent-engine-api
       - name: Initialize database
         run: |
           echo "=== Container status before init ==="
-          docker compose ps
+          docker compose ps -a
 
-          # Fail fast if the api container is not running
-          if ! docker compose ps api --format '{{.State}}' | grep -q "running"; then
+          if ! docker compose ps intent-engine-api --format '{{.State}}' | grep -q "running"; then
             echo "ERROR: API container is not running!"
-            docker compose logs api --tail=200
+            docker compose logs intent-engine-api --tail=200
             exit 1
           fi
 
-          docker compose exec -T api python init_db_direct.py
-          docker compose exec -T api python seed_sample_data.py
+          docker compose exec -T intent-engine-api python init_db_direct.py
+          docker compose exec -T intent-engine-api python seed_sample_data.py
           sleep 5
 
       - name: Run integration tests
@@ -290,8 +314,7 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose down -v
-
-# ============================================================================
+ ============================================================================
 # Job 5: Build & Push Docker Image
 # ============================================================================
   build-and-push:
