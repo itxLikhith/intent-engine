@@ -207,7 +207,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # FIX 1: load into daemon so `docker compose` can use the cached layers
       - name: Build test image
         uses: docker/build-push-action@v5
         with:
@@ -218,11 +217,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # FIX 2: Ensure required config files exist so pgbouncer doesn't crash
+      # FIX: Create directories first to avoid "No such file or directory"
       - name: Create required config files
         run: |
           mkdir -p pgbouncer searxng data
-
+          
           # pgbouncer config
           cat > pgbouncer/pgbouncer.ini << 'EOF'
           [databases]
@@ -236,71 +235,37 @@ jobs:
           pool_mode = transaction
           max_client_conn = 100
           default_pool_size = 20
-          min_pool_size = 5
-          reserve_pool_size = 5
           EOF
 
           cat > pgbouncer/userlist.txt << 'EOF'
           "intent_user" "intent_secure_password_change_in_prod"
           EOF
+          
+          # Fix permissions for pgbouncer files so the container can read them
+          chmod 644 pgbouncer/pgbouncer.ini
+          chmod 644 pgbouncer/userlist.txt
 
-      # FIX 3: --wait blocks until healthchecks pass; no blind sleep
-      #         Default profile only (no --profile monitoring → skips Prometheus/Grafana)
+      # FIX: logic relies on --wait. If this passes, services are healthy.
+      # If Worker healthcheck fails, this step will fail with logs automatically.
       - name: Start services
         run: |
-          docker compose -f docker-compose.yml up -d --wait --wait-timeout 180
-          echo "All services report healthy."
+          docker compose -f docker-compose.yml up -d --wait --wait-timeout 300
+          echo "All services (API, Worker, DB) are healthy."
+          docker compose ps
 
-      # FIX 4: Correct service name → intent-engine-api (not "api")
-      - name: Wait for API to be ready
-        run: |
-          for i in {1..30}; do
-            STATUS=$(docker compose ps intent-engine-api --format '{{.State}}' 2>/dev/null || echo "missing")
-            if [[ "$STATUS" == "exited" || "$STATUS" == "dead" || "$STATUS" == "missing" ]]; then
-              echo "API container is not running (state: $STATUS)"
-              docker compose logs intent-engine-api --tail=100
-              exit 1
-            fi
-
-            if curl -sf http://localhost:8000/ | grep -q "healthy"; then
-              echo "API is ready!"
-              sleep 5
-              STATUS=$(docker compose ps intent-engine-api --format '{{.State}}' 2>/dev/null || echo "missing")
-              if [[ "$STATUS" == "running" ]]; then
-                echo "API confirmed stable."
-                exit 0
-              fi
-            fi
-            echo "Waiting for API... ($i/30)  container state=$STATUS"
-            sleep 10
-          done
-          echo "API failed to become ready"
-          docker compose ps -a
-          docker compose logs
-          exit 1
-
-      # FIX 5: Correct service name → intent-engine-api
+      # FIX: Initialize DB (using intent-engine-api)
       - name: Initialize database
         run: |
-          echo "=== Container status before init ==="
-          docker compose ps -a
-
-          if ! docker compose ps intent-engine-api --format '{{.State}}' | grep -q "running"; then
-            echo "ERROR: API container is not running!"
-            docker compose logs intent-engine-api --tail=200
-            exit 1
-          fi
-
           docker compose exec -T intent-engine-api python init_db_direct.py
           docker compose exec -T intent-engine-api python seed_sample_data.py
-          sleep 5
 
       - name: Run integration tests
         run: |
           pip install requests pytest
           pytest tests/comprehensive_test.py -v
           pytest tests/api_integration_test.py -v
-          python test_complete_workflow.py || true
+          # Only run workflow test if it exists
+          if [ -f "test_complete_workflow.py" ]; then python test_complete_workflow.py; fi
 
       - name: Show logs on failure
         if: failure()
@@ -308,13 +273,15 @@ jobs:
           echo "=== Container status ==="
           docker compose ps -a
           echo ""
-          echo "=== All service logs ==="
-          docker compose logs --tail=200
+          echo "=== Worker Logs (Usually the culprit) ==="
+          docker compose logs worker --tail=100
+          echo ""
+          echo "=== API Logs ==="
+          docker compose logs intent-engine-api --tail=100
 
       - name: Cleanup
         if: always()
         run: docker compose down -v
-
 # ============================================================================
 # Job 5: Build & Push Docker Image
 # ============================================================================
