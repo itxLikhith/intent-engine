@@ -106,8 +106,13 @@ services:
       - redis
       - pgbouncer
     restart: unless-stopped
+    # ── CHANGED: real healthcheck instead of disable: true ──
     healthcheck:
-      disable: true
+      test: ["CMD-SHELL", "pgrep -f 'arq' > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
   searxng:
     image: docker.io/searxng/searxng:latest
