@@ -3,45 +3,46 @@
 
 import os
 import sys
+from sqlalchemy import text
 
 # ---------------------------------------------------------
-# CRITICAL FIX: Override connection to bypass PgBouncer
+# 1. Force Direct Connection (Bypass PgBouncer)
 # ---------------------------------------------------------
-# We must connect directly to 'postgres:5432' because PgBouncer (6543)
-# in transaction mode causes issues with DDL (Drop/Create) sequences.
-print("Configuring direct database connection for initialization...")
-
-# Extract credentials or use defaults matching docker-compose
+print("Configuring direct database connection...")
 user = os.getenv("POSTGRES_USER", "intent_user")
 password = os.getenv("POSTGRES_PASSWORD", "intent_secure_password_change_in_prod")
 db = os.getenv("POSTGRES_DB", "intent_engine")
-host = "postgres"  # The actual service name, NOT pgbouncer
-port = "5432"  # The direct port, NOT 6543
+host = "postgres"  # Direct container name
+port = "5432"      # Direct port
 
-# Force the environment variable BEFORE importing 'database'
 os.environ["DATABASE_URL"] = f"postgresql://{user}:{password}@{host}:{port}/{db}"
 
 # ---------------------------------------------------------
-
+# 2. Perform Operations
+# ---------------------------------------------------------
 try:
-    # Now import Base and engine. They will see the new DATABASE_URL
     from database import Base, engine
-
-    # Import models explicitly to ensure they are registered with Base
-    # (Adjust this import based on your project structure, e.g. 'from app import models')
+    
+    # Import models explicitly so Base knows what to create
     try:
         import models
     except ImportError:
-        pass
+        pass 
 
     print(f"Connecting to: {engine.url}")
 
-    print("1. Dropping all existing tables...")
-    Base.metadata.drop_all(bind=engine)
+    # FORCE CLEAN: Drop the entire schema instead of individual tables.
+    # This handles cases where migrations created tables that SQLAlchemy doesn't know about.
+    print("1. Wiping database schema (Nuclear Option)...")
+    with engine.connect() as conn:
+        conn.execute(text("DROP SCHEMA public CASCADE;"))
+        conn.execute(text("CREATE SCHEMA public;"))
+        conn.commit()
+        print("   Schema wiped successfully.")
 
-    print("2. Creating all tables...")
+    print("2. Creating tables from Python models...")
     Base.metadata.create_all(bind=engine)
-
+    
     print("✅ Database initialized successfully!")
 
 except Exception as e:
