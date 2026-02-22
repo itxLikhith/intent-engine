@@ -4,7 +4,7 @@
 import os
 import sys
 
-# Ensure we use the direct Postgres port (5432) for DDL operations, 
+# Ensure we use the direct Postgres port (5432) for DDL operations,
 # not PgBouncer (6543) which doesn't support "PREPARE" statements well in some configs
 if not os.getenv("DATABASE_URL"):
     host = os.getenv("POSTGRES_HOST", "postgres")
@@ -18,7 +18,7 @@ from database import Base, engine
 # IMPORTANT: Import models here so SQLAlchemy knows they exist before creating tables.
 # Adjust 'models' to match your actual file name (e.g., 'app.models' or just 'models')
 try:
-    import models 
+    import models
 except ImportError:
     # If models are defined inside database.py or imported there, this passes safely
     pass
@@ -35,7 +35,7 @@ try:
     # This fixes the "UndefinedTable" error by creating tables exactly as defined in your code.
     print("Creating tables from SQLAlchemy models...")
     Base.metadata.create_all(bind=engine)
-    
+
     print("Tables initialized successfully!")
 
 except Exception as e:
