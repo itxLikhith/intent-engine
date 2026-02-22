@@ -14,6 +14,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Don't restart a one-shot migration container
+    restart: "no"
 
   intent-engine-api:
     build:
@@ -61,7 +63,6 @@ services:
     networks:
       - intent-network
       - searxng
-    # Full engine requires more memory/resources
     deploy:
       resources:
         limits:
@@ -72,17 +73,17 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 60s          # ← increased; the app needs time to boot
     depends_on:
       migrations:
         condition: service_completed_successfully
       postgres:
         condition: service_healthy
       pgbouncer:
-        condition: service_started
+        condition: service_healthy  # ← changed from service_started
       redis:
-        condition: service_started
+        condition: service_healthy  # ← changed from service_started
       searxng:
         condition: service_started
 
@@ -133,9 +134,16 @@ services:
     command: valkey-server --save 30 1 --loglevel warning
     restart: unless-stopped
     networks:
+      - intent-network                     # ← ADDED: was only on searxng
       - searxng
     volumes:
       - valkey-data:/data
+    # ── ADDED: healthcheck so dependents can use service_healthy ──
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:15-alpine
@@ -167,13 +175,22 @@ services:
     networks:
       - intent-network
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy         # ← wait for postgres to be healthy
     restart: unless-stopped
+    # ── ADDED: healthcheck so the API can use service_healthy ──
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 6543 -U intent_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # ── Monitoring services: optional via profile ──
   prometheus:
     image: prom/prometheus:v2.48.0
     container_name: intent-prometheus
     restart: unless-stopped
+    profiles: ["monitoring"]               # ← only starts with --profile monitoring
     ports:
       - "9090:9090"
     volumes:
@@ -198,6 +215,7 @@ services:
     image: grafana/grafana:10.2.0
     container_name: intent-grafana
     restart: unless-stopped
+    profiles: ["monitoring"]               # ← only starts with --profile monitoring
     ports:
       - "3000:3000"
     environment:
