@@ -256,7 +256,6 @@ jobs:
       # FIX: Initialize DB (using intent-engine-api)
       - name: Initialize database
         run: |
-          docker compose exec -T intent-engine-api python init_db_direct.py
           docker compose exec -T intent-engine-api python seed_sample_data.py
 
       - name: Run integration tests
