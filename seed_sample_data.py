@@ -18,9 +18,11 @@ from database import (
     AdGroup,
     AdMetric,
     Advertiser,
+    Base,
     Campaign,
     CreativeAsset,
     db_manager,
+    engine,
 )
 
 
@@ -29,6 +31,10 @@ def seed_data():
     print("=" * 60)
     print("Intent Engine - Seeding Sample Data")
     print("=" * 60)
+
+    # Ensure all ORM-defined tables exist before writing sample rows.
+    # This keeps seeding resilient when migrations were skipped or partially applied.
+    Base.metadata.create_all(bind=engine, checkfirst=True)
 
     db = next(db_manager.get_db())
 
