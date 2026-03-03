@@ -8,6 +8,9 @@ Run this after the database is initialized.
 import os
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
+
+from sqlalchemy import inspect
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,12 +21,36 @@ from database import (
     AdGroup,
     AdMetric,
     Advertiser,
-    Base,
     Campaign,
     CreativeAsset,
     db_manager,
     engine,
 )
+
+
+def _ensure_required_tables() -> None:
+    """Ensure required ad-system tables exist using idempotent SQL migrations."""
+    required_tables = ("creative_assets",)
+    inspector = inspect(engine)
+    missing = [table for table in required_tables if not inspector.has_table(table)]
+
+    if not missing:
+        return
+
+    migration_path = Path(__file__).resolve().parent / "migrations" / "001_create_missing_tables.sql"
+    if not migration_path.exists():
+        raise RuntimeError(f"Missing migration file: {migration_path}")
+
+    print(f"Detected missing tables ({', '.join(missing)}). Applying {migration_path.name}...")
+    sql_script = migration_path.read_text(encoding="utf-8")
+
+    raw_conn = engine.raw_connection()
+    try:
+        cursor = raw_conn.cursor()
+        cursor.execute(sql_script)
+        raw_conn.commit()
+    finally:
+        raw_conn.close()
 
 
 def seed_data():
@@ -32,9 +59,7 @@ def seed_data():
     print("Intent Engine - Seeding Sample Data")
     print("=" * 60)
 
-    # Ensure all ORM-defined tables exist before writing sample rows.
-    # This keeps seeding resilient when migrations were skipped or partially applied.
-    Base.metadata.create_all(bind=engine, checkfirst=True)
+    _ensure_required_tables()
 
     db = next(db_manager.get_db())
 
