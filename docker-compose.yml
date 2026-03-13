@@ -3,12 +3,27 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["/app/scripts/run_migrations.sh"]
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL...' &&
+        until pg_isready -h postgres -U intent_user -d intent_engine; do
+          sleep 2
+        done &&
+        echo 'Running database initialization...' &&
+        python /app/init_db_standalone.py &&
+        echo 'Running SQL migrations...' &&
+        psql -h postgres -U intent_user -d intent_engine -f /app/migrations/001_create_missing_tables.sql || true &&
+        psql -h postgres -U intent_user -d intent_engine -f /app/migrations/002_fix_click_tracking.sql || true &&
+        psql -h postgres -U intent_user -d intent_engine -f /app/migrations/003_fix_conversion_fraud.sql || true &&
+        psql -h postgres -U intent_user -d intent_engine -f /app/migrations/004_fix_ab_tests.sql || true &&
+        echo 'Migrations complete!'
+      "
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=intent_user
       - POSTGRES_PASSWORD=intent_secure_password_change_in_prod
       - POSTGRES_DB=intent_engine
+      - PGPASSWORD=intent_secure_password_change_in_prod
     networks:
       - intent-network
     depends_on:
@@ -25,8 +40,8 @@ services:
       - "8000:8000"
     environment:
       # Database configuration
-      - DATABASE_URL=postgresql://intent_user:intent_secure_password_change_in_prod@pgbouncer:6543/intent_engine
-      - PGBOUNCER_ENABLED=true
+      - DATABASE_URL=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine
+      - PGBOUNCER_ENABLED=false
       - DATABASE_POOL_SIZE=10
       - DATABASE_MAX_OVERFLOW=20
       - DATABASE_POOL_TIMEOUT=30

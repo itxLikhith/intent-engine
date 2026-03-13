@@ -15,6 +15,7 @@ CREATE TABLE click_tracking (
     ip_hash VARCHAR(100),
     user_agent_hash TEXT,
     referring_url TEXT,
+    payload JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

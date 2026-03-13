@@ -12,6 +12,7 @@ CREATE TABLE conversion_tracking (
     value DECIMAL(12,4),
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(20) DEFAULT 'pending',
+    payload JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -31,8 +32,7 @@ CREATE TABLE fraud_detection (
     review_status VARCHAR(20) DEFAULT 'pending',
     fraud_score DECIMAL(5,4),
     is_fraudulent BOOLEAN DEFAULT FALSE,
-    metadata JSONB,
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    payload JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
