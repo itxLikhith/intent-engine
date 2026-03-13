@@ -1,6 +1,6 @@
 [project]
 name = "intent-engine"
-version = "0.2.2"
+version = "0.2.3"
 description = "Intent recognition and classification engine"
 requires-python = ">=3.11"
 
