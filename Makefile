@@ -1,7 +1,7 @@
 # Intent Engine - Development Makefile
 # Common development tasks simplified
 
-.PHONY: help install dev test lint format clean docker-build docker-run migrations
+.PHONY: help install dev test lint format clean docker-build docker-run migrations push quickpush fixpush dryrun
 
 # Default target
 help:
@@ -39,6 +39,12 @@ help:
 	@echo "Documentation:"
 	@echo "  make docs           - Build documentation"
 	@echo "  make docs-serve     - Serve documentation locally"
+	@echo ""
+	@echo "Git Automation:"
+	@echo "  make push           - Auto commit + check + push (revert on fail)"
+	@echo "  make quickpush      - Auto commit + push (skip checks)"
+	@echo "  make fixpush        - Auto-fix lint, then commit + push"
+	@echo "  make dryrun         - Show what autopush would do"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean          - Remove build artifacts"
@@ -142,6 +148,22 @@ docs:
 
 docs-serve:
 	mkdocs serve
+
+# ============================================================================
+# Git Automation
+# ============================================================================
+
+push:
+	python autopush.py
+
+quickpush:
+	python autopush.py --no-check
+
+fixpush:
+	python autopush.py --fix
+
+dryrun:
+	python autopush.py --dry-run
 
 # ============================================================================
 # Cleanup
