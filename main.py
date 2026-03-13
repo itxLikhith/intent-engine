@@ -10,6 +10,7 @@ import json
 import sys
 
 from config.model_cache import initialize_models
+
 from extraction.extractor import IntentExtractionRequest, extract_intent
 
 
