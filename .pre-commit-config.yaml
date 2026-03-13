@@ -1,7 +1,27 @@
 # Pre-commit configuration for Intent Engine
 # Install: pip install pre-commit && pre-commit install
+#
+# Commit message conventions (Conventional Commits):
+#   feat:     A new feature
+#   fix:      A bug fix
+#   docs:     Documentation only changes
+#   style:    Changes that do not affect the meaning (formatting, etc)
+#   refactor: A code change that neither fixes a bug nor adds a feature
+#   perf:     A code change that improves performance
+#   test:     Adding missing tests or correcting existing tests
+#   chore:    Changes to the build process, tooling, or auxiliary files
+#   ci:       Changes to CI configuration files and scripts
 
 repos:
+  # Commit message validation (only on commit-msg stage)
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+        always_run: true
+        verbose: true
+
   # Ruff - Fast Python linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.14
