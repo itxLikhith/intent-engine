@@ -130,12 +130,13 @@ jobs:
         if: steps.bump.outputs.new_version != ''
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ steps.bump.outputs.new_version }}
           name: Release ${{ steps.bump.outputs.new_version }}
           body: |
             ## Changes in this release
-            
+
             Auto-generated release for version ${{ steps.bump.outputs.new_version }}
-            
+
             ### Commits since last release:
             ${{ steps.commits.outputs.commits }}
           draft: false
