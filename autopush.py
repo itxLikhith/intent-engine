@@ -22,9 +22,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 _script_dir = os.path.dirname(os.path.abspath(__file__))
-_spec = importlib.util.spec_from_file_location(
-    "commit_gen", os.path.join(_script_dir, "commit-gen.py")
-)
+_spec = importlib.util.spec_from_file_location("commit_gen", os.path.join(_script_dir, "commit-gen.py"))
 _commit_gen = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_commit_gen)
 
@@ -37,9 +35,7 @@ get_diff_stats = _commit_gen.get_diff_stats
 def run_cmd(cmd, capture=True):
     """Run a command (list or string) and return (returncode, stdout, stderr)."""
     use_shell = isinstance(cmd, str)
-    result = subprocess.run(
-        cmd, shell=use_shell, capture_output=capture, text=True, encoding="utf-8", errors="replace"
-    )
+    result = subprocess.run(cmd, shell=use_shell, capture_output=capture, text=True, encoding="utf-8", errors="replace")
     return result.returncode, (result.stdout or "").strip(), (result.stderr or "").strip()
 
 
@@ -58,8 +54,7 @@ def has_staged_changes():
 def get_all_changed_files():
     """Get all changed files (staged + unstaged + untracked) via git status."""
     result = subprocess.run(
-        ["git", "status", "--porcelain"], capture_output=True, text=True,
-        encoding="utf-8", errors="replace"
+        ["git", "status", "--porcelain"], capture_output=True, text=True, encoding="utf-8", errors="replace"
     )
     raw = result.stdout.rstrip()
     if not raw:
