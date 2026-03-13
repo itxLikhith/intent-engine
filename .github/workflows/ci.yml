@@ -1,0 +1,334 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+  REGISTRY: docker.io
+  IMAGE_NAME: anony45/intent-engine-api
+
+jobs:
+
+# ============================================================================
+# Job 1: Code Quality - Lint & Format
+# ============================================================================
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Check formatting
+        run: ruff format --check .
+        continue-on-error: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/master' }}
+
+      - name: Lint
+        run: ruff check . --output-format=github
+        continue-on-error: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/master' }}
+
+      - name: Auto-fix on push (master only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          ruff check . --fix --unsafe-fixes || true
+          ruff format . || true
+          if [[ -n $(git status --porcelain) ]]; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add -A
+            git commit -m "style: auto-fix linting issues [skip ci]" || exit 0
+            git pull --rebase --no-verify || true
+            git push
+          fi
+
+# ============================================================================
+# Job 2: Security Scanning
+# ============================================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install security tools
+        run: pip install safety bandit
+
+      - name: Dependency vulnerability scan
+        run: safety check -r requirements.txt --output json || true
+        continue-on-error: true
+
+      - name: Bandit security scan
+        run: bandit -r . -f json -o bandit-report.json || true
+        continue-on-error: true
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: bandit-report.json
+
+# ============================================================================
+# Job 3: Unit Tests with Coverage
+# ============================================================================
+  test:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [code-quality]
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: valkey/valkey:8-alpine
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+        run: |
+          for migration in migrations/*.sql; do
+            if [ -f "$migration" ]; then
+              PGPASSWORD=test psql -h localhost -U test -d test_db -f "$migration"
+            fi
+          done
+
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        run: |
+          pytest \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --timeout=300 \
+            -v \
+            --ignore=tests/comprehensive_test.py \
+            --ignore=tests/api_integration_test.py \
+            --ignore=tests/test_advertising_api.py \
+            tests/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: false
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/
+
+# ============================================================================
+# Job 4: Integration Tests (Docker)
+# ============================================================================
+# ============================================================================
+# Job 4: Integration Tests (Docker)
+# ============================================================================
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: intent-engine-test:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # FIX: Create directories first to avoid "No such file or directory"
+      - name: Create required config files
+        run: |
+          mkdir -p pgbouncer searxng data
+          
+          # pgbouncer config
+          cat > pgbouncer/pgbouncer.ini << 'EOF'
+          [databases]
+          intent_engine = host=postgres port=5432 dbname=intent_engine
+
+          [pgbouncer]
+          listen_addr = 0.0.0.0
+          listen_port = 6543
+          auth_type = md5
+          auth_file = /etc/pgbouncer/userlist.txt
+          pool_mode = transaction
+          max_client_conn = 100
+          default_pool_size = 20
+          EOF
+
+          cat > pgbouncer/userlist.txt << 'EOF'
+          "intent_user" "intent_secure_password_change_in_prod"
+          EOF
+          
+          # Fix permissions for pgbouncer files so the container can read them
+          chmod 644 pgbouncer/pgbouncer.ini
+          chmod 644 pgbouncer/userlist.txt
+
+      # FIX: logic relies on --wait. If this passes, services are healthy.
+      # If Worker healthcheck fails, this step will fail with logs automatically.
+      - name: Start services
+        run: |
+          docker compose -f docker-compose.yml up -d --wait --wait-timeout 300
+          echo "All services (API, Worker, DB) are healthy."
+          docker compose ps
+
+      # FIX: Initialize DB using standalone script to avoid SQLAlchemy metadata caching issues
+      - name: Initialize database
+        run: |
+          docker compose exec -T intent-engine-api python init_db_standalone.py
+          docker compose exec -T intent-engine-api python seed_sample_data.py
+
+      - name: Run integration tests
+        run: |
+          pip install requests pytest
+          pytest tests/comprehensive_test.py -v
+          python tests/api_integration_test.py
+          # Only run workflow test if it exists
+          if [ -f "test_complete_workflow.py" ]; then python test_complete_workflow.py; fi
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          echo "=== Container status ==="
+          docker compose ps -a
+          echo ""
+          echo "=== Worker Logs (Usually the culprit) ==="
+          docker compose logs worker --tail=100
+          echo ""
+          echo "=== API Logs ==="
+          docker compose logs intent-engine-api --tail=100
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+# ============================================================================
+# Job 5: Build & Push Docker Image
+# ============================================================================
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [integration-test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+# ============================================================================
+# Job 6: Notify on Failure
+# ============================================================================
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [code-quality, security, test, integration-test, build-and-push]
+    if: failure()
+
+    steps:
+      - name: Print failure context
+        run: |
+          echo "Workflow failed: ${{ github.workflow }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"

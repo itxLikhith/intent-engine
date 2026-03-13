@@ -1,0 +1,70 @@
+# Pre-commit configuration for Intent Engine
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  # Ruff - Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.14
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # Check for merge conflicts
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-json
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: check-toml
+      - id: end-of-file-fixer
+        exclude: \.(sql|md)$
+      - id: trailing-whitespace
+        exclude: \.(sql|md)$
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+
+  # Security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: ['-r', '.', '-f', 'json', '-o', 'bandit-report.json']
+        exclude: tests/
+
+  # Check for common security issues in dependencies
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.3
+    hooks:
+      - id: python-safety-dependencies-check
+        files: requirements.txt
+
+  # SQL formatter (optional)
+  - repo: https://github.com/pre-commit/mirrors-sqlfluff
+    rev: v2.3.5
+    hooks:
+      - id: sqlfluff-lint
+        args: ['--dialect', 'postgres']
+        files: migrations/.*\.sql$
+
+# Skip certain files
+exclude: |
+  (?x)^(
+    .venv/|
+    venv/|
+    __pycache__/|
+    \.git/|
+    \.pytest_cache/|
+    htmlcov/|
+    .*\.egg-info/|
+    node_modules/|
+    data/|
+    grafana/dashboards/.*\.json$|
+    pgbouncer/.*\.ini$
+  )$

@@ -1,0 +1,188 @@
+Run docker compose exec -T intent-engine-api python seed_sample_data.py
+============================================================
+Intent Engine - Seeding Sample Data
+============================================================
+
+[1/6] Creating advertisers...
+  ✓ Created advertiser: TechGadgets Inc. (ID: 1)
+  ✓ Created advertiser: Privacy Solutions Ltd. (ID: 2)
+  ✓ Created advertiser: EcoFriendly Products (ID: 3)
+  ✓ Created advertiser: OpenSource Tools (ID: 4)
+
+[2/6] Creating campaigns...
+  ✓ Created campaign: Summer Laptop Sale 2026 (ID: 1)
+  ✓ Created campaign: Privacy-First VPN Campaign (ID: 2)
+  ✓ Created campaign: Sustainable Living Products (ID: 3)
+  ✓ Created campaign: Developer Tools Promotion (ID: 4)
+
+[3/6] Creating ad groups...
+  ✓ Created ad group: Programming Laptops (ID: 1)
+  ✓ Created ad group: Budget Laptops (ID: 2)
+  ✓ Created ad group: Privacy Conscious Users (ID: 3)
+  ✓ Created ad group: Eco Products (ID: 4)
+  ✓ Created ad group: Developer Tools (ID: 5)
+
+[4/6] Creating ads...
+  ✓ Created ad: Best Programming Laptops 2026 (ID: 1)
+  ✓ Created ad: Budget Laptops Under ₹30,000 (ID: 2)
+  ✓ Created ad: Secure VPN - No Logs Policy (ID: 3)
+  ✓ Created ad: Eco-Friendly Home Products (ID: 4)
+  ✓ Created ad: Open Source Dev Tools (ID: 5)
+
+[5/6] Creating creative assets...
+Error seeding data: (psycopg2.errors.UndefinedTable) relation "creative_assets" does not exist
+LINE 1: INSERT INTO creative_assets (ad_id, asset_type, asset_url, p...
+                    ^
+
+[SQL: INSERT INTO creative_assets (ad_id, asset_type, asset_url, payload, checksum) SELECT p0::INTEGER, p1::VARCHAR, p2::VARCHAR, p3::JSON, p4::VARCHAR FROM (VALUES (%(ad_id__0)s, %(asset_type__0)s, %(asset_url__0)s, %(payload__0)s, %(checksum__0)s, 0), (% ... 404 characters truncated ... BY sen_counter RETURNING creative_assets.id, creative_assets.created_at, creative_assets.id AS id__1]
+[parameters: {'payload__0': '{"width": 728, "height": 90}', 'asset_type__0': 'image', 'asset_url__0': 'https://techgadgets.com/assets/laptop-programming-banner.jpg', 'ad_id__0': 1, 'checksum__0': 'abc123def456', 'payload__1': '{"width": 300, "height": 250}', 'asset_type__1': 'image', 'asset_url__1': 'https://techgadgets.com/assets/budget-laptop-banner.jpg', 'ad_id__1': 2, 'checksum__1': 'def456ghi789', 'payload__2': '{"width": 640, "height": 480}', 'asset_type__2': 'video', 'asset_url__2': 'https://privacysolutions.io/assets/vpn-promo.mp4', 'ad_id__2': 3, 'checksum__2': 'ghi789jkl012', 'payload__3': '{"width": 728, "height": 90}', 'asset_type__3': 'image', 'asset_url__3': 'https://ecofriendly.shop/assets/eco-products.jpg', 'ad_id__3': 4, 'checksum__3': 'jkl012mno345', 'payload__4': '{"width": 970, "height": 250}', 'asset_type__4': 'image', 'asset_url__4': 'https://opensource.tools/assets/dev-tools-banner.png', 'ad_id__4': 5, 'checksum__4': 'mno345pqr678'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2112, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedTable: relation "creative_assets" does not exist
+LINE 1: INSERT INTO creative_assets (ad_id, asset_type, asset_url, p...
+                    ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/seed_sample_data.py", line 292, in seed_data
+    db.commit()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1969, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1256, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1231, in _prepare_impl
+    self.session.flush()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4312, in flush
+    self._flush(objects)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4447, in _flush
+    with util.safe_reraise():
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4408, in _flush
+    flush_context.execute()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 1136, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+           ^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 516, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1639, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_insertmany_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2120, in _exec_insertmany_context
+    self._handle_dbapi_exception(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2343, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2112, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedTable) relation "creative_assets" does not exist
+LINE 1: INSERT INTO creative_assets (ad_id, asset_type, asset_url, p...
+                    ^
+
+[SQL: INSERT INTO creative_assets (ad_id, asset_type, asset_url, payload, checksum) SELECT p0::INTEGER, p1::VARCHAR, p2::VARCHAR, p3::JSON, p4::VARCHAR FROM (VALUES (%(ad_id__0)s, %(asset_type__0)s, %(asset_url__0)s, %(payload__0)s, %(checksum__0)s, 0), (% ... 404 characters truncated ... BY sen_counter RETURNING creative_assets.id, creative_assets.created_at, creative_assets.id AS id__1]
+[parameters: {'payload__0': '{"width": 728, "height": 90}', 'asset_type__0': 'image', 'asset_url__0': 'https://techgadgets.com/assets/laptop-programming-banner.jpg', 'ad_id__0': 1, 'checksum__0': 'abc123def456', 'payload__1': '{"width": 300, "height": 250}', 'asset_type__1': 'image', 'asset_url__1': 'https://techgadgets.com/assets/budget-laptop-banner.jpg', 'ad_id__1': 2, 'checksum__1': 'def456ghi789', 'payload__2': '{"width": 640, "height": 480}', 'asset_type__2': 'video', 'asset_url__2': 'https://privacysolutions.io/assets/vpn-promo.mp4', 'ad_id__2': 3, 'checksum__2': 'ghi789jkl012', 'payload__3': '{"width": 728, "height": 90}', 'asset_type__3': 'image', 'asset_url__3': 'https://ecofriendly.shop/assets/eco-products.jpg', 'ad_id__3': 4, 'checksum__3': 'jkl012mno345', 'payload__4': '{"width": 970, "height": 250}', 'asset_type__4': 'image', 'asset_url__4': 'https://opensource.tools/assets/dev-tools-banner.png', 'ad_id__4': 5, 'checksum__4': 'mno345pqr678'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2112, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedTable: relation "creative_assets" does not exist
+LINE 1: INSERT INTO creative_assets (ad_id, asset_type, asset_url, p...
+                    ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/seed_sample_data.py", line 347, in <module>
+    seed_data()
+  File "/app/seed_sample_data.py", line 292, in seed_data
+    db.commit()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1969, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1256, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1231, in _prepare_impl
+    self.session.flush()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4312, in flush
+    self._flush(objects)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4447, in _flush
+    with util.safe_reraise():
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4408, in _flush
+    flush_context.execute()
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 1136, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+           ^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 516, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1639, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_insertmany_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2120, in _exec_insertmany_context
+    self._handle_dbapi_exception(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2343, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2112, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 922, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedTable) relation "creative_assets" does not exist
+LINE 1: INSERT INTO creative_assets (ad_id, asset_type, asset_url, p...
+                    ^
+
+[SQL: INSERT INTO creative_assets (ad_id, asset_type, asset_url, payload, checksum) SELECT p0::INTEGER, p1::VARCHAR, p2::VARCHAR, p3::JSON, p4::VARCHAR FROM (VALUES (%(ad_id__0)s, %(asset_type__0)s, %(asset_url__0)s, %(payload__0)s, %(checksum__0)s, 0), (% ... 404 characters truncated ... BY sen_counter RETURNING creative_assets.id, creative_assets.created_at, creative_assets.id AS id__1]
+[parameters: {'payload__0': '{"width": 728, "height": 90}', 'asset_type__0': 'image', 'asset_url__0': 'https://techgadgets.com/assets/laptop-programming-banner.jpg', 'ad_id__0': 1, 'checksum__0': 'abc123def456', 'payload__1': '{"width": 300, "height": 250}', 'asset_type__1': 'image', 'asset_url__1': 'https://techgadgets.com/assets/budget-laptop-banner.jpg', 'ad_id__1': 2, 'checksum__1': 'def456ghi789', 'payload__2': '{"width": 640, "height": 480}', 'asset_type__2': 'video', 'asset_url__2': 'https://privacysolutions.io/assets/vpn-promo.mp4', 'ad_id__2': 3, 'checksum__2': 'ghi789jkl012', 'payload__3': '{"width": 728, "height": 90}', 'asset_type__3': 'image', 'asset_url__3': 'https://ecofriendly.shop/assets/eco-products.jpg', 'ad_id__3': 4, 'checksum__3': 'jkl012mno345', 'payload__4': '{"width": 970, "height": 250}', 'asset_type__4': 'image', 'asset_url__4': 'https://opensource.tools/assets/dev-tools-banner.png', 'ad_id__4': 5, 'checksum__4': 'mno345pqr678'}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Error: Process completed with exit code 1.

@@ -1,0 +1,66 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*", "*Test"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "-ra",
+    "-q",
+]
+filterwarnings = [
+    # Ignore Pydantic v2 deprecation warnings (will be fixed in v3)
+    "ignore:Support for class-based.*config.*is deprecated:DeprecationWarning:pydantic",
+    # Ignore python-multipart pending deprecation from Starlette
+    "ignore:Please use.*import python_multipart.*:PendingDeprecationWarning:starlette",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [
+    "venv",
+    ".venv",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".mypy_cache",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort (import sorting)
+]
+fixable = ["ALL"]
+unfixable = []
+
+# Ignore naming conventions and code style suggestions
+ignore = [
+    "N",      # pep8-naming (too strict for existing codebase)
+    "B",      # flake8-bugbear (suggestions, not errors)
+    "C4",     # flake8-comprehensions (style suggestions)
+    "SIM",    # flake8-simplify (code simplification suggestions)
+    "UP",     # pyupgrade (version upgrade suggestions)
+    "YTT",    # flake8-2020 (version-specific suggestions)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore unused imports in __init__.py files
+"__init__.py" = ["F401"]
+# Ignore complex test code
+"tests/**" = ["E501", "B011"]
+"demos/**" = ["E501"]
+"load_testing/**" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

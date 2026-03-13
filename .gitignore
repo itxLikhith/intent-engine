@@ -1,0 +1,265 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.spec
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+.directory
+.Trashes
+*.nfs*
+
+# Logs
+*.log
+logs/
+*.out
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.*
+*.env
+
+# Coverage reports
+.coverage
+htmlcov/
+.coverage.*
+.cov.config
+.coverage.xml
+
+# Model caches and ML
+model_cache/
+*/cache/
+.huggingface/
+.cache/
+transformers/
+sentence_transformers/
+torch/
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.model
+*.onnx
+*.pb
+*.pbtxt
+*.joblib
+*.pickle
+*.pkl
+*.h5
+*.weights
+*.dat
+*.npy
+*.npz
+
+# Testing
+.pytest_cache/
+.pytest/
+.nox/
+.coverage.xml
+test_*.py
+*_test.py
+
+# Distribution / packaging
+.python-version
+.tox/
+*.cover
+.py-build/
+*.zip
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# flake8
+.flake8
+
+# Black
+.black
+
+# isort
+.isort.pkl
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Local configuration
+config/local_settings.py
+settings_local.py
+local_settings.py
+
+# Database (except migrations)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+!*.sql
+
+# Migrations (include SQL files, exclude run logs)
+migrations/*.log
+migrations/.lock
+
+# Docker
+.dockerignore
+*.dockerignore
+docker-compose.override.yml
+docker-compose.prod.yml
+docker-compose.stage.yml
+docker-compose.dev.yml
+Dockerfile.light
+
+# Documentation
+docs/_build/
+docs/build/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Secrets and credentials
+secrets/
+secret.key
+*.pem
+*.key
+*.crt
+*.cert
+*.pub
+id_rsa
+id_rsa.pub
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+
+# macOS
+.AppleDouble/
+.LSOverride
+.DocumentRevisions-V100/
+.Spotlight-V100/
+.TemporaryItems/
+.Trashes/
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.com.apple.FinderInfo
+.apdisk
+
+# Windows
+[C-c]ache/
+[C-c]onfig/
+[D-d]ata/
+[L-l]ogs/
+[T-t]emp/
+[N-n]ode_modules/
+[D-d]ist/
+[B-b]uild/
+
+# PyCharm
+*.iml
+*.iws
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.idea/
+!.idea/
+
+# Visual Studio Code
+.vscode/
+.history
+*.code-workspace
+
+# Test and Report Files (Generated)
+stress_test_results_*.json
+api_logs.txt
+*_SUMMARY.md
+*_STATUS.md
+*_QUICKSTART.md
+*_REPORT.md
+*.md.bak
+TESTING_RESULTS.md
+
+# Local scripts
+start.bat
+start.sh
+build_and_push.bat
+build_and_push.sh
+
+# Data directory (local development)
+data/
+
+# Grafana local data
+grafana/dashboards/*.json
+grafana/provisioning/dashboards/*.yml
+grafana/provisioning/datasources/*.yml
+
+# PgBouncer local config
+pgbouncer/pgbouncer.ini
+pgbouncer/userlist.txt
+
+# Monitoring (local only)
+monitoring/
+
+# Bridge (local only)
+bridge/
+
+# pgAdmin (local only)
+pgadmin/
+
+# Local development overrides
+docker-compose.override.yml
