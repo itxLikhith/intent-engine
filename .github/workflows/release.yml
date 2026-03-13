@@ -9,6 +9,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     
     permissions:
       contents: write
@@ -35,7 +36,15 @@ jobs:
 
       - name: Get tag name
         id: tag
-        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          if [ -z "$TAG_NAME" ]; then
+            echo "Error: No tag found in GITHUB_REF"
+            echo "GITHUB_REF: $GITHUB_REF"
+            exit 1
+          fi
+          echo "TAG=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Tag: $TAG_NAME"
 
       - name: Generate changelog
         id: changelog
