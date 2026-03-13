@@ -22,6 +22,9 @@ wheels/
 MANIFEST
 *.spec
 
+# Changelog (auto-generated)
+CHANGELOG.md
+
 # Virtual Environments
 venv/
 env/

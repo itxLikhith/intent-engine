@@ -1,0 +1,144 @@
+name: Auto Version Bump
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  auto-version:
+    name: Auto Version & Tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Commitizen
+        run: pip install commitizen
+      
+      - name: Get last tag
+        id: last_tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          echo "Last tag: $LAST_TAG"
+      
+      - name: Analyze commits since last tag
+        id: commits
+        run: |
+          LAST_TAG="${{ steps.last_tag.outputs.last_tag }}"
+          
+          if [ -z "$LAST_TAG" ]; then
+            echo "No tags found, checking all commits"
+            COMMITS=$(git log --pretty=format:"%s" --reverse)
+          else
+            echo "Checking commits since $LAST_TAG"
+            COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s" --reverse)
+          fi
+          
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Determine bump type
+          BUMP_TYPE="skip"
+          HAS_BREAKING=false
+          
+          while IFS= read -r commit; do
+            # Check for breaking changes
+            if echo "$commit" | grep -qE "(BREAKING CHANGE|^[a-z]+!:)"; then
+              HAS_BREAKING=true
+              BUMP_TYPE="major"
+              break
+            fi
+            
+            # Check for features (minor bump)
+            if echo "$commit" | grep -qE "^feat(\(.+\))?:|^feat:"; then
+              if [ "$BUMP_TYPE" != "major" ]; then
+                BUMP_TYPE="minor"
+              fi
+            fi
+            
+            # Check for fixes/perf (patch bump)
+            if echo "$commit" | grep -qE "^(fix|perf)(\(.+\))?:|^(fix|perf):"; then
+              if [ "$BUMP_TYPE" == "skip" ]; then
+                BUMP_TYPE="patch"
+              fi
+            fi
+          done <<< "$COMMITS"
+          
+          # Default to patch if no conventional commits found but there are changes
+          if [ "$BUMP_TYPE" == "skip" ] && [ -n "$COMMITS" ]; then
+            echo "No conventional commits detected, defaulting to patch"
+            BUMP_TYPE="patch"
+          fi
+          
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "Determined bump type: $BUMP_TYPE"
+      
+      - name: Skip if no version bump needed
+        if: steps.commits.outputs.bump_type == 'skip'
+        run: |
+          echo "No commits or no changes since last tag, skipping version bump"
+          exit 0
+      
+      - name: Configure git
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+      
+      - name: Bump version with Commitizen
+        id: bump
+        if: steps.commits.outputs.bump_type != 'skip'
+        run: |
+          BUMP_TYPE="${{ steps.commits.outputs.bump_type }}"
+          
+          # Run commitizen bump
+          cz bump --increment $BUMP_TYPE --yes
+          
+          # Get new version from pyproject.toml
+          NEW_VERSION=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Version bumped to: $NEW_VERSION"
+      
+      - name: Push version changes
+        if: steps.bump.outputs.new_version != ''
+        run: |
+          git add -A
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:$(git rev-parse --abbrev-ref HEAD)
+          git push --tags
+          echo "✓ Pushed version ${{ steps.bump.outputs.new_version }}"
+      
+      - name: Create GitHub Release
+        if: steps.bump.outputs.new_version != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.bump.outputs.new_version }}
+          body: |
+            ## Changes in this release
+            
+            Auto-generated release for version ${{ steps.bump.outputs.new_version }}
+            
+            ### Commits since last release:
+            ${{ steps.commits.outputs.commits }}
+          draft: false
+          prerelease: ${{ contains(steps.bump.outputs.new_version, 'alpha') || contains(steps.bump.outputs.new_version, 'beta') || contains(steps.bump.outputs.new_version, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

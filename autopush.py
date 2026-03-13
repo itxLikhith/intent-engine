@@ -2,12 +2,21 @@
 """
 autopush.py - Automate commit message generation, checks, and push.
 
+Workflow: stage -> check -> commit -> fetch & rebase -> push
+Handles CI linting commits (auto-fix [skip ci]) by rebasing on top of them.
+
 Usage:
-    python autopush.py                # Stage all, generate msg, check, commit, push
+    python autopush.py                # Stage all, generate msg, check, commit, rebase, push
     python autopush.py --no-check     # Skip lint/format checks
     python autopush.py --dry-run      # Show what would happen without doing it
     python autopush.py -m "message"   # Override auto-generated commit message
     python autopush.py --staged       # Only commit already-staged files
+
+Aliases (Makefile):
+    make p                            # Same as: python autopush.py
+    make q                            # Same as: python autopush.py --no-check
+    make f                            # Same as: python autopush.py --fix
+    make d                            # Same as: python autopush.py --dry-run
 """
 
 import argparse
@@ -148,6 +157,58 @@ def has_remote():
     return code == 0
 
 
+def sync_with_remote(branch):
+    """Fetch and rebase on top of remote changes (e.g. CI linting fixes).
+
+    Returns True if sync succeeded or was not needed, False on rebase conflict.
+    """
+    print("\nSyncing with remote...")
+
+    # Fetch latest from origin
+    code, _, err = run_cmd(["git", "fetch", "origin"])
+    if code != 0:
+        print(f"  [!] Fetch failed: {err}")
+        print("  Continuing anyway (push may fail if remote is ahead)")
+        return True
+
+    # Check if remote is ahead
+    code, counts, _ = run_cmd(f"git rev-list --left-right --count HEAD...origin/{branch}")
+    if code != 0:
+        print("  [!] Could not compare with remote, continuing...")
+        return True
+
+    parts = counts.split()
+    if len(parts) != 2:
+        return True
+
+    behind = int(parts[1])
+    if behind == 0:
+        print("  [+] Already up to date with remote")
+        return True
+
+    # Show what remote commits we need to rebase onto
+    print(f"  Remote is {behind} commit(s) ahead. Inspecting...")
+    _, log_out, _ = run_cmd(f"git log --oneline HEAD..origin/{branch}")
+    if log_out:
+        ci_lint_marker = "[skip ci]"
+        for line in log_out.splitlines():
+            is_ci = ci_lint_marker in line or "auto-fix linting" in line.lower()
+            tag = " (CI lint fix)" if is_ci else ""
+            print(f"    {line}{tag}")
+
+    # Pull with rebase
+    print(f"\n  Rebasing onto origin/{branch}...")
+    code, out, err = run_cmd(["git", "pull", "--rebase", "--no-verify", "origin", branch])
+    if code != 0:
+        print(f"  [X] Rebase failed: {err or out}")
+        print("  Aborting rebase...")
+        run_cmd(["git", "rebase", "--abort"])
+        return False
+
+    print("  [+] Rebase successful")
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Auto commit, check, and push")
     parser.add_argument("-m", "--message", help="Override auto-generated commit message")
@@ -233,14 +294,26 @@ def main():
 
     # 8. Dry run stops here
     if args.dry_run:
-        print("\n[dry-run] Would commit and push. No changes made.")
+        print("\n[dry-run] Would commit, rebase, and push. No changes made.")
         sys.exit(0)
 
     # 9. Commit
     if not commit(commit_msg):
         sys.exit(1)
 
-    # 10. Push (revert on failure)
+    # 10. Sync with remote (fetch + rebase over CI linting commits)
+    if has_remote():
+        if not sync_with_remote(branch):
+            print("\n[X] Rebase conflict. Reverting your commit (changes stay staged).")
+            revert_commit()
+            print("\nTo fix manually:")
+            print("   1. git pull --rebase origin " + branch)
+            print("   2. Resolve conflicts")
+            print("   3. git rebase --continue")
+            print("   4. Re-run: python autopush.py")
+            sys.exit(1)
+
+    # 11. Push
     if not has_remote():
         print(f"\nNo upstream set. Setting upstream to origin/{branch}...")
         code, _, err = run_cmd(["git", "push", "-u", "origin", branch], capture=False)
@@ -256,6 +329,7 @@ def main():
 
     print("\n" + "=" * 50)
     print("  All done! Committed and pushed.")
+    print("  (versioning handled automatically by CI)")
     print("=" * 50)
 
 
