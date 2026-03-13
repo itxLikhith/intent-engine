@@ -1,0 +1,28 @@
+# <type>(<scope>): <subject>
+# |<----  Using a Maximum Of 50 Characters  ---->|
+
+# Explain why this change is being made
+# |<----   Try To Limit Each Line to a Maximum Of 72 Characters   ---->|
+
+# --- COMMIT END ---
+# Types:
+#   feat:     A new feature
+#   fix:      A bug fix
+#   docs:     Documentation only changes
+#   style:    Changes that do not affect the meaning (white-space, formatting, etc)
+#   refactor: A code change that neither fixes a bug nor adds a feature
+#   perf:     A code change that improves performance
+#   test:     Adding missing tests or correcting existing tests
+#   chore:    Changes to the build process, tooling, or auxiliary files
+#   ci:       Changes to CI configuration files and scripts
+#
+# Examples:
+#   feat: add user authentication system
+#   fix: resolve database connection timeout issue
+#   docs: update API documentation with new endpoints
+#   refactor: simplify query optimization logic
+#   perf: improve search query performance by 40%
+#   test: add integration tests for payment flow
+#   chore: update dependencies to latest versions
+#   ci: add automated linting to GitHub Actions
+# --- COMMIT END ---
