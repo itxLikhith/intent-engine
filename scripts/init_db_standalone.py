@@ -308,6 +308,84 @@ tables["audit_trails"] = Table(
     Index("ix_audit_trails_resource_type_id", "resource_type", "resource_id"),
 )
 
+# Crawler tables
+tables["crawl_queue"] = Table(
+    "crawl_queue",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("url", String(2048), nullable=False, unique=True),
+    Column("priority", Integer, default=0, nullable=False),
+    Column("depth", Integer, default=0, nullable=False),
+    Column("status", String(50), default="pending", nullable=False),
+    Column("scheduled_at", DateTime, default=func.now(), nullable=False),
+    Column("created_at", DateTime, default=func.now(), nullable=False),
+    Column("updated_at", DateTime, default=func.now(), onupdate=func.now(), nullable=False),
+    Index("ix_crawl_queue_status", "status"),
+    Index("ix_crawl_queue_priority", "priority", "scheduled_at"),
+)
+
+tables["crawled_pages"] = Table(
+    "crawled_pages",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("url", String(2048), nullable=False, unique=True),
+    Column("final_url", String(2048)),
+    Column("title", String(1024)),
+    Column("content", Text),
+    Column("html_content", Text),
+    Column("meta_description", Text),
+    Column("meta_keywords", Text),
+    Column("language", String(10), default="en"),
+    Column("status_code", Integer),
+    Column("content_type", String(255)),
+    Column("content_length", Integer),
+    Column("load_time_ms", Float),
+    Column("inbound_links", Integer, default=0),
+    Column("outbound_links", Integer, default=0),
+    Column("crawl_depth", Integer, default=0),
+    Column("crawler_version", String(50)),
+    Column("crawled_at", DateTime, default=func.now(), nullable=False),
+    Column("updated_at", DateTime, default=func.now(), onupdate=func.now(), nullable=False),
+    Column("next_crawl_at", DateTime),
+    Column("is_indexed", Boolean, default=False),
+    Column("is_sitemap", Boolean, default=False),
+    Index("ix_crawled_pages_url", "url"),
+    Index("ix_crawled_pages_crawled_at", "crawled_at"),
+    Index("ix_crawled_pages_is_indexed", "is_indexed"),
+)
+
+tables["page_links"] = Table(
+    "page_links",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("source_page_id", Integer, ForeignKey("crawled_pages.id"), nullable=False),
+    Column("target_url", String(2048), nullable=False),
+    Column("anchor_text", String(512)),
+    Column("link_type", String(50), default="dofollow"),
+    Column("created_at", DateTime, default=func.now(), nullable=False),
+    Index("ix_page_links_source", "source_page_id"),
+    Index("ix_page_links_target", "target_url"),
+)
+
+tables["search_index"] = Table(
+    "search_index",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("page_id", Integer, ForeignKey("crawled_pages.id"), nullable=False, unique=True),
+    Column("url", String(2048), nullable=False),
+    Column("title", String(1024), nullable=False),
+    Column("content", Text, nullable=False),
+    Column("meta_description", Text),
+    Column("term_frequencies", Text),
+    Column("word_count", Integer, default=0),
+    Column("document_length", Integer, default=0),
+    Column("pagerank_score", Float, default=0.0),
+    Column("indexed_at", DateTime, default=func.now(), nullable=False),
+    Column("updated_at", DateTime, default=func.now(), onupdate=func.now(), nullable=False),
+    Index("ix_search_index_url", "url"),
+    Index("ix_search_index_pagerank", "pagerank_score"),
+)
+
 # Create all tables
 engine = create_engine(DATABASE_URL, poolclass=NullPool, pool_pre_ping=True)
 metadata.create_all(engine)
