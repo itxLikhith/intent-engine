@@ -1,33 +1,33 @@
-# Intent Engine Advertising System - Project Overview
+# Intent Engine - Project Overview
 
-**Version:** 1.0.4
-**Last Updated:** February 18, 2026
-**Repository:** intent-ads
-**Docker Image:** `anony45/intent-engine-api:latest`
+**Version:** 0.2.0  
+**Last Updated:** March 14, 2026  
+**Repository:** [intent-engine](https://github.com/itxLikhith/intent-engine)  
+**Docker Image:** `anony45/intent-engine-api:latest`  
 
 ---
 
 ## Executive Summary
 
-The Intent Engine Advertising System is a **privacy-first, intent-driven advertising platform** that provides ethical ad matching without discriminatory targeting or user tracking. The system processes user queries to extract structured intent and uses this intent for search ranking, service recommendation, and ad matching.
+The Intent Engine is a **privacy-first, intent-driven system** for search, service recommendation, and ad matching. It processes user queries to extract structured intent while respecting privacy and ethical considerations, without discriminatory targeting or user tracking.
 
 ### Core Principles
 
 1. **Intent-First**: All decisions derive from structured intent, not user identity
-2. **Privacy Native**: No persistent tracking; intent signals decay on session boundary
+2. **Privacy Native**: No persistent tracking; intent signals decay on session boundary (8-hour TTL)
 3. **Open Architecture**: Intent schema is composable and extensible
 4. **Non-Discriminatory**: Matching algorithms never use sensitive attributes
-5. **Transparent**: Intent extraction rules are inspectable
+5. **Transparent**: Intent extraction rules are inspectable and rule-based
 
 ### Key Features
 
-- ✅ **Intent Extraction** - Converts free-form queries to structured intent
+- ✅ **Intent Extraction** - Converts free-form queries to structured intent (NLP + rule-based)
 - ✅ **Privacy-Focused Search** - SearXNG integration with intent-aware ranking
 - ✅ **URL Ranking** - Privacy-compliant URL scoring and ranking
 - ✅ **Advanced Constraint Handling** - Supports range (`0-500`), comparison (`<=500`), min/max formats
-- ✅ **Service Recommendation** - Routes users to appropriate services
+- ✅ **Service Recommendation** - Routes users to appropriate services based on intent
 - ✅ **Ethical Ad Matching** - Fair ad matching with fairness validation
-- ✅ **Campaign Management** - Full advertising campaign lifecycle
+- ✅ **Campaign Management** - Full advertising campaign lifecycle with budget tracking
 - ✅ **Real-time Analytics** - Live metrics with WebSocket broadcasting
 - ✅ **Fraud Detection** - Comprehensive fraud detection for clicks, impressions, conversions
 - ✅ **A/B Testing** - Experiment management with statistical significance
@@ -43,373 +43,350 @@ The Intent Engine Advertising System is a **privacy-first, intent-driven adverti
 # Using Docker (Recommended)
 docker-compose up -d
 
-# Local Development
-pip install -r requirements.txt
-python -m uvicorn main_api:app --host 0.0.0.0 --port 8000 --reload
+# Wait for initialization (~45 seconds)
+sleep 45
+
+# Verify installation
+curl http://localhost:8000/
 ```
 
 ### First API Call
 
 ```bash
+# Extract intent from a query
 curl -X POST http://localhost:8000/extract-intent \
   -H "Content-Type: application/json" \
   -d '{
     "product": "search",
     "input": {"text": "best laptop for programming under 50000 rupees"},
-    "context": {"sessionId": "test-123"}
-  }'
+    "context": {"sessionId": "test-123", "userLocale": "en-US"}
+  }' | jq
 ```
 
-### Run Tests
+### Run Demos
 
 ```bash
-python -m pytest tests/ -v
+# Run all demos
+python main.py demo
+
+# Run specific demo
+python main.py demo-search
 ```
 
 ---
 
 ## System Architecture
 
-### Four-Phase Processing Pipeline
+### Four Main Phases
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌──────────────┐     ┌──────────┐
-│  1. INTENT      │     │  2. CONSTRAINT   │     │  3. SERVICE  │     │  4. AD   │
-│  EXTRACTION     │────▶│  & RANKING       │────▶│  REC         │────▶│  MATCH   │
-└─────────────────┘     └──────────────────┘     └──────────────┘     └──────────┘
+┌─────────────────┐     ┌──────────────────────┐     ┌──────────────────┐     ┌──────────────┐
+│  1. Intent      │────▶│  2. Constraint       │────▶│  3. Service      │────▶│  4. Ad       │
+│  Extraction     │     │  Satisfaction &      │     │  Recommendation  │     │  Matching    │
+│                 │     │  Ranking             │     │                  │     │              │
+└─────────────────┘     └──────────────────────┘     └──────────────────┘     └──────────────┘
 ```
 
-### Component Overview
+### Component Flow
 
-| Module | Directory | Purpose |
-|--------|-----------|---------|
-| **Core Schema** | `core/` | Universal intent data models and enums |
-| **Intent Extraction** | `extraction/` | Parse queries into structured intent |
-| **Ranking** | `ranking/` | Constraint satisfaction and result ranking |
-| **Services** | `services/` | Service recommendation and routing |
-| **Ads** | `ads/` | Ethical ad matching with fairness validation |
-| **Privacy** | `privacy/` | Consent management and privacy controls |
-| **Audit** | `audit/` | Audit trail and compliance logging |
-| **Analytics** | `analytics/` | Real-time metrics and advanced analytics |
-| **Fraud** | `fraud/` | Fraud detection and prevention |
-| **A/B Testing** | `abtesting/` | Experiment management and statistical analysis |
-| **SearXNG** | `searxng/` | Privacy-focused search integration |
-| **Config** | `config/` | Query caching and Redis caching |
-
----
-
-## API Endpoints Reference
-
-### Core Intent Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Health check |
-| `GET` | `/status` | Service status with metrics |
-| `GET` | `/metrics` | Prometheus metrics |
-| `POST` | `/extract-intent` | Extract structured intent from query |
-| `POST` | `/search` | Unified privacy search with intent |
-| `POST` | `/rank-results` | Rank results based on intent |
-| `POST` | `/rank-urls` | Privacy-focused URL ranking |
-| `POST` | `/recommend-services` | Recommend services based on intent |
-| `POST` | `/match-ads` | Ethical ad matching |
-| `POST` | `/match-ads-advanced` | Advanced matching with campaign context |
-
-### Campaign Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/campaigns` | Create new campaign |
-| `GET` | `/campaigns` | List campaigns (paginated) |
-| `GET` | `/campaigns/{id}` | Get campaign details |
-| `PUT` | `/campaigns/{id}` | Update campaign |
-| `DELETE` | `/campaigns/{id}` | Delete campaign |
-| `POST` | `/adgroups` | Create ad group |
-| `GET` | `/adgroups` | List ad groups |
-| `GET` | `/adgroups/{id}` | Get ad group details |
-| `PUT` | `/adgroups/{id}` | Update ad group |
-| `POST` | `/ads` | Create ad |
-| `GET` | `/ads` | List ads |
-| `GET` | `/ads/{id}` | Get ad details |
-| `PUT` | `/ads/{id}` | Update ad |
-| `DELETE` | `/ads/{id}` | Delete ad |
-| `POST` | `/advertisers` | Create advertiser |
-| `GET` | `/advertisers` | List advertisers |
-| `GET` | `/advertisers/{id}` | Get advertiser details |
-
-### Tracking & Analytics
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/click-tracking` | Record ad click |
-| `POST` | `/conversion-tracking` | Record conversion |
-| `POST` | `/fraud-detection` | Report fraud event |
-| `GET` | `/analytics/attribution/{id}` | Get attribution data |
-| `GET` | `/analytics/campaign-roi/{id}` | Get campaign ROI |
-| `GET` | `/analytics/trends/{metric}` | Get trend analysis |
-| `GET` | `/analytics/top-ads` | Get top performing ads |
-| `GET` | `/reports/campaign-performance` | Campaign performance reports |
-
-### Privacy & Compliance
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/consent/record` | Record user consent |
-| `GET` | `/consent/{user_id}/{type}` | Get consent status |
-| `POST` | `/consent/withdraw/{user_id}/{type}` | Withdraw consent |
-| `GET` | `/consent-summary` | System-wide consent summary |
-| `GET` | `/audit-events` | Get audit events |
-| `GET` | `/audit-stats` | Get audit statistics |
-| `GET` | `/privacy-controls/compliance-report` | Compliance report |
-| `POST` | `/privacy-controls/apply-retention-policy` | Apply retention policy |
-
-### A/B Testing
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/abtests` | Create A/B test |
-| `GET` | `/abtests` | List A/B tests |
-| `GET` | `/abtests/{id}` | Get A/B test details |
-| `PUT` | `/abtests/{id}` | Update A/B test |
-| `DELETE` | `/abtests/{id}` | Delete A/B test |
-| `GET` | `/abtests/{id}/results` | Get A/B test results |
-| `GET` | `/abtests/{id}/variants` | Get A/B test variants |
-
-### Creative Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/creatives` | Upload creative assets |
-| `GET` | `/creatives/{id}` | Get creative details |
-| `PUT` | `/creatives/{id}` | Update creative |
-| `DELETE` | `/creatives/{id}` | Delete creative |
+```
+User Query → Intent Extraction → UniversalIntent Object
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+            Search Results    Service Options    Ad Inventory
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+            Rank Results     Recommend        Match Ads
+            (Constraint      Service          (Fairness
+             Satisfaction)   (Intent Match)    Validation)
+                    │                 │                 │
+                    └─────────────────┼─────────────────┘
+                                      ▼
+                              Privacy-Preserving
+                              Response to User
+```
 
 ---
 
 ## Technology Stack
 
 ### Backend
+- **FastAPI** - Modern async web framework
+- **SQLAlchemy 2.0** - Async ORM for database operations
+- **Pydantic v2** - Data validation and settings management
+- **PostgreSQL** - Primary database with PgBouncer connection pooling
+- **Redis/Valkey** - Caching and session management
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Framework** | FastAPI 0.104+ | High-performance API |
-| **Database ORM** | SQLAlchemy 2.0+ | Database abstraction |
-| **Database** | SQLite (dev) / PostgreSQL (prod) | Data persistence |
-| **ML/NLP** | sentence-transformers, transformers | Intent extraction |
-| **Deep Learning** | PyTorch 2.1+ | Neural network operations |
-| **Validation** | Pydantic 2.5+ | Data validation |
-| **Caching** | Redis (optional) | Performance optimization |
-| **Monitoring** | Prometheus | Metrics collection |
-| **Task Scheduling** | APScheduler | Background tasks |
+### Machine Learning
+- **PyTorch** - Deep learning framework
+- **Sentence Transformers** - Semantic similarity calculations
+- **Transformers** - NLP model inference
+- **NumPy** - Numerical computations
 
 ### Infrastructure
+- **Docker & Docker Compose** - Containerization and orchestration
+- **SearXNG** - Privacy-focused metasearch engine
+- **Prometheus** - Metrics collection
+- **Grafana** - Dashboards and visualization
+- **ARQ** - Background task queue
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Containerization** | Docker | Application packaging |
-| **Orchestration** | Docker Compose | Multi-container management |
-| **Search Backend** | SearXNG | Privacy-focused search |
-| **Admin UI** | pgAdmin (optional) | Database management |
-
----
-
-## Performance Characteristics
-
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Warm-up Time** | <100ms | After initial model load |
-| **Processing Time** | <50ms | Per query after warm-up |
-| **Memory Footprint** | <500MB | RAM usage |
-| **Concurrent Requests** | 1000+/sec | With proper scaling |
-| **Database Queries** | <10ms | With connection pooling |
-| **Cache Hit Rate** | >80% | With Redis enabled |
+### Development Tools
+- **Ruff** - Fast Python linter and formatter
+- **Pytest** - Testing framework
+- **Pre-commit** - Git hooks management
+- **Commitizen** - Conventional commits
 
 ---
 
-## Development Workflow
+## Performance Metrics
 
-### Project Structure
+| Metric | Target | Actual | Notes |
+|--------|--------|--------|-------|
+| **Warm-up Time** | <100ms | ~50ms | After initial model load |
+| **Processing Time** | <50ms | ~30ms | Per query after warm-up |
+| **Memory Footprint** | <500MB | ~450MB | RAM usage |
+| **Concurrent Requests** | 1000+/sec | 200-300/sec | With Redis caching |
+| **Database Queries** | <10ms | ~5ms | With connection pooling |
+| **Cache Hit Rate** | >80% | 70-80% | With Redis enabled |
+
+### Load Capacity
+
+| Concurrent Users | Throughput | Success Rate | Latency (Mean) |
+|------------------|------------|--------------|----------------|
+| 1-10 | 200-370 req/s | 100% | 15-85ms |
+| 20 | 370 req/s | 100% | 180ms |
+| 50 | 650 req/s | 72% | 200ms |
+
+---
+
+## Privacy & Ethics Features
+
+### Data Protection
+- **No User Tracking**: No persistent profiles or behavioral tracking
+- **Local Processing**: All intent extraction happens on-device
+- **Data Minimization**: Only processes what's necessary for current session
+- **Automatic Cleanup**: Session data auto-deletes after 8 hours
+- **Differential Privacy**: Techniques applied to sensitive metrics
+
+### Compliance Features
+- **GDPR Ready**: Privacy-by-design architecture
+- **Granular Consent**: Fine-grained user consent management
+- **Right to Deletion**: Automated data deletion
+- **Data Portability**: Export capabilities
+- **Audit Trails**: Comprehensive logging for compliance
+
+### Fair Ad Matching
+The system enforces strict fairness rules:
+- ❌ **Forbidden Dimensions**: Age, gender, income, race, ethnicity
+- ❌ **Protected Attributes**: Political affiliation, religious belief
+- ❌ **Sensitive Data**: Health condition, sexual orientation
+- ❌ **Discriminatory Targeting**: Location, behavior, interests, purchasing history
+
+---
+
+## Project Structure
 
 ```
 intent-engine/
-├── core/                    # Shared schema and utilities
-│   ├── schema.py            # UniversalIntent class + enums
-│   └── utils.py             # Shared helpers
-├── extraction/              # Intent extraction
-│   ├── extractor.py         # Main extraction logic
-│   └── constraints.py       # Constraint parsing
-├── ranking/                 # Result ranking
-│   ├── ranker.py            # Main ranking logic
-│   ├── optimized_ranker.py  # Optimized implementation
-│   ├── url_ranker.py        # URL ranking
-│   └── scoring.py           # Scoring functions
-├── services/                # Service recommendation
-│   └── recommender.py       # Recommendation logic
-├── ads/                     # Ad matching
-│   └── matcher.py           # Ad matching logic
-├── privacy/                 # Privacy compliance
-│   ├── consent_manager.py   # Consent management
-│   └── enhanced_privacy.py  # Privacy controls
-├── audit/                   # Audit trail
-│   └── audit_trail.py       # Audit logging
-├── analytics/               # Analytics
-│   ├── realtime.py          # Real-time metrics
-│   └── advanced.py          # Advanced analytics
-├── fraud/                   # Fraud detection
-│   └── detector.py          # Fraud detection logic
-├── abtesting/               # A/B testing
-│   └── service.py           # A/B test management
-├── searxng/                 # SearXNG integration
-│   ├── client.py            # SearXNG client
-│   └── unified_search.py    # Unified search
-├── config/                  # Configuration
-│   ├── query_cache.py       # Query caching
-│   └── redis_cache.py       # Redis caching
-├── load_testing/            # Load testing
-│   ├── locustfile.py        # Locust tests
-│   └── stress_test.py       # Stress tests
-├── perf_tests/              # Performance tests
-├── tests/                   # Unit tests
-├── demos/                   # Demo scripts
-├── scripts/                 # Utility scripts
-├── main_api.py              # FastAPI application
-├── database.py              # Database models
-├── models.py                # Pydantic models
-├── privacy_core.py          # Privacy validation
-├── requirements.txt         # Dependencies
-├── Dockerfile               # Docker config
-├── docker-compose.yml       # Docker Compose
-└── README.md                # Documentation
+├── abtesting/              # A/B testing module
+├── ads/                    # Ad matching module
+├── analytics/              # Real-time analytics
+├── audit/                  # Audit trail logging
+├── config/                 # Configuration modules
+├── core/                   # Shared schema and utilities
+│   ├── schema.py           # UniversalIntent class + enums
+│   ├── embedding_service.py # Shared embedding service
+│   └── utils.py            # Shared helpers
+├── extraction/             # Intent extraction
+│   ├── extractor.py        # Main extraction logic
+│   └── constraints.py      # Constraint parsing
+├── fraud/                  # Fraud detection
+├── privacy/                # Privacy compliance
+│   ├── consent_manager.py  # Consent management
+│   └── enhanced_privacy.py # Privacy controls
+├── ranking/                # Ranking module
+│   ├── ranker.py           # Main ranking logic
+│   └── url_ranker.py       # URL ranking
+├── searxng/                # SearXNG integration
+│   ├── client.py           # SearXNG client
+│   └── unified_search.py   # Unified search service
+├── services/               # Service recommendation
+├── scripts/                # Utility scripts
+├── tests/                  # Unit tests
+├── docs/                   # Documentation
+├── main.py                 # CLI entry point
+├── main_api.py             # FastAPI server
+├── worker.py               # ARQ worker
+├── database.py             # Database models
+├── models.py               # Pydantic models
+├── docker-compose.yml      # Docker orchestration
+├── Dockerfile              # Container image
+├── pyproject.toml          # Python project config
+└── requirements.txt        # Python dependencies
 ```
 
-### Running Tests
+---
+
+## API Endpoints
+
+### Core Intent Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/extract-intent` | Extract structured intent from query |
+| `POST` | `/search` | Unified privacy search with intent ranking |
+| `POST` | `/rank-results` | Rank results based on user intent |
+| `POST` | `/rank-urls` | Privacy-focused URL ranking |
+| `POST` | `/recommend-services` | Recommend services based on intent |
+| `POST` | `/match-ads` | Match ads with fairness validation |
+| `POST` | `/match-ads-advanced` | Advanced matching with campaign context |
+
+### Campaign Management
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/campaigns` | Create campaign |
+| `GET` | `/campaigns/{id}` | Get campaign details |
+| `PUT` | `/campaigns/{id}` | Update campaign |
+| `DELETE` | `/campaigns/{id}` | Delete campaign |
+| `GET` | `/campaigns` | List campaigns with filters |
+
+### Analytics & Reporting
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/reports/campaign-performance` | Campaign performance reports |
+| `GET` | `/analytics/attribution/{id}` | Get conversion attribution |
+| `GET` | `/analytics/campaign-roi/{id}` | Get campaign ROI metrics |
+| `GET` | `/analytics/trends/{metric}` | Get trend analysis |
+| `GET` | `/analytics/top-ads` | Get top performing ads |
+
+### Privacy & Compliance
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/consent/record` | Record user consent |
+| `GET` | `/consent/{user_id}/{type}` | Get user consent |
+| `POST` | `/consent/withdraw/{user_id}/{type}` | Withdraw consent |
+| `GET` | `/audit-events` | Get audit events with filters |
+| `GET` | `/audit-stats` | Get audit statistics |
+
+### System
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Health check |
+| `GET` | `/health` | Comprehensive health check |
+| `GET` | `/status` | Service status |
+| `GET` | `/metrics` | Prometheus metrics |
+| `WS` | `/analytics/ws` | Real-time analytics WebSocket |
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[README.md](../README.md)** | Main README with quick start guide |
+| **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** | This file - Quick reference and overview |
+| **[COMPREHENSIVE_GUIDE.md](COMPREHENSIVE_GUIDE.md)** | Complete usage guide with examples |
+| **[Intent-Engine-Whitepaper.md](Intent-Engine-Whitepaper.md)** | Technical whitepaper and architecture |
+| **[Intent-Engine-Tech-Reference.md](Intent-Engine-Tech-Reference.md)** | Developer reference documentation |
+| **[Intent-Engine-Visual-Guide.md](Intent-Engine-Visual-Guide.md)** | Visual diagrams and illustrations |
+| **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** | Detailed project structure |
+| **[PERFORMANCE_OPTIMIZATION_PLAN.md](PERFORMANCE_OPTIMIZATION_PLAN.md)** | Performance optimization strategies |
+| **[TESTING_GUIDE.md](TESTING_GUIDE.md)** | Testing strategies and procedures |
+
+---
+
+## Environment Variables
+
+Create a `.env` file based on `.env.example`:
 
 ```bash
-# All tests
+# Database
+DATABASE_URL=postgresql://intent_user:password@localhost:5432/intent_engine
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# Security
+SECRET_KEY=your-secret-key-here
+
+# SearXNG
+SEARXNG_BASE_URL=http://localhost:8080
+
+# CORS
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+```
+
+---
+
+## Testing
+
+```bash
+# Run all tests
 python -m pytest tests/ -v
 
-# Specific modules
-python -m pytest tests/test_extraction.py -v
-python -m pytest tests/test_ranking.py -v
-python -m pytest tests/test_ads.py -v
-python -m pytest tests/test_advertising_api.py -v
-python -m pytest tests/test_url_ranking.py -v
-python -m pytest tests/comprehensive_test.py -v
+# Run with coverage
+pytest --cov=. --cov-report=html tests/
 
-# Load testing
+# Run load tests
 cd load_testing
 locust -f locustfile.py
 
-# Stress testing
-python stress_test_all.py
-```
-
-### Code Style
-
-```bash
-# Format code
-black .
-
-# Type checking
-mypy .
-
-# Linting
-flake8 .
+# Run performance tests
+python -m pytest perf_tests/ -v
 ```
 
 ---
 
-## Deployment Guide
-
-### Docker Deployment
-
-```bash
-# Build and start
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Scale workers
-docker-compose up -d --scale intent-engine=3
-
-# Stop
-docker-compose down
-```
-
-### Environment Configuration
-
-```bash
-# Copy example environment
-cp .env.example .env
-
-# Edit .env with your settings
-```
+## Deployment
 
 ### Production Checklist
 
-- [ ] Use PostgreSQL instead of SQLite
-- [ ] Enable Redis caching
-- [ ] Configure CORS origins
-- [ ] Set up SSL/TLS
-- [ ] Configure logging
-- [ ] Set up monitoring
-- [ ] Enable automated backups
-- [ ] Review security settings
+**Already Configured:**
+- [x] PostgreSQL with connection pooling (PgBouncer)
+- [x] Redis caching enabled
+- [x] CORS configuration
+- [x] Prometheus + Grafana monitoring
+- [x] Rate limiting
+- [x] Health checks
+- [x] SearXNG integration
+
+**Required for Production:**
+- [ ] Change default PostgreSQL password
+- [ ] Set secure SECRET_KEY
+- [ ] Update CORS_ORIGINS to actual domains
+- [ ] Enable SSL/TLS
+- [ ] Configure Redis authentication
+- [ ] Set up automated backups
+- [ ] Configure log aggregation
+- [ ] Set up alerting rules
+- [ ] Review rate limits
+- [ ] Enable firewall rules
 
 ---
 
-## Privacy & Compliance Features
+## Support
 
-### Data Protection
-
-- **No User Tracking**: No persistent profiles or behavioral tracking
-- **Local Processing**: All intent extraction on-device
-- **Data Minimization**: Only necessary data processed
-- **Automatic Cleanup**: Session data deleted after 8 hours
-- **Differential Privacy**: Applied to sensitive metrics
-
-### Compliance
-
-- **GDPR Ready**: Privacy-by-design architecture
-- **Consent Management**: Granular consent controls
-- **Right to Deletion**: Automated data deletion
-- **Data Portability**: Export capabilities
-- **Audit Trails**: Comprehensive logging
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Issue**: Models not loading
-**Solution**: Ensure 4GB+ RAM available; check model cache directory
-
-**Issue**: Database connection errors
-**Solution**: Verify DATABASE_URL; check PostgreSQL is running
-
-**Issue**: High latency
-**Solution**: Enable Redis caching; check model warm-up
-
-**Issue**: Docker build fails
-**Solution**: Increase Docker memory limit; check network connectivity
-
-### Getting Help
-
-1. Check documentation in `COMPREHENSIVE_GUIDE.md`
-2. Review whitepaper `Intent-Engine-Whitepaper.md`
-3. Check technical reference `Intent-Engine-Tech-Reference.md`
-4. Open GitHub issue
+- **GitHub Issues**: [Open an issue](https://github.com/itxLikhith/intent-engine/issues)
+- **Documentation**: Review the [docs](../docs/) directory
+- **Email**: Contact the maintainers
 
 ---
 
 ## License
 
-MIT License - See LICENSE file for details.
+MIT License - see the [LICENSE](../LICENSE) file for details.
 
-## Support
+---
 
-- **GitHub Issues**: For bug reports and feature requests
-- **Documentation**: See docs in this directory
-- **Email**: Contact maintainers for support
+## Acknowledgments
+
+- Built with [FastAPI](https://fastapi.tiangolo.com/)
+- Uses [sentence-transformers](https://www.sbert.net/)
+- Implements privacy-first design principles
+- Incorporates ethical AI practices

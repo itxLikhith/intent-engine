@@ -30,61 +30,63 @@ The Intent Engine is a privacy-first, intent-driven system for search, service r
 
 The project follows a clean, modular structure:
 ```
-intent_engine/
-├── docs/                   # Documentation files
+intent-engine/
+├── .github/                # GitHub Actions workflows
+├── abtesting/              # A/B testing module
+├── ads/                    # Ad matching module
+├── analytics/              # Real-time analytics module
+├── audit/                  # Audit trail module
+├── bin/                    # Executable scripts
+├── config/                 # Configuration modules
 ├── core/                   # Shared schema and utilities
 │   ├── schema.py           # UniversalIntent class + enums
 │   └── utils.py            # Shared helpers (caching, logging)
+├── data/                   # Local data directory (git-ignored)
+├── demos/                  # Demo scripts
+├── docs/                   # Documentation
 ├── extraction/             # Intent extraction module
 │   ├── extractor.py        # Main IntentExtraction logic
 │   └── constraints.py      # Constraint parsing logic
+├── fraud/                  # Fraud detection module
+├── grafana/                # Grafana dashboards and provisioning
+├── load_testing/           # Load testing with Locust
+├── migrations/             # SQL database migrations
+├── pgbouncer/              # PgBouncer configuration
+├── perf_tests/             # Performance tests
+├── privacy/                # Privacy compliance module
+│   ├── consent_manager.py  # Consent management
+│   └── enhanced_privacy.py # Privacy controls and retention
 ├── ranking/                # Ranking module
 │   ├── ranker.py           # Main Ranking logic
 │   ├── optimized_ranker.py # Optimized ranking implementation
 │   ├── url_ranker.py       # URL ranking implementation
 │   ├── optimized_url_ranker.py # Optimized URL ranking implementation
 │   └── scoring.py          # Alignment/quality/ethical scoring
-├── services/               # Service recommendation module
-│   └── recommender.py      # Service recommendation logic
-├── ads/                    # Ad matching module
-│   └── matcher.py          # Ad matching logic
-├── privacy/                # Privacy compliance module
-│   ├── consent_manager.py  # Consent management
-│   └── enhanced_privacy.py # Privacy controls and retention
-├── audit/                  # Audit trail module
-│   └── audit_trail.py      # Audit logging for compliance
-├── analytics/              # Real-time analytics module
-│   ├── realtime.py         # Real-time metrics and WebSocket
-│   └── advanced.py         # Advanced analytics (ROI, attribution)
-├── fraud/                  # Fraud detection module
-│   └── detector.py         # Fraud detection algorithms
-├── abtesting/              # A/B testing module
-│   └── service.py          # A/B test management
+├── scripts/                # Utility and maintenance scripts
 ├── searxng/                # SearXNG integration
-│   ├── client.py           # SearXNG client
-│   ├── settings.yml        # SearXNG configuration
-│   └── unified_search.py   # Unified search with intent
-├── config/                 # Configuration
-│   ├── query_cache.py      # Query caching
-│   └── redis_cache.py      # Redis caching
-├── load_testing/           # Load testing
-│   ├── locustfile.py       # Locust load tests
-│   └── stress_test.py      # Stress testing
-├── perf_tests/             # Performance tests
-├── tests/                  # Unit tests
-├── demos/                  # Demo scripts
-├── scripts/                # Utility scripts
-├── main.py                 # Entry point for CLI or server
+├── services/               # Service recommendation module
+├── tests/                  # Unit and integration tests
+├── .env.example            # Environment variables template
+├── .gitignore              # Git ignore rules
+├── .pre-commit-config.yaml # Pre-commit hooks configuration
+├── CONTRIBUTING.md         # Contribution guidelines
+├── docker-compose.yml      # Docker Compose configuration
+├── Dockerfile              # Docker image definition
+├── LICENSE                 # MIT License
+├── main.py                 # CLI entry point
 ├── main_api.py             # FastAPI server implementation
+├── Makefile                # Common development tasks
 ├── models.py               # Pydantic models for API
 ├── database.py             # Database models and connection
 ├── privacy_core.py         # Privacy validation
-├── requirements.txt        # Python dependencies
-├── Dockerfile              # Full Docker image
-├── docker-compose.yml      # Docker Compose configuration
+├── prometheus.yml          # Prometheus configuration
+├── pyproject.toml          # Python project metadata (PEP 621)
 ├── README.md               # This file
-└── benchmark.py            # Benchmarking utilities
+├── requirements.txt        # Production dependencies
+└── worker.py               # ARQ worker entry point
 ```
+
+For detailed information about the project structure, see [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md).
 
 ## Key Components
 
@@ -271,14 +273,38 @@ python -m pytest perf_tests/ -v
 
 ## Performance
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Warm-up Time** | <100ms | After initial model load |
-| **Processing Time** | <50ms | Per query after warm-up |
-| **Memory Footprint** | <500MB | RAM usage |
-| **Concurrent Requests** | 1000+/sec | With proper scaling |
-| **Database Queries** | <10ms | With connection pooling |
-| **Cache Hit Rate** | >80% | With Redis enabled |
+### Benchmarks (March 2026)
+
+| Metric | Target | Actual | Notes |
+|--------|--------|--------|-------|
+| **Warm-up Time** | <100ms | ~50ms | After initial model load |
+| **Processing Time** | <50ms | ~30ms | Per query after warm-up |
+| **Memory Footprint** | <500MB | ~450MB | RAM usage |
+| **Concurrent Requests** | 1000+/sec | 200-300/sec | With Redis caching |
+| **Database Queries** | <10ms | ~5ms | With connection pooling |
+| **Cache Hit Rate** | >80% | 70-80% | With Redis enabled |
+
+### Load Test Results
+
+| Concurrent Users | Throughput | Success Rate | Mean Latency | P95 Latency |
+|------------------|------------|--------------|--------------|-------------|
+| **1** | 243 req/s | 100% | 16ms | 20ms |
+| **5** | 328 req/s | 100% | 53ms | 71ms |
+| **10** | 369 req/s | 100% | 84ms | 123ms |
+| **20** | 372 req/s | 100% | 183ms | 243ms |
+| **50** | 646 req/s | 72% | 205ms | 336ms |
+
+**Optimal Operating Point:** 10-20 concurrent users with 100% success rate
+
+### Capacity Planning
+
+| Metric | Single Instance | With 3 Replicas |
+|--------|----------------|-----------------|
+| **Max Throughput** | 370 req/s | 1,100 req/s |
+| **Daily Capacity** | 32M requests | 95M requests |
+| **Monthly Capacity** | 950M requests | 2.8B requests |
+
+See [docs/PERFORMANCE_OPTIMIZATION_PLAN.md](docs/PERFORMANCE_OPTIMIZATION_PLAN.md) for optimization strategies.
 
 ## Privacy & Ethics Features
 

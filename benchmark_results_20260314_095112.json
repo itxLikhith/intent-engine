@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-03-14T09:51:11.472531",
+  "single_request": {
+    "best laptop": {
+      "min_ms": 6.33,
+      "max_ms": 8.15,
+      "mean_ms": 7.02,
+      "median_ms": 6.84,
+      "stdev_ms": 0.7,
+      "success_rate": "100%"
+    },
+    "best laptop for programming under 50000": {
+      "min_ms": 7.13,
+      "max_ms": 8.34,
+      "mean_ms": 7.85,
+      "median_ms": 7.79,
+      "stdev_ms": 0.49,
+      "success_rate": "100%"
+    },
+    "best privacy-focused search engines 2024": {
+      "min_ms": 5.92,
+      "max_ms": 7.51,
+      "mean_ms": 6.62,
+      "median_ms": 6.56,
+      "stdev_ms": 0.61,
+      "success_rate": "100%"
+    },
+    "how to set up E2E encrypted email on Android no big tech": {
+      "min_ms": 5.73,
+      "max_ms": 7.12,
+      "mean_ms": 6.42,
+      "median_ms": 6.22,
+      "stdev_ms": 0.66,
+      "success_rate": "100%"
+    }
+  },
+  "concurrent_load": [
+    {
+      "concurrent_users": 1,
+      "total_requests": 5,
+      "successful": 5,
+      "failed": 0,
+      "success_rate": "100.0%",
+      "total_time_seconds": 0.02,
+      "requests_per_second": 243.43,
+      "latency_min_ms": 7.2,
+      "latency_max_ms": 19.64,
+      "latency_mean_ms": 15.74,
+      "latency_median_ms": 18.51,
+      "latency_p95_ms": 19.64
+    },
+    {
+      "concurrent_users": 2,
+      "total_requests": 10,
+      "successful": 10,
+      "failed": 0,
+      "success_rate": "100.0%",
+      "total_time_seconds": 0.03,
+      "requests_per_second": 289.82,
+      "latency_min_ms": 8.08,
+      "latency_max_ms": 32.79,
+      "latency_mean_ms": 20.76,
+      "latency_median_ms": 16.73,
+      "latency_p95_ms": 32.79
+    },
+    {
+      "concurrent_users": 5,
+      "total_requests": 25,
+      "successful": 25,
+      "failed": 0,
+      "success_rate": "100.0%",
+      "total_time_seconds": 0.08,
+      "requests_per_second": 328.04,
+      "latency_min_ms": 17.57,
+      "latency_max_ms": 70.86,
+      "latency_mean_ms": 53.4,
+      "latency_median_ms": 61.53,
+      "latency_p95_ms": 70.82
+    },
+    {
+      "concurrent_users": 10,
+      "total_requests": 50,
+      "successful": 50,
+      "failed": 0,
+      "success_rate": "100.0%",
+      "total_time_seconds": 0.14,
+      "requests_per_second": 368.81,
+      "latency_min_ms": 28.59,
+      "latency_max_ms": 123.02,
+      "latency_mean_ms": 84.44,
+      "latency_median_ms": 80.69,
+      "latency_p95_ms": 122.81
+    },
+    {
+      "concurrent_users": 20,
+      "total_requests": 100,
+      "successful": 100,
+      "failed": 0,
+      "success_rate": "100.0%",
+      "total_time_seconds": 0.27,
+      "requests_per_second": 371.81,
+      "latency_min_ms": 93.41,
+      "latency_max_ms": 246.03,
+      "latency_mean_ms": 182.93,
+      "latency_median_ms": 196.92,
+      "latency_p95_ms": 242.5
+    },
+    {
+      "concurrent_users": 50,
+      "total_requests": 250,
+      "successful": 180,
+      "failed": 70,
+      "success_rate": "72.0%",
+      "total_time_seconds": 0.39,
+      "requests_per_second": 646.31,
+      "latency_min_ms": 50.55,
+      "latency_max_ms": 339.54,
+      "latency_mean_ms": 204.61,
+      "latency_median_ms": 163.33,
+      "latency_p95_ms": 335.65
+    }
+  ],
+  "stress_test": {
+    "total_requests": 50,
+    "successful": 6,
+    "failed": 44,
+    "success_rate": "12.0%",
+    "total_time_seconds": 0.06,
+    "requests_per_second": 834.46,
+    "latency_min_ms": 36.72,
+    "latency_max_ms": 38.79,
+    "latency_mean_ms": 38.09
+  }
+}

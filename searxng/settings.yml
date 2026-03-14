@@ -1,4 +1,4 @@
-# SearXNG settings
+# SearXNG settings - OPTIMIZED FOR PERFORMANCE
 # See https://docs.searxng.org/admin/settings.yml.html
 
 use_default_settings: true
@@ -7,6 +7,7 @@ general:
   instance_name: "Intent Engine - Privacy Search"
   debug: false
   contact_url: false
+  enable_metrics: true
 
 server:
   port: 8080
@@ -14,77 +15,102 @@ server:
   secret_key: "${SEARXNG_SECRET_KEY:-}"
   limiter: false
   image_proxy: true
-  method: "GET"
+  method: "POST"
+  http_protocol_version: "1.1"
 
 search:
   safe_search: 0
   autocomplete: "duckduckgo"
   default_lang: "en"
+  max_page: 5
   formats:
     - html
     - json
+  ban_time_on_fail: 3
+  max_ban_time_on_fail: 60
 
+# Engine configuration - only fast, reliable engines
 engines:
   - name: google
     engine: google
     shortcut: g
-    timeout: 3.0
+    timeout: 2.0
     use_http2: true
-  
+    disabled: false
+
   - name: duckduckgo
     engine: duckduckgo
     shortcut: ddg
-    timeout: 3.0
-  
+    timeout: 2.0
+    disabled: false
+
   - name: brave
     engine: brave
     shortcut: b
-    timeout: 3.0
-  
-  - name: wikipedia
-    engine: wikipedia
-    shortcut: w
     timeout: 2.0
-  
-  - name: bing
-    engine: bing
-    shortcut: bi
-    timeout: 3.0
+    disabled: false
 
   - name: startpage
     engine: startpage
     shortcut: sp
-    timeout: 4.0
+    timeout: 3.0
+    disabled: false
 
-  # Disable problematic or slow engines
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: w
+    timeout: 2.0
+    disabled: false
+
+  - name: bing
+    engine: bing
+    shortcut: bi
+    timeout: 2.5
+    disabled: false
+
+  # Disabled engines (slow or not needed)
   - name: pubmed
     disabled: true
-  
   - name: arxiv
     disabled: true
-  
   - name: semantic scholar
     disabled: true
-  
-  - name: openairedatasets
+  - name: ahmia
     disabled: true
-  
-  - name: openairepublications
+  - name: torch
     disabled: true
-  
   - name: radio browser
     disabled: true
 
-  - name: ahmia
-    disabled: true
-
-  - name: torch
-    disabled: true
-
 outgoing:
-  # Increase pool size for better concurrency
-  pool_connections: 100
-  pool_maxsize: 20
-  # Set global timeout
-  request_timeout: 10.0
-  max_request_timeout: 15.0
+  pool_connections: 50
+  pool_maxsize: 15
+  enable_http2: true
+  request_timeout: 2.0
+  max_request_timeout: 5.0
+  max_retries: 1
+  retry_on_timeout: true
+
+# Valkey (Redis) caching
+valkey:
+  url: "redis://redis:6379/0"
+  cache_time: 300
+  limiter: false
+
+# Plugins
+plugins:
+  searx.plugins.infinite_scroll.SXNGPlugin:
+    active: false
+  searx.plugins.tracker_url_remover.SXNGPlugin:
+    active: true
+  searx.plugins.self_info.SXNGPlugin:
+    active: false
+  searx.plugins.hash_plugin.SXNGPlugin:
+    active: false
+
+ui:
+  default_theme: simple
+  query_in_title: false
+  infinite_scroll: false
+  results_on_new_tab: false
+  default_number_of_results: 10

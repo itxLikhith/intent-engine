@@ -163,8 +163,19 @@ def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIn
     # Convert declared intent
     declared_dict = intent_dict.get("declared", {}) or {}
     goal = declared_dict.get("goal")
-    if isinstance(goal, str) and goal in [g.value for g in IntentGoal]:
-        goal = IntentGoal(goal)
+    # Convert goal if it's a string or has a .value attribute
+    if goal is not None and not isinstance(goal, IntentGoal):
+        goal_value = goal.value if hasattr(goal, "value") else str(goal)
+        if goal_value in [g.value for g in IntentGoal]:
+            goal = IntentGoal(goal_value)
+        else:
+            # Try to find a matching goal by case-insensitive comparison
+            goal_lower = goal_value.lower().replace("_", "").replace("-", "")
+            for g in IntentGoal:
+                g_normalized = g.value.lower().replace("_", "").replace("-", "")
+                if goal_lower == g_normalized:
+                    goal = g
+                    break
     urgency = declared_dict.get("urgency", "FLEXIBLE")
     if isinstance(urgency, str) and urgency in [u.value for u in Urgency]:
         urgency = Urgency(urgency)
@@ -186,8 +197,25 @@ def convert_dict_to_universal_intent(intent_dict: dict[str, Any]) -> UniversalIn
     inferred_dict = intent_dict.get("inferred", {}) or {}
     use_cases = []
     for uc in inferred_dict.get("useCases", []) or []:
-        if isinstance(uc, str) and uc in [u.value for u in UseCase]:
-            use_cases.append(UseCase(uc))
+        # Handle both string and enum values
+        if isinstance(uc, UseCase):
+            use_cases.append(uc)
+        elif hasattr(uc, "value"):
+            uc_value = uc.value
+            if uc_value in [u.value for u in UseCase]:
+                use_cases.append(UseCase(uc_value))
+        elif isinstance(uc, str):
+            # Direct string match
+            if uc in [u.value for u in UseCase]:
+                use_cases.append(UseCase(uc))
+            else:
+                # Try to find a matching use case by case-insensitive comparison
+                uc_lower = uc.lower().replace("_", "").replace("-", "")
+                for u in UseCase:
+                    u_normalized = u.value.lower().replace("_", "").replace("-", "")
+                    if uc_lower == u_normalized:
+                        use_cases.append(u)
+                        break
 
     result_type = inferred_dict.get("resultType")
     if isinstance(result_type, str) and result_type in [r.value for r in ResultType]:
@@ -811,8 +839,11 @@ async def recommend_services_endpoint(request: ServiceRecommendationRequest):
             ServiceRecommendationRequest as InternalServiceRequest,
         )
 
+        logger.info(f"Received service recommendation request: {request}")
+
         # Convert intent dict to UniversalIntent dataclass
         intent = convert_dict_to_universal_intent(request.intent)
+        logger.info(f"Converted intent: {intent}")
 
         # Convert the request to internal format
         services_metadata = []
@@ -832,7 +863,9 @@ async def recommend_services_endpoint(request: ServiceRecommendationRequest):
             intent=intent, availableServices=services_metadata, options=request.options
         )
 
+        logger.info("Calling recommend_services...")
         response = recommend_services(internal_request)
+        logger.info(f"Response received: {response}")
 
         # Convert response to dict format
         recommendations = []
@@ -856,7 +889,10 @@ async def recommend_services_endpoint(request: ServiceRecommendationRequest):
         return ServiceRecommendationResponse(recommendations=recommendations)
 
     except Exception as e:
+        import traceback
+
         logger.error(f"Error in service recommendation: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 

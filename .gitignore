@@ -1,9 +1,24 @@
-# Python
+# =============================================================================
+# Intent Engine - Professional .gitignore
+# =============================================================================
+# A privacy-first, intent-driven advertising platform
+# Python 3.11+ | FastAPI | PostgreSQL | Redis | Docker
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Python / Bytecode
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Build artifacts
 build/
 develop-eggs/
 dist/
@@ -16,27 +31,38 @@ parts/
 sdist/
 var/
 wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+*.egg/
 *.spec
 
-# Changelog (auto-generated)
-CHANGELOG.md
-
-# Virtual Environments
+# -----------------------------------------------------------------------------
+# Virtual Environments (keep venv/ for local dev documentation)
+# -----------------------------------------------------------------------------
 venv/
+.venv/
 env/
 ENV/
+.ENV/
 env.bak/
 venv.bak/
-.venv/
-.ENV/
+.pyvenv.cfg
 
-# IDE
+# -----------------------------------------------------------------------------
+# IDE / Editor
+# -----------------------------------------------------------------------------
+# VS Code
 .vscode/
+*.code-workspace
+.history/
+
+# PyCharm / IntelliJ
 .idea/
+*.iml
+*.iws
+*.pyc
+*.pyo
+*.pyd
+
+# Vim / Emacs
 *.swp
 *.swo
 *~
@@ -45,43 +71,96 @@ venv.bak/
 *.orig
 *.rej
 
-# OS
+# -----------------------------------------------------------------------------
+# Operating System Files
+# -----------------------------------------------------------------------------
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100/
+.Spotlight-V100/
+.TemporaryItems/
+.Trashes/
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.com.apple.FinderInfo
+
+# Windows
 Thumbs.db
 ehthumbs.db
 .directory
-.Trashes
-*.nfs*
+[Tt]emp/
+[Tt]mp/
+desktop.ini
+$RECYCLE.BIN/
 
-# Logs
+# Linux
+.Trashes/
+.directory/
+
+# -----------------------------------------------------------------------------
+# Logs & Runtime Data
+# -----------------------------------------------------------------------------
 *.log
 logs/
 *.out
 *.pid
 *.seed
 *.pid.lock
+*.lock
 
-# Environment variables
+# -----------------------------------------------------------------------------
+# Environment Variables & Secrets
+# -----------------------------------------------------------------------------
 .env
 .env.local
-.env.*
+.env.*.local
+.env.development
+.env.staging
+.env.production
 *.env
+!.env.example
 
-# Coverage reports
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+*.crt
+*.pub
+id_rsa
+id_rsa.pub
+*.p12
+*.pfx
+
+# -----------------------------------------------------------------------------
+# Testing & Coverage
+# -----------------------------------------------------------------------------
+.pytest_cache/
+.pytest/
+.nox/
 .coverage
-htmlcov/
 .coverage.*
-.cov.config
 .coverage.xml
+htmlcov/
+.tox/
+*.cover
+*.coveragerc
+test_*.py
+*_test.py
+!tests/__init__.py
+!tests/conftest.py
 
-# Model caches and ML
-model_cache/
-*/cache/
-.huggingface/
-.cache/
-transformers/
-sentence_transformers/
-torch/
+# Test reports
+test-results/
+pytest.xml
+test-reports/
+
+# -----------------------------------------------------------------------------
+# Model Caches & Machine Learning Artifacts
+# -----------------------------------------------------------------------------
+# Model files (large binaries)
 *.bin
 *.pt
 *.pth
@@ -98,30 +177,35 @@ torch/
 *.dat
 *.npy
 *.npz
+*.safetensors
 
-# Testing
-.pytest_cache/
-.pytest/
-.nox/
-.coverage.xml
-test_*.py
-*_test.py
+# Model cache directories
+model_cache/
+*/cache/
+.huggingface/
+.cache/
+transformers/
+sentence_transformers/
+torch/
 
-# Distribution / packaging
-.python-version
-.tox/
-*.cover
-.py-build/
-*.zip
-
-# Jupyter Notebook
+# -----------------------------------------------------------------------------
+# Jupyter Notebooks
+# -----------------------------------------------------------------------------
 .ipynb_checkpoints
 *.ipynb
+!demos/*.ipynb
 
+# -----------------------------------------------------------------------------
+# Type Checking & Linting
+# -----------------------------------------------------------------------------
 # mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
+mypy.ini
+
+# Ruff
+.ruff_cache/
 
 # flake8
 .flake8
@@ -131,30 +215,31 @@ dmypy.json
 
 # isort
 .isort.pkl
+.isort.cfg
 
-# Temporary files
-*.tmp
-*.temp
-tmp/
-temp/
+# Bandit (security)
+bandit-report.json
 
-# Local configuration
-config/local_settings.py
-settings_local.py
-local_settings.py
-
-# Database (except migrations)
+# -----------------------------------------------------------------------------
+# Database Files (except migrations and schema)
+# -----------------------------------------------------------------------------
+# SQLite databases
 *.db
 *.db-journal
 *.sqlite
 *.sqlite3
+
+# Keep SQL migration files
+!migrations/*.sql
 !*.sql
 
-# Migrations (include SQL files, exclude run logs)
+# Migration runtime files
 migrations/*.log
 migrations/.lock
 
-# Docker
+# -----------------------------------------------------------------------------
+# Docker & Containerization
+# -----------------------------------------------------------------------------
 .dockerignore
 *.dockerignore
 docker-compose.override.yml
@@ -162,96 +247,81 @@ docker-compose.prod.yml
 docker-compose.stage.yml
 docker-compose.dev.yml
 Dockerfile.light
+*.dockerfile
 
-# Documentation
+# -----------------------------------------------------------------------------
+# Documentation Build Artifacts
+# -----------------------------------------------------------------------------
 docs/_build/
 docs/build/
+docs/.doctrees/
+*.pdf
+*.epub
 
-# Node
+# -----------------------------------------------------------------------------
+# Node.js (if used for frontend tooling)
+# -----------------------------------------------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# Secrets and credentials
-secrets/
-secret.key
-*.pem
-*.key
-*.crt
-*.cert
-*.pub
-id_rsa
-id_rsa.pub
+# -----------------------------------------------------------------------------
+# Generated Reports & Temporary Files
+# -----------------------------------------------------------------------------
+# Auto-generated changelog
+CHANGELOG.md
 
-# Backup files
-*~
-*.bak
-*.swp
-*.swo
-
-# macOS
-.AppleDouble/
-.LSOverride
-.DocumentRevisions-V100/
-.Spotlight-V100/
-.TemporaryItems/
-.Trashes/
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.com.apple.FinderInfo
-.apdisk
-
-# Windows
-[C-c]ache/
-[C-c]onfig/
-[D-d]ata/
-[L-l]ogs/
-[T-t]emp/
-[N-n]ode_modules/
-[D-d]ist/
-[B-b]uild/
-
-# PyCharm
-*.iml
-*.iws
-*.pyc
-*.pyo
-*.pyd
-__pycache__/
-.idea/
-!.idea/
-
-# Visual Studio Code
-.vscode/
-.history
-*.code-workspace
-
-# Test and Report Files (Generated)
-stress_test_results_*.json
-api_logs.txt
+# Test summary files
 *_SUMMARY.md
 *_STATUS.md
 *_QUICKSTART.md
 *_REPORT.md
 *.md.bak
-TESTING_RESULTS.md
 
-# Local scripts
+# Load testing results
+stress_test_results_*.json
+api_logs.txt
+locust_logs/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+error.txt
+
+# -----------------------------------------------------------------------------
+# Local Development Overrides
+# -----------------------------------------------------------------------------
+# Local scripts (user-specific)
 start.bat
 start.sh
 build_and_push.bat
 build_and_push.sh
+run_local.sh
+run_local.bat
+
+# Local configuration
+config/local_settings.py
+settings_local.py
+local_settings.py
+local.py
 
 # Data directory (local development)
 data/
+*.db-shm
+*.db-wal
 
-# Grafana local data
+# Grafana local provisioning (auto-generated)
 grafana/dashboards/*.json
 grafana/provisioning/dashboards/*.yml
 grafana/provisioning/datasources/*.yml
 
-# PgBouncer local config
+# PgBouncer local config (contains credentials)
 pgbouncer/pgbouncer.ini
 pgbouncer/userlist.txt
 
@@ -264,5 +334,50 @@ bridge/
 # pgAdmin (local only)
 pgadmin/
 
-# Local development overrides
-docker-compose.override.yml
+# -----------------------------------------------------------------------------
+# CI/CD & GitHub Actions
+# -----------------------------------------------------------------------------
+.github/workflows/*.log
+.github/caches/
+
+# -----------------------------------------------------------------------------
+# Commitizen & Git Hooks
+# -----------------------------------------------------------------------------
+.cz.toml
+.gitmessage.local
+
+# -----------------------------------------------------------------------------
+# Performance & Benchmark Data
+# -----------------------------------------------------------------------------
+benchmark_results/
+perf_results/
+*.benchmark
+locustfile_*.py
+
+# -----------------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------------
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+
+# Coverage
+.coverage
+.coverage.xml
+
+# Distribution
+.python-version
+.py-build/
+*.zip
+*.tar.gz
+*.whl
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pydantic
+.pydantic/
