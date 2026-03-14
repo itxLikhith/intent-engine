@@ -338,12 +338,12 @@ class StressTester:
         test_data = {"product": "search", "input": {"text": query}}
 
         # First request (cache miss)
-        for i in range(10):
+        for _i in range(10):
             status, latency, error = await self.make_request("POST", "/extract-intent", test_data)
             latencies_first.append(latency)
 
         # Subsequent requests (should be cached)
-        for i in range(50):
+        for _i in range(50):
             status, latency, error = await self.make_request("POST", "/extract-intent", test_data)
             latencies_cached.append(latency)
 
@@ -396,7 +396,7 @@ class StressTester:
 
         for query in queries:
             test_data = {"product": "search", "input": {"text": query}}
-            for i in range(20):
+            for _i in range(20):
                 status, latency, error = await self.make_request("POST", "/extract-intent", test_data)
                 latencies.append(latency)
 
@@ -501,7 +501,7 @@ class StressTester:
         endpoints = ["/extract-intent", "/campaigns", "/match-ads", "/rank-results"]
 
         for endpoint in endpoints:
-            for i in range(10):
+            for _i in range(10):
                 status, latency, error = await self.make_request(
                     "OPTIONS",
                     endpoint,

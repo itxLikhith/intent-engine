@@ -144,7 +144,7 @@ class UnifiedSearchService:
 
         # Build response - defensive handling of engines_used
         try:
-            engines_used = list(set(r.engine for r in searxng_results if r.engine))
+            engines_used = list({r.engine for r in searxng_results if r.engine})
         except Exception as e:
             logger.warning(f"Error extracting engines: {e}")
             engines_used = []

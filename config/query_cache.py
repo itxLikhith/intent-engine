@@ -6,16 +6,16 @@ This module provides caching for ranking results to improve performance.
 
 import hashlib
 import threading
-from typing import Any, Optional
 from collections import OrderedDict
+from typing import Any, Optional
 
 
 class RankingCache:
     """Thread-safe LRU cache for ranking results"""
-    
+
     _instance: Optional["RankingCache"] = None
     _lock = threading.Lock()
-    
+
     def __new__(cls, capacity: int = 1000):
         if cls._instance is None:
             with cls._lock:
@@ -24,7 +24,7 @@ class RankingCache:
                     cls._instance._initialized = False
                     cls._instance._capacity = capacity
         return cls._instance
-    
+
     def __init__(self, capacity: int = 1000):
         if self._initialized:
             return
@@ -34,7 +34,7 @@ class RankingCache:
         self._hits = 0
         self._misses = 0
         self._initialized = True
-    
+
     def _make_key(self, query: str, **kwargs) -> str:
         """Create cache key from query and kwargs"""
         key_parts = [query]
@@ -42,8 +42,8 @@ class RankingCache:
             key_parts.append(f"{k}={v}")
         key_string = "|".join(key_parts)
         return hashlib.sha256(key_string.encode()).hexdigest()
-    
-    def get(self, query: str, **kwargs) -> Optional[Any]:
+
+    def get(self, query: str, **kwargs) -> Any | None:
         """Get cached result for query"""
         key = self._make_key(query, **kwargs)
         with self._lock:
@@ -53,7 +53,7 @@ class RankingCache:
                 return self._cache[key]
             self._misses += 1
             return None
-    
+
     def set(self, query: str, result: Any, **kwargs) -> None:
         """Cache result for query"""
         key = self._make_key(query, **kwargs)
@@ -64,14 +64,14 @@ class RankingCache:
                 if len(self._cache) >= self._capacity:
                     self._cache.popitem(last=False)
             self._cache[key] = result
-    
+
     def clear(self) -> None:
         """Clear the cache"""
         with self._lock:
             self._cache.clear()
             self._hits = 0
             self._misses = 0
-    
+
     def stats(self) -> dict[str, Any]:
         """Get cache statistics"""
         total = self._hits + self._misses
@@ -86,7 +86,7 @@ class RankingCache:
 
 
 # Singleton instance
-_ranking_cache_instance: Optional[RankingCache] = None
+_ranking_cache_instance: RankingCache | None = None
 
 
 def get_ranking_cache(capacity: int = 1000) -> RankingCache:

@@ -497,7 +497,7 @@ class URLRanker:
         content_embs = self.embedding_cache.encode_batch(contents)
 
         # Calculate similarities
-        for i, (result, content_emb) in enumerate(zip(results, content_embs, strict=False)):
+        for _i, (result, content_emb) in enumerate(zip(results, content_embs, strict=False)):
             if content_emb is not None:
                 similarity = self.embedding_cache.cosine_similarity(query_emb, content_emb)
                 result.relevance_score = (similarity + 1) / 2  # Normalize to 0-1

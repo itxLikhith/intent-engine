@@ -204,7 +204,7 @@ class SearXNGClient:
                 corrections=data.get("corrections", []),
                 infoboxes=data.get("infoboxes", []),
                 processing_time=data.get("search_duration", 0.0),
-                engines=list(set(r.engine for r in results)),
+                engines=list({r.engine for r in results}),
             )
 
             # Cache the response

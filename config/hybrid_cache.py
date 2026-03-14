@@ -17,11 +17,11 @@ import hashlib
 import logging
 import os
 import threading
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
-from config.optimized_cache import LRUCache, OptimizedEmbeddingCache
+from config.optimized_cache import LRUCache
 from config.redis_cache import RedisCache, get_redis_cache
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class HybridEmbeddingCache:
         self.local_cache = LRUCache(capacity=local_capacity)
 
         # L2: Redis cache (optional)
-        self.redis_cache: Optional[RedisCache] = None
+        self.redis_cache: RedisCache | None = None
         if self.use_redis:
             self.redis_cache = get_redis_cache()
             if self.redis_cache is None:
@@ -115,7 +115,7 @@ class HybridEmbeddingCache:
         text_hash = hashlib.md5(text.encode()).hexdigest()
         return f"embedding:{self.model_name}:{text_hash}"
 
-    def encode_text(self, text: str, use_cache: bool = True) -> Optional[np.ndarray]:
+    def encode_text(self, text: str, use_cache: bool = True) -> np.ndarray | None:
         """
         Encode single text to embedding with two-tier caching.
 
@@ -166,7 +166,7 @@ class HybridEmbeddingCache:
 
         return embedding
 
-    def encode_batch(self, texts: List[str], use_cache: bool = True) -> List[np.ndarray]:
+    def encode_batch(self, texts: list[str], use_cache: bool = True) -> list[np.ndarray]:
         """
         Encode multiple texts with two-tier caching.
 
@@ -180,9 +180,9 @@ class HybridEmbeddingCache:
         if not texts:
             return []
 
-        results: List[Optional[np.ndarray]] = [None] * len(texts)
-        texts_to_encode: List[str] = []
-        indices_to_encode: List[int] = []
+        results: list[np.ndarray | None] = [None] * len(texts)
+        texts_to_encode: list[str] = []
+        indices_to_encode: list[int] = []
 
         # Check caches for all texts
         for i, text in enumerate(texts):
@@ -225,7 +225,7 @@ class HybridEmbeddingCache:
                 )
 
                 # Store results and cache
-                for idx, embedding in zip(indices_to_encode, embeddings):
+                for idx, embedding in zip(indices_to_encode, embeddings, strict=False):
                     result = embedding.astype(np.float32)
                     results[idx] = result
 
@@ -240,7 +240,7 @@ class HybridEmbeddingCache:
             except Exception as e:
                 logger.error(f"Error encoding batch: {e}")
                 # Fallback to individual encoding
-                for idx, text in zip(indices_to_encode, texts_to_encode):
+                for idx, text in zip(indices_to_encode, texts_to_encode, strict=False):
                     results[idx] = self.encode_text(text, use_cache)
 
         # Replace any remaining None placeholders
@@ -250,7 +250,7 @@ class HybridEmbeddingCache:
 
         return results
 
-    def _compute_embedding(self, text: str) -> Optional[np.ndarray]:
+    def _compute_embedding(self, text: str) -> np.ndarray | None:
         """Compute embedding for text."""
         if self.model is None:
             return np.random.rand(384).astype(np.float32)
@@ -274,7 +274,7 @@ class HybridEmbeddingCache:
         dot_product = np.dot(vec1, vec2)
         return float(np.clip(dot_product, -1.0, 1.0))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         total = self.hits_l1 + self.hits_l2 + self.misses
         hit_rate_l1 = self.hits_l1 / total if total > 0 else 0
@@ -318,7 +318,7 @@ class HybridEmbeddingCache:
 
 
 # Global instance
-_embedding_cache_instance: Optional[HybridEmbeddingCache] = None
+_embedding_cache_instance: HybridEmbeddingCache | None = None
 _init_lock = threading.Lock()
 
 

@@ -17,9 +17,10 @@ import json
 import logging
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from config.redis_cache import RedisCache, get_redis_cache
 
@@ -60,7 +61,7 @@ class HybridQueryCache:
         self,
         max_size: int = 1000,
         default_ttl_seconds: float = 300,
-        redis_ttl_seconds: Optional[float] = None,
+        redis_ttl_seconds: float | None = None,
         use_redis: bool = True,
         name: str = "default",
     ):
@@ -81,11 +82,11 @@ class HybridQueryCache:
         self.use_redis = use_redis and os.getenv("REDIS_ENABLED", "false").lower() == "true"
 
         # L1: Local cache
-        self.cache: Dict[str, CacheEntry] = {}
+        self.cache: dict[str, CacheEntry] = {}
         self.lock = threading.RLock()
 
         # L2: Redis cache
-        self.redis_cache: Optional[RedisCache] = None
+        self.redis_cache: RedisCache | None = None
         if self.use_redis:
             self.redis_cache = get_redis_cache()
             if self.redis_cache is None:
@@ -137,7 +138,7 @@ class HybridQueryCache:
 
     def _make_key(self, *args, **kwargs) -> str:
         """Create cache key from arguments"""
-        key_data = {"args": args, "kwargs": {k: v for k, v in sorted(kwargs.items())}}
+        key_data = {"args": args, "kwargs": dict(sorted(kwargs.items()))}
         key_str = json.dumps(key_data, sort_keys=True, default=str)
         return f"cache:{self.name}:{hashlib.md5(key_str.encode()).hexdigest()}"
 
@@ -145,7 +146,7 @@ class HybridQueryCache:
         """Convert local key to Redis key"""
         return f"cache:{self.name}:{local_key}"
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get value from cache"""
         # Check L1 first
         with self.lock:
@@ -182,7 +183,7 @@ class HybridQueryCache:
         self.stats["misses"] += 1
         return None
 
-    def set(self, key: str, value: Any, ttl_seconds: Optional[float] = None) -> None:
+    def set(self, key: str, value: Any, ttl_seconds: float | None = None) -> None:
         """Store value in cache"""
         ttl_local = ttl_seconds if ttl_seconds is not None else self.default_ttl_seconds
         ttl_redis = self.redis_ttl_seconds
@@ -209,7 +210,7 @@ class HybridQueryCache:
         self,
         key: str,
         compute_func: Callable[[], Any],
-        ttl_seconds: Optional[float] = None,
+        ttl_seconds: float | None = None,
     ) -> Any:
         """Get from cache or compute and store"""
         cached = self.get(key)
@@ -270,7 +271,7 @@ class HybridQueryCache:
 
         logger.info(f"HybridQueryCache '{self.name}' cleared")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics"""
         with self.lock:
             total_requests = self.stats["hits_l1"] + self.stats["hits_l2"] + self.stats["misses"]
@@ -299,10 +300,10 @@ class HybridQueryCache:
 import os
 
 # Global cache instances for different operations
-_intent_extraction_cache: Optional[HybridQueryCache] = None
-_ranking_cache: Optional[HybridQueryCache] = None
-_url_analysis_cache: Optional[HybridQueryCache] = None
-_ad_matching_cache: Optional[HybridQueryCache] = None
+_intent_extraction_cache: HybridQueryCache | None = None
+_ranking_cache: HybridQueryCache | None = None
+_url_analysis_cache: HybridQueryCache | None = None
+_ad_matching_cache: HybridQueryCache | None = None
 _cache_lock = threading.Lock()
 
 
@@ -362,7 +363,7 @@ def get_ad_matching_cache() -> HybridQueryCache:
     return _ad_matching_cache
 
 
-def get_all_cache_stats() -> Dict[str, Dict[str, Any]]:
+def get_all_cache_stats() -> dict[str, dict[str, Any]]:
     """Get statistics for all caches"""
     return {
         "intent_extraction": get_intent_extraction_cache().get_stats(),
@@ -383,8 +384,8 @@ def clear_all_caches() -> None:
 
 def cached(
     cache_instance: HybridQueryCache,
-    ttl_seconds: Optional[float] = None,
-    key_func: Optional[Callable] = None,
+    ttl_seconds: float | None = None,
+    key_func: Callable | None = None,
 ):
     """Decorator to cache function results"""
 

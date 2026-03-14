@@ -180,7 +180,7 @@ class AuditTrailManager:
         stats = {
             "timestamp": datetime.utcnow().isoformat(),
             "total_events": total_events,
-            "events_by_type": {event_type: count for event_type, count in event_counts},
+            "events_by_type": dict(event_counts),
             "daily_counts": [{"date": str(date), "count": count} for date, count in daily_counts],
             "recent_activity": len(self.get_recent_events(hours=24)),
         }

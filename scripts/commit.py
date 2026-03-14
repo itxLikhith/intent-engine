@@ -68,7 +68,7 @@ def guess_commit_type(files):
     config_keywords = [".yml", ".yaml", ".toml", ".ini", ".github/", ".gitignore"]
     code_keywords = [".py", ".js", ".ts", ".jsx", ".tsx", ".rs", ".go", ".java"]
 
-    scores = {t: 0 for t in COMMIT_TYPES}
+    scores = dict.fromkeys(COMMIT_TYPES, 0)
 
     for f in files:
         f_lower = f.lower()

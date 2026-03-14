@@ -1723,7 +1723,7 @@ async def track_click(click_data: ClickTrackingCreate, db: Session = Depends(get
     if not ad:
         raise HTTPException(status_code=404, detail="Ad not found")
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     db_click = DbClickTracking(
         ad_id=click_data.ad_id,
@@ -1731,7 +1731,7 @@ async def track_click(click_data: ClickTrackingCreate, db: Session = Depends(get
         ip_hash=click_data.ip_hash,
         user_agent_hash=click_data.user_agent_hash,
         referring_url=click_data.referring_url,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
     )
     db.add(db_click)
     db.commit()

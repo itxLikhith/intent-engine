@@ -333,7 +333,7 @@ class EmbeddingService:
 
 
 # Global singleton instance
-_embedding_service_instance: Optional[EmbeddingService] = None
+_embedding_service_instance: EmbeddingService | None = None
 _embedding_service_lock = threading.Lock()
 
 

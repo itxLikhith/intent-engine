@@ -113,7 +113,7 @@ class ServiceScoringEngine:
         # Ensure we have the right number of weights
         if len(scores) != len(weights):
             # Adjust weights if needed
-            adjusted_weights = [w for w in weights[: len(scores)]]
+            adjusted_weights = list(weights[: len(scores)])
             remaining_weight = 1.0 - sum(adjusted_weights)
             if remaining_weight > 0 and len(adjusted_weights) > 0:
                 adjusted_weights[0] += remaining_weight

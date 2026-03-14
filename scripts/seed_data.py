@@ -455,7 +455,7 @@ def seed_creative_assets(db: Session, ads: list[Ad]) -> list[CreativeAsset]:
     logger.info("Seeding creative assets...")
 
     assets_data = []
-    for i, ad in enumerate(ads):
+    for _i, ad in enumerate(ads):
         if ad.creative_format == "banner":
             assets_data.append(
                 {
