@@ -10,7 +10,7 @@ services:
           sleep 2
         done &&
         echo 'Running database initialization...' &&
-        python /app/init_db_standalone.py &&
+        python /app/scripts/init_db_standalone.py &&
         echo 'Running SQL migrations...' &&
         psql -h postgres -U intent_user -d intent_engine -f /app/migrations/001_create_missing_tables.sql || true &&
         psql -h postgres -U intent_user -d intent_engine -f /app/migrations/002_fix_click_tracking.sql || true &&
