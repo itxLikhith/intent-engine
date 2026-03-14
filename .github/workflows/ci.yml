@@ -260,13 +260,13 @@ jobs:
       # FIX: Initialize DB using standalone script to avoid SQLAlchemy metadata caching issues
       - name: Initialize database
         run: |
-          docker compose exec -T intent-engine-api python init_db_standalone.py
-          docker compose exec -T intent-engine-api python seed_sample_data.py
+          docker compose exec -T intent-engine-api python scripts/init_db_standalone.py
+          docker compose exec -T intent-engine-api python scripts/seed_sample_data.py
 
       - name: Run integration tests
         run: |
-          pip install requests pytest
-          pytest tests/comprehensive_test.py -v
+          pip install requests pytest pytest-cov
+          pytest tests/comprehensive_test.py -v --no-cov
           python tests/api_integration_test.py
           # Only run workflow test if it exists
           if [ -f "test_complete_workflow.py" ]; then python test_complete_workflow.py; fi
