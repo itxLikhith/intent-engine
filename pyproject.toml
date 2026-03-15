@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "intent-engine"
-version = "0.3.0"
+version = "2.0.0"
 description = "A privacy-first, intent-driven advertising platform for search, service recommendation, and ad matching"
 readme = "README.md"
 license = { text = "MIT" }
@@ -136,6 +136,12 @@ major_version_zero = true
 changelog_file = "CHANGELOG.md"
 changelog_incremental = true
 changelog_start_version = "0.1.0"
+version_files = [
+    "__init__.py:__version__",
+    "__version__.py:__version__",
+    "README.md:version-",
+    "README.md:v"
+]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
