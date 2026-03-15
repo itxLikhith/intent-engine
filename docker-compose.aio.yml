@@ -1,0 +1,153 @@
+# =============================================================================
+# Intent Engine - All-in-One Production Container
+# =============================================================================
+# This compose file runs the entire Intent Engine stack in a SINGLE container
+# Services included:
+#   - PostgreSQL 15 (Database)
+#   - Redis/Valkey (Cache)
+#   - SearXNG (Privacy search)
+#   - Intent Engine API (FastAPI)
+#   - Nginx (Reverse proxy)
+#
+# Ports exposed:
+#   - 80: Main API (via nginx)
+#   - 5432: PostgreSQL (optional, for external access)
+#   - 8080: Direct SearXNG access (optional)
+# =============================================================================
+
+services:
+  intent-engine-aio:
+    build:
+      context: .
+      dockerfile: Dockerfile.aio
+    container_name: intent-engine-aio
+    ports:
+      # Main API endpoint
+      - "80:80"
+      # PostgreSQL (optional - comment out in production if not needed externally)
+      - "5432:5432"
+      # SearXNG direct access (optional)
+      - "8080:8080"
+      # Prometheus metrics (optional)
+      - "9090:9090"
+    environment:
+      # Application
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - WORKERS=2
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      
+      # Database
+      - POSTGRES_USER=intent_user
+      - POSTGRES_PASSWORD=intent_secure_password_change_in_prod
+      - POSTGRES_DB=intent_engine
+      - PGDATA=/var/lib/postgresql/data
+      
+      # API Database URL (internal)
+      - DATABASE_URL=postgresql://intent_user:intent_secure_password_change_in_prod@127.0.0.1:5432/intent_engine
+      
+      # Redis
+      - REDIS_ENABLED=true
+      - REDIS_URL=redis://127.0.0.1:6379/0
+      
+      # SearXNG
+      - SEARXNG_BASE_URL=http://127.0.0.1:8080
+      - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY:-}
+      
+      # Security
+      - SECRET_KEY=${SECRET_KEY:-change-this-to-a-secure-random-string-in-production}
+      - ENABLE_CORS=true
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8080,https://yourdomain.com
+      - CORS_ALLOW_CREDENTIALS=true
+      
+      # Rate Limiting
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_DEFAULT=100/minute
+      - RATE_LIMIT_STRICT=10/minute
+      
+      # Database Pool
+      - DATABASE_POOL_SIZE=10
+      - DATABASE_MAX_OVERFLOW=20
+      - DATABASE_POOL_TIMEOUT=30
+      - DATABASE_POOL_RECYCLE=1800
+      
+      # Redis Pool
+      - REDIS_MAX_CONNECTIONS=50
+      - REDIS_TIMEOUT=5.0
+      
+      # ML Models
+      - MODEL_CACHE_DIR=/app/data/models
+      - TRANSFORMERS_CACHE=/app/data/transformers
+      - SENTENCE_TRANSFORMERS_DEVICE=cpu
+      
+      # Privacy & Compliance
+      - ENABLE_ANONYMIZATION=true
+      - CONSENT_REQUIRED=true
+      - SESSION_DATA_RETENTION_HOURS=8
+      
+      # Monitoring
+      - ENABLE_METRICS=true
+      - HEALTH_CHECK_INTERVAL=30
+      - HEALTH_CHECK_TIMEOUT=10
+    volumes:
+      # Persistent data
+      - intent-aio-postgres:/var/lib/postgresql/data
+      - intent-aio-redis:/app/data/redis
+      - intent-aio-searxng:/app/data/searxng
+      # Application data
+      - intent-aio-app-data:/app/data
+      # Logs
+      - intent-aio-logs:/var/log/nginx
+      # Optional: Mount searxng config
+      - ./searxng:/etc/searxng:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '2.0'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 120s
+    stop_grace_period: 60s
+    stop_signal: SIGTERM
+
+# Named volumes for data persistence
+volumes:
+  intent-aio-postgres:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/postgres
+  intent-aio-redis:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis
+  intent-aio-searxng:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/searxng
+  intent-aio-app-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/app
+  intent-aio-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/logs

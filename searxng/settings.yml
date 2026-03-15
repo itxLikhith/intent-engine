@@ -12,7 +12,7 @@ general:
 server:
   port: 8080
   bind_address: "0.0.0.0"
-  secret_key: "${SEARXNG_SECRET_KEY:-}"
+  secret_key: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
   limiter: false
   image_proxy: true
   method: "POST"

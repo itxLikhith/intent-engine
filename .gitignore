@@ -1,8 +1,8 @@
 # =============================================================================
 # Intent Engine - Professional .gitignore
 # =============================================================================
-# A privacy-first, intent-driven advertising platform
-# Python 3.11+ | FastAPI | PostgreSQL | Redis | Docker
+# Privacy-first Intent-Driven Advertising Platform
+# Python 3.11+ | FastAPI | PostgreSQL | Redis | Go | Docker
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -12,11 +12,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.pyd
+*.pyc
+*.pyo
 .Python
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
+*.spec
 
 # Build artifacts
 build/
@@ -32,19 +36,18 @@ sdist/
 var/
 wheels/
 *.egg/
-*.spec
 
 # -----------------------------------------------------------------------------
-# Virtual Environments (keep venv/ for local dev documentation)
+# Virtual Environments
 # -----------------------------------------------------------------------------
 venv/
 .venv/
 env/
 ENV/
-.ENV/
 env.bak/
 venv.bak/
 .pyvenv.cfg
+pip-selfcheck.json
 
 # -----------------------------------------------------------------------------
 # IDE / Editor
@@ -53,16 +56,16 @@ venv.bak/
 .vscode/
 *.code-workspace
 .history/
+*.code-snippets
 
-# PyCharm / IntelliJ
+# PyCharm / IntelliJ / JetBrains
 .idea/
 *.iml
 *.iws
-*.pyc
-*.pyo
-*.pyd
+*.ipr
+.idea_modules/
 
-# Vim / Emacs
+# Vim / Emacs / Nano
 *.swp
 *.swo
 *~
@@ -70,6 +73,12 @@ venv.bak/
 *.bak
 *.orig
 *.rej
+\#*\#
+.*.swp
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
 
 # -----------------------------------------------------------------------------
 # Operating System Files
@@ -95,6 +104,7 @@ ehthumbs.db
 [Tt]mp/
 desktop.ini
 $RECYCLE.BIN/
+System Volume Information/
 
 # Linux
 .Trashes/
@@ -110,6 +120,13 @@ logs/
 *.seed
 *.pid.lock
 *.lock
+*.stderr
+*.stdout
+
+# Application logs
+api_logs.txt
+error.txt
+debug.log
 
 # -----------------------------------------------------------------------------
 # Environment Variables & Secrets
@@ -120,6 +137,7 @@ logs/
 .env.development
 .env.staging
 .env.production
+.env.test
 *.env
 !.env.example
 
@@ -133,6 +151,9 @@ id_rsa
 id_rsa.pub
 *.p12
 *.pfx
+*.jks
+credentials/
+passwords.txt
 
 # -----------------------------------------------------------------------------
 # Testing & Coverage
@@ -156,6 +177,7 @@ test_*.py
 test-results/
 pytest.xml
 test-reports/
+.nyc_output/
 
 # -----------------------------------------------------------------------------
 # Model Caches & Machine Learning Artifacts
@@ -178,15 +200,20 @@ test-reports/
 *.npy
 *.npz
 *.safetensors
+*.gguf
+*.ggml
 
 # Model cache directories
 model_cache/
+models/
 */cache/
 .huggingface/
 .cache/
 transformers/
 sentence_transformers/
 torch/
+hub/
+.onnx/
 
 # -----------------------------------------------------------------------------
 # Jupyter Notebooks
@@ -194,6 +221,7 @@ torch/
 .ipynb_checkpoints
 *.ipynb
 !demos/*.ipynb
+!notebooks/*.ipynb
 
 # -----------------------------------------------------------------------------
 # Type Checking & Linting
@@ -212,6 +240,7 @@ mypy.ini
 
 # Black
 .black
+.black.toml
 
 # isort
 .isort.pkl
@@ -220,12 +249,18 @@ mypy.ini
 # Bandit (security)
 bandit-report.json
 
+# Pylint
+.pylint.d/
+.pylintrc
+
 # -----------------------------------------------------------------------------
 # Database Files (except migrations and schema)
 # -----------------------------------------------------------------------------
 # SQLite databases
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 
@@ -237,6 +272,10 @@ bandit-report.json
 migrations/*.log
 migrations/.lock
 
+# PostgreSQL
+*.dump
+*.sql.gz
+
 # -----------------------------------------------------------------------------
 # Docker & Containerization
 # -----------------------------------------------------------------------------
@@ -246,8 +285,21 @@ docker-compose.override.yml
 docker-compose.prod.yml
 docker-compose.stage.yml
 docker-compose.dev.yml
+docker-compose.local.yml
 Dockerfile.light
 *.dockerfile
+
+# Docker volumes (data persistence)
+postgres_data/
+redis_data/
+valkey_data/
+searxng_data/
+grafana_data/
+prometheus_data/
+data/
+
+# Docker runtime
+.docker/
 
 # -----------------------------------------------------------------------------
 # Documentation Build Artifacts
@@ -257,6 +309,7 @@ docs/build/
 docs/.doctrees/
 *.pdf
 *.epub
+*.rst.html
 
 # -----------------------------------------------------------------------------
 # Node.js (if used for frontend tooling)
@@ -268,6 +321,9 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+bun.lockb
+.npm/
+.yarn/
 
 # -----------------------------------------------------------------------------
 # Generated Reports & Temporary Files
@@ -280,19 +336,20 @@ CHANGELOG.md
 *_STATUS.md
 *_QUICKSTART.md
 *_REPORT.md
+*_COMPLETE.md
 *.md.bak
 
 # Load testing results
 stress_test_results_*.json
-api_logs.txt
 locust_logs/
+k6_results/
 
 # Temporary files
 *.tmp
 *.temp
 tmp/
 temp/
-error.txt
+.scratch/
 
 # -----------------------------------------------------------------------------
 # Local Development Overrides
@@ -304,17 +361,15 @@ build_and_push.bat
 build_and_push.sh
 run_local.sh
 run_local.bat
+test_local.sh
+test_local.bat
 
 # Local configuration
 config/local_settings.py
 settings_local.py
 local_settings.py
 local.py
-
-# Data directory (local development)
-data/
-*.db-shm
-*.db-wal
+local_config.py
 
 # Grafana local provisioning (auto-generated)
 grafana/dashboards/*.json
@@ -327,6 +382,7 @@ pgbouncer/userlist.txt
 
 # Monitoring (local only)
 monitoring/
+prometheus_data/
 
 # Bridge (local only)
 bridge/
@@ -334,17 +390,28 @@ bridge/
 # pgAdmin (local only)
 pgadmin/
 
+# Local data directories
+data/postgres/
+data/redis/
+data/searxng/
+data/app/
+data/logs/
+data/bleve/
+data/badger/
+
 # -----------------------------------------------------------------------------
 # CI/CD & GitHub Actions
 # -----------------------------------------------------------------------------
 .github/workflows/*.log
 .github/caches/
+.artifacts/
 
 # -----------------------------------------------------------------------------
 # Commitizen & Git Hooks
 # -----------------------------------------------------------------------------
 .cz.toml
 .gitmessage.local
+.hooks/
 
 # -----------------------------------------------------------------------------
 # Performance & Benchmark Data
@@ -353,6 +420,42 @@ benchmark_results/
 perf_results/
 *.benchmark
 locustfile_*.py
+benchmark_results_*.json
+benchmark_*.csv
+
+# -----------------------------------------------------------------------------
+# Go Language
+# -----------------------------------------------------------------------------
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+cmd/*/main
+
+# Go modules
+go.sum
+vendor/
+
+# Go build cache
+go-build/
+.cache/go-build/
+
+# Go coverage
+coverage.out
+coverage.html
+
+# -----------------------------------------------------------------------------
+# Rust (if used)
+# -----------------------------------------------------------------------------
+/target/
+**/target/
+Cargo.lock
+**/Cargo.lock
 
 # -----------------------------------------------------------------------------
 # Miscellaneous
@@ -363,10 +466,6 @@ locustfile_*.py
 *.swp
 *.swo
 
-# Coverage
-.coverage
-.coverage.xml
-
 # Distribution
 .python-version
 .py-build/
@@ -376,8 +475,83 @@ locustfile_*.py
 
 # mypy
 .mypy_cache/
-.dmypy.json
-dmypy.json
 
 # Pydantic
 .pydantic/
+
+# Ruff
+.ruff_cache/
+
+# Hatch
+.hatch/
+
+# Poetry
+.poetry/
+
+# pip
+pip-selfcheck.json
+
+# -----------------------------------------------------------------------------
+# Intent Engine Specific
+# -----------------------------------------------------------------------------
+# AIO container files (if not needed in repo)
+# Dockerfile.aio
+# docker-compose.aio.yml
+# docker/aio-entrypoint.sh
+# docker/nginx-aio.conf
+
+# Build logs
+build_log.txt
+
+# Query logs
+query_logs/
+
+# Crawl data (auto-generated)
+crawled_data/
+crawl_results/
+
+# Index files (auto-generated)
+*.bleve
+bleve_index/
+search_index/
+
+# Redis dumps
+dump.rdb
+appendonly.aof
+
+# Application state
+.state/
+.cache/
+tmp_state/
+
+# Vector databases
+*.hnsw
+*.index
+faiss_index/
+
+# -----------------------------------------------------------------------------
+# Sensitive Data - NEVER COMMIT
+# -----------------------------------------------------------------------------
+# API Keys
+*_api_key.txt
+*_apikey.txt
+api_keys.json
+
+# Database credentials
+db_password.txt
+database_credentials.json
+
+# SSL/TLS
+ssl/
+certs/
+private/
+
+# Backup archives
+*.backup
+*.bak.gz
+backup_*.tar.gz
+backup_*.zip
+
+# -----------------------------------------------------------------------------
+# End of .gitignore
+# -----------------------------------------------------------------------------

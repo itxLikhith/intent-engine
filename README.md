@@ -5,9 +5,39 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/itxLikhith/intent-engine)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/itxLikhith/intent-engine)
 
-**Latest Release:** v0.2.0 | **Docker Image:** `anony45/intent-engine-api:latest`
+**Latest Release:** v0.3.0 | **Docker Image:** `anony45/intent-engine-api:latest`
+
+---
+
+## 🚀 Quick Start - Search Engine (60 seconds)
+
+**📚 For complete documentation, see [INDEX.md](INDEX.md)**
+
+**Quick Start Guides:**
+- **[Quick Start](docs/getting-started/QUICKSTART.md)** - Complete installation guide (5 min)
+- **[Production Setup](docs/getting-started/README_PRODUCTION.md)** - Production-focused setup (3 min)
+- **[Full Guide](docs/getting-started/README_PRODUCTION_FULL.md)** - Complete deployment guide (10 min)
+
+**Start immediately:**
+
+```bash
+# Clone and start (Linux/Mac)
+git clone git@github.com-work:itxLikhith/intent-engine.git
+cd intent-engine
+./scripts/production_start.sh start
+sleep 60
+curl http://localhost:8000/search -X POST -H "Content-Type: application/json" -d '{"query":"best laptop for programming"}'
+
+# Windows PowerShell
+.\scripts\production_start.ps1 start
+Start-Sleep -Seconds 60
+```
+
+**That's it!** Your privacy-first search engine is running.
+
+---
 
 ## Overview
 
@@ -72,7 +102,7 @@ intent-engine/
 ├── CONTRIBUTING.md         # Contribution guidelines
 ├── docker-compose.yml      # Docker Compose configuration
 ├── Dockerfile              # Docker image definition
-├── LICENSE                 # MIT License
+├── LICENSE                 # Intent Engine Community License
 ├── main.py                 # CLI entry point
 ├── main_api.py             # FastAPI server implementation
 ├── Makefile                # Common development tasks
@@ -509,7 +539,27 @@ Comprehensive documentation is available in the `docs` directory:
 | **[PARENT_DIRECTORY_GUIDE.md](docs/PARENT_DIRECTORY_GUIDE.md)** | Parent directory information |
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+
+This project is licensed under the **Intent Engine Community License (IECL) v1.0** - see the [LICENSE](LICENSE) file for details.
+
+**Key Points:**
+- ✅ Free for Non-Commercial Purposes (personal, educational, academic, internal evaluation)
+- ❌ Commercial use requires separate Commercial License
+- 📧 Contact: anony45.omnipresent@proton.me for Commercial Licensing
+
+**Non-Commercial Purposes include:**
+- Personal use
+- Educational purposes
+- Academic research
+- Internal evaluation
+- Open research experimentation
+
+**Commercial Use (requires separate license):**
+- Selling the Software
+- Offering as a hosted service (SaaS)
+- Integrating into paid products
+- Commercial consulting or client work
+- Any revenue-generating activity
 
 ## Support
 

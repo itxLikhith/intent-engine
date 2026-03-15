@@ -380,7 +380,12 @@ python -m pytest perf_tests/ -v
 
 ## License
 
-MIT License - see the [LICENSE](../LICENSE) file for details.
+This project is licensed under the **Intent Engine Community License (IECL) v1.0** - see the [LICENSE](../LICENSE) file for details.
+
+**Key Points:**
+- ✅ Free for Non-Commercial Purposes (personal, educational, academic, internal evaluation)
+- ❌ Commercial use requires separate Commercial License
+- 📧 Contact: anony45.omnipresent@proton.me for Commercial Licensing
 
 ---
 

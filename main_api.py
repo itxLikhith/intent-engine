@@ -463,9 +463,6 @@ async def startup_event():
     """Initialize resources on startup"""
     logger.info("Starting up Intent Engine API...")
 
-    # Import all modules that define database tables to ensure they're registered with Base.metadata
-    # We need to explicitly access the model classes to ensure they're registered with Base.metadata
-
     # Log the tables that will be created
     logger.info(f"Registered tables: {list(Base.metadata.tables.keys())}")
 
@@ -474,26 +471,48 @@ async def startup_event():
         Base.metadata.create_all(bind=engine, checkfirst=True)
         logger.info("Database tables created successfully")
     except Exception as e:
-        # This can happen if multiple workers try to create tables simultaneously
-        # or if tables already exist - this is safe to ignore
         logger.warning(f"Table creation warning (safe to ignore if tables exist): {str(e)}")
 
-    # Pre-load models to avoid cold start
-    from ads.matcher import get_ad_matcher
-    from extraction.extractor import get_intent_extractor
-    from ranking.ranker import get_intent_ranker
-    from services.recommender import get_service_recommender
+    # Pre-load core search models (gracefully handle failures)
+    try:
+        from extraction.extractor import get_intent_extractor
 
-    get_intent_extractor()
-    get_intent_ranker()
-    get_service_recommender()
-    get_ad_matcher()
+        get_intent_extractor()
+        logger.info("Intent extractor loaded")
+    except Exception as e:
+        logger.warning(f"Could not load intent extractor: {e}")
 
-    from ranking.url_ranker import get_url_ranker
+    try:
+        from ranking.ranker import get_intent_ranker
 
-    get_url_ranker()
+        get_intent_ranker()
+        logger.info("Intent ranker loaded")
+    except Exception as e:
+        logger.warning(f"Could not load intent ranker: {e}")
 
-    logger.info("Models loaded and API ready!")
+    try:
+        from ranking.url_ranker import get_url_ranker
+
+        get_url_ranker()
+        logger.info("URL ranker loaded")
+    except Exception as e:
+        logger.warning(f"Could not load URL ranker: {e}")
+
+    try:
+        from services.recommender import get_service_recommender
+
+        get_service_recommender()
+    except Exception as e:
+        logger.warning(f"Could not load service recommender: {e}")
+
+    try:
+        from ads.matcher import get_ad_matcher
+
+        get_ad_matcher()
+    except Exception as e:
+        logger.warning(f"Could not load ad matcher: {e}")
+
+    logger.info("API ready! Search endpoint: POST /search")
 
 
 async def shutdown_event():

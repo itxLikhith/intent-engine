@@ -120,7 +120,7 @@ intent-engine/
 ├── docker-compose.searxng.yml  # SearXNG Docker Compose
 ├── docker-compose.yml          # Main Docker Compose configuration
 ├── Dockerfile                  # Docker image definition
-├── LICENSE                     # MIT License
+├── LICENSE                     # Intent Engine Community License
 ├── main.py                     # CLI entry point
 ├── main_api.py                 # FastAPI server entry point
 ├── Makefile                    # Makefile for common tasks

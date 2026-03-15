@@ -9,7 +9,7 @@ This document outlines the recommended structure for the parent directory (`inte
 ```
 intent-ads/
 ├── README.md                     # Main project README (copy from intent-engine/)
-├── LICENSE                       # MIT License file
+├── LICENSE                       # Intent Engine Community License file
 ├── .gitignore                    # Git ignore rules (copy from intent-engine/)
 ├── docker-compose.yml            # Root Docker Compose (links to intent-engine/)
 ├── docs/                         # Additional documentation
@@ -43,8 +43,9 @@ intent-ads/
    - Update paths to reference `intent-engine/` subdirectory
    - Add frontend section when available
 
-2. **LICENSE** - Create MIT License file
-   - Use standard MIT License template
+2. **LICENSE** - Copy the Intent Engine Community License
+   - Use the IECL v1.0 from the parent project
+   - Do not change to MIT or other licenses
    - Add copyright year and owner
 
 3. **.gitignore** - Copy from `intent-engine/.gitignore`

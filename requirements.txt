@@ -25,3 +25,4 @@ slowapi==0.1.9  # For rate limiting
 limits==3.6.0  # Rate limiting utilities
 arq==0.25.0
 dataclasses-json==0.6.4
+aiohttp==3.9.1  # For async HTTP health checks
