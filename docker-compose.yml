@@ -114,11 +114,13 @@ services:
       - SETUID
 
   # Go Search API - provides search functionality for Go documentation
+  # Note: This service requires Go source code which is not in this repository
   go-search-api:
     build:
       context: ./go-crawler
       dockerfile: deployments/Dockerfile.api
     container_name: intent-go-search-api
+    profiles: ["go-crawler"]
     ports:
       - "8081:8080"
     environment:
@@ -149,11 +151,13 @@ services:
         condition: service_healthy
 
   # Go Crawler - crawls Go documentation websites
+  # Note: This service requires Go source code which is not in this repository
   go-crawler:
     build:
       context: ./go-crawler
       dockerfile: deployments/Dockerfile.crawler
     container_name: intent-go-crawler
+    profiles: ["go-crawler"]
     environment:
       - REDIS_ADDR=redis:6379
       - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
@@ -181,11 +185,13 @@ services:
         condition: service_healthy
 
   # Go Indexer - indexes crawled content into Bleve search index
+  # Note: This service requires Go source code which is not in this repository
   go-indexer:
     build:
       context: ./go-crawler
       dockerfile: deployments/Dockerfile.indexer
     container_name: intent-go-indexer
+    profiles: ["go-crawler"]
     environment:
       - REDIS_ADDR=redis:6379
       - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
