@@ -113,6 +113,101 @@ services:
       - SETGID
       - SETUID
 
+  # Go Search API - provides search functionality for Go documentation
+  go-search-api:
+    build:
+      context: ./go-crawler
+      dockerfile: deployments/Dockerfile.api
+    container_name: intent-go-search-api
+    ports:
+      - "8081:8080"
+    environment:
+      - BLEVE_PATH=/data/bleve
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
+      - BADGER_PATH=/data/badger
+      - REDIS_ADDR=redis:6379
+    volumes:
+      - go-api-data:/data
+    networks:
+      - intent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Go Crawler - crawls Go documentation websites
+  go-crawler:
+    build:
+      context: ./go-crawler
+      dockerfile: deployments/Dockerfile.crawler
+    container_name: intent-go-crawler
+    environment:
+      - REDIS_ADDR=redis:6379
+      - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
+      - BADGER_PATH=/data/badger
+    volumes:
+      - go-crawler-data:/data
+    networks:
+      - intent-network
+      - searxng
+    restart: unless-stopped
+    command: >
+      ./crawler
+      -redis=redis:6379
+      -postgres=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
+      -badger=/data/badger
+      -seed=https://go.dev,https://golang.org
+      -max-pages=100
+      -max-depth=2
+      -concurrency=3
+      -delay=2000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Go Indexer - indexes crawled content into Bleve search index
+  go-indexer:
+    build:
+      context: ./go-crawler
+      dockerfile: deployments/Dockerfile.indexer
+    container_name: intent-go-indexer
+    environment:
+      - REDIS_ADDR=redis:6379
+      - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
+      - BLEVE_PATH=/data/bleve
+    volumes:
+      - go-indexer-data:/data
+    networks:
+      - intent-network
+    restart: unless-stopped
+    command: >
+      ./indexer
+      -redis=redis:6379
+      -postgres=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
+      -bleve=/data/bleve
+      -batch-size=50
+      -interval=60
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   redis:
     image: docker.io/valkey/valkey:8-alpine
     container_name: intent-redis
@@ -262,3 +357,6 @@ volumes:
   valkey-data:
   prometheus_data:
   grafana_data:
+  go-api-data:
+  go-crawler-data:
+  go-indexer-data:

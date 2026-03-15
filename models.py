@@ -636,6 +636,7 @@ class UnifiedSearchRequest(BaseModel):
     time_range: str | None = None
     extract_intent: bool = True
     rank_results: bool = True
+    max_results: int = 20
     weights: dict[str, float] | None = None
     min_privacy_score: float | None = None
     exclude_big_tech: bool = False
@@ -685,3 +686,4 @@ class UnifiedSearchResponse(BaseModel):
     results_ranked: int = 0
     privacy_enhanced: bool = True
     tracking_blocked: bool = True
+    metrics: dict[str, Any] = {}

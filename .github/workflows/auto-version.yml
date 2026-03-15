@@ -15,35 +15,38 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
-    
+
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install Commitizen
         run: pip install commitizen
-      
+
       - name: Get last tag
         id: last_tag
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Remove 'v' prefix if present for comparison
+          LAST_TAG_CLEAN=$(echo "$LAST_TAG" | sed 's/^v//')
           echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
-          echo "Last tag: $LAST_TAG"
-      
+          echo "last_tag_clean=$LAST_TAG_CLEAN" >> $GITHUB_OUTPUT
+          echo "Last tag: $LAST_TAG (clean: $LAST_TAG_CLEAN)"
+
       - name: Analyze commits since last tag
         id: commits
         run: |
           LAST_TAG="${{ steps.last_tag.outputs.last_tag }}"
-          
+
           if [ -z "$LAST_TAG" ]; then
             echo "No tags found, checking all commits"
             COMMITS=$(git log --pretty=format:"%s" --reverse)
@@ -51,15 +54,15 @@ jobs:
             echo "Checking commits since $LAST_TAG"
             COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s" --reverse)
           fi
-          
+
           echo "commits<<EOF" >> $GITHUB_OUTPUT
           echo "$COMMITS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          
+
           # Determine bump type
           BUMP_TYPE="skip"
           HAS_BREAKING=false
-          
+
           while IFS= read -r commit; do
             # Check for breaking changes
             if echo "$commit" | grep -qE "(BREAKING CHANGE|^[a-z]+!:)"; then
@@ -67,14 +70,14 @@ jobs:
               BUMP_TYPE="major"
               break
             fi
-            
+
             # Check for features (minor bump)
             if echo "$commit" | grep -qE "^feat(\(.+\))?:|^feat:"; then
               if [ "$BUMP_TYPE" != "major" ]; then
                 BUMP_TYPE="minor"
               fi
             fi
-            
+
             # Check for fixes/perf (patch bump)
             if echo "$commit" | grep -qE "^(fix|perf)(\(.+\))?:|^(fix|perf):"; then
               if [ "$BUMP_TYPE" == "skip" ]; then
@@ -82,22 +85,22 @@ jobs:
               fi
             fi
           done <<< "$COMMITS"
-          
+
           # Default to patch if no conventional commits found but there are changes
           if [ "$BUMP_TYPE" == "skip" ] && [ -n "$COMMITS" ]; then
             echo "No conventional commits detected, defaulting to patch"
             BUMP_TYPE="patch"
           fi
-          
+
           echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
           echo "Determined bump type: $BUMP_TYPE"
-      
+
       - name: Skip if no version bump needed
         if: steps.commits.outputs.bump_type == 'skip'
         run: |
           echo "No commits or no changes since last tag, skipping version bump"
           exit 0
-      
+
       - name: Configure git
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -107,36 +110,37 @@ jobs:
         id: version_check
         run: |
           LAST_TAG="${{ steps.last_tag.outputs.last_tag }}"
-          
+          LAST_TAG_CLEAN="${{ steps.last_tag.outputs.last_tag_clean }}"
+
           # Get current version from pyproject.toml
           CURRENT_VERSION=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
           echo "Current version in pyproject.toml: $CURRENT_VERSION"
-          echo "Last tag: $LAST_TAG"
-          
+          echo "Last tag: $LAST_TAG (clean: $LAST_TAG_CLEAN)"
+
           # If last tag exists and is different from current version, update pyproject.toml
-          if [ -n "$LAST_TAG" ] && [ "$LAST_TAG" != "$CURRENT_VERSION" ]; then
+          if [ -n "$LAST_TAG_CLEAN" ] && [ "$LAST_TAG_CLEAN" != "$CURRENT_VERSION" ]; then
             echo "⚠️ Version mismatch detected!"
-            echo "Updating pyproject.toml version from $CURRENT_VERSION to $LAST_TAG"
-            sed -i "s/^version = \".*\"/version = \"$LAST_TAG\"/" pyproject.toml
+            echo "Updating pyproject.toml version from $CURRENT_VERSION to $LAST_TAG_CLEAN"
+            sed -i "s/^version = \".*\"/version = \"$LAST_TAG_CLEAN\"/" pyproject.toml
             git add pyproject.toml
-            git commit -m "chore: sync version with last tag $LAST_TAG [skip ci]" || true
-            CURRENT_VERSION="$LAST_TAG"
+            git commit -m "chore: sync version with last tag $LAST_TAG_CLEAN [skip ci]" || true
+            CURRENT_VERSION="$LAST_TAG_CLEAN"
           fi
-          
+
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          
+
           # Check if commits since last tag warrant a version bump
           if [ -n "$LAST_TAG" ]; then
             COMMITS_SINCE_TAG=$(git log $LAST_TAG..HEAD --pretty=format:"%s" | wc -l)
             echo "Commits since last tag: $COMMITS_SINCE_TAG"
-            
+
             if [ "$COMMITS_SINCE_TAG" -eq 0 ]; then
               echo "No new commits since last tag, skipping version bump"
               echo "skip=true" >> $GITHUB_OUTPUT
               exit 0
             fi
           fi
-          
+
           echo "skip=false" >> $GITHUB_OUTPUT
 
       - name: Skip if no version bump needed
@@ -151,67 +155,97 @@ jobs:
         run: |
           BUMP_TYPE="${{ steps.commits.outputs.bump_type }}"
           CURRENT_VERSION="${{ steps.version_check.outputs.current_version }}"
-          
+
           echo "Bumping version: $CURRENT_VERSION with $BUMP_TYPE increment"
-          
+
           # Run commitizen bump
-          cz bump --increment $BUMP_TYPE --yes
+          cz bump --increment $BUMP_TYPE --yes --changelog-to-stdout > /tmp/changelog_entry.txt || {
+            echo "Commitizen bump failed, trying manual update"
+            # Fallback: manually update version
+            MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+            MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+            PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+            
+            if [ "$BUMP_TYPE" == "major" ]; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+            elif [ "$BUMP_TYPE" == "minor" ]; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+            
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+            sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+            sed -i "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" __version__.py
+            echo "Manually bumped to $NEW_VERSION"
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          }
+
+          # Get new version from pyproject.toml if commitizen succeeded
+          if [ -z "${{ steps.bump.outputs.new_version }}" ]; then
+            NEW_VERSION=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          fi
           
-          # Get new version from pyproject.toml
           NEW_VERSION=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "Version bumped to: $NEW_VERSION"
-          
+
           # Check if tag already exists
-          if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
-            echo "⚠️ Tag $NEW_VERSION already exists!"
+          if git rev-parse "v$NEW_VERSION" >/dev/null 2>&1; then
+            echo "⚠️ Tag v$NEW_VERSION already exists!"
             echo "This version was already released. Skipping tag creation."
             echo "tag_exists=true" >> $GITHUB_OUTPUT
           else
             echo "tag_exists=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Push version changes
         if: steps.bump.outputs.new_version != '' && steps.bump.outputs.tag_exists != 'true'
         run: |
           git add -A
           git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]" || echo "No changes to commit"
-          
+
           # Check if tag already exists (double-check)
           NEW_VERSION="${{ steps.bump.outputs.new_version }}"
-          if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
-            echo "⚠️ Tag $NEW_VERSION already exists!"
+          if git rev-parse "v$NEW_VERSION" >/dev/null 2>&1; then
+            echo "⚠️ Tag v$NEW_VERSION already exists!"
             echo "Removing existing tag and recreating..."
-            git tag -d "$NEW_VERSION" || true
-            git push origin :refs/tags/$NEW_VERSION || true
+            git tag -d "v$NEW_VERSION" || true
+            git push origin :refs/tags/v$NEW_VERSION || true
           fi
-          
+
           git push origin HEAD:$(git rev-parse --abbrev-ref HEAD)
           git push --tags
-          echo "✓ Pushed version $NEW_VERSION"
-      
+          echo "✓ Pushed version v$NEW_VERSION"
+
       - name: Skip push (tag already exists)
         if: steps.bump.outputs.new_version != '' && steps.bump.outputs.tag_exists == 'true'
         run: |
-          echo "⚠️ Version ${{ steps.bump.outputs.new_version }} already tagged, skipping push"
+          echo "⚠️ Version v${{ steps.bump.outputs.new_version }} already tagged, skipping push"
           echo "This is expected if the workflow ran multiple times for the same commits"
-      
+
       - name: Create GitHub Release
         if: steps.bump.outputs.new_version != '' && steps.bump.outputs.tag_exists != 'true'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.bump.outputs.new_version }}
-          name: Release ${{ steps.bump.outputs.new_version }}
-          body: |
-            ## Changes in this release
-
-            Auto-generated release for version ${{ steps.bump.outputs.new_version }}
-
-            ### Commits since last release:
-            ${{ steps.commits.outputs.commits }}
+          name: Release v${{ steps.bump.outputs.new_version }}
+          body_path: /tmp/changelog_entry.txt
           draft: false
           prerelease: ${{ contains(steps.bump.outputs.new_version, 'alpha') || contains(steps.bump.outputs.new_version, 'beta') || contains(steps.bump.outputs.new_version, 'rc') }}
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Auto-Version Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Last tag: ${{ steps.last_tag.outputs.last_tag }}"
+          echo "- Bump type: ${{ steps.commits.outputs.bump_type }}"
+          echo "- New version: v${{ steps.bump.outputs.new_version }}"
+          echo "- Tag exists: ${{ steps.bump.outputs.tag_exists }}"

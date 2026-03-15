@@ -1,0 +1,18 @@
+# Crawler Configuration
+redis:
+  addr: "redis:6379"
+
+postgres:
+  dsn: "postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable"
+
+badger:
+  path: "/data/badger"
+
+crawler:
+  seed_urls:
+    - "https://go.dev"
+    - "https://golang.org"
+  max_pages: 100
+  max_depth: 2
+  concurrency: 3
+  delay_ms: 2000

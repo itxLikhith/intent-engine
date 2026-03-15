@@ -20,12 +20,13 @@ docs/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 **New to Intent Engine? Start here:**
 
 | Document | Description | Time |
 |----------|-------------|------|
+| [README.md](README.md) | Main README with overview | 3 min |
 | [Quick Start](docs/getting-started/QUICKSTART.md) | Complete installation guide | 5 min |
 | [Production Setup](docs/getting-started/README_PRODUCTION.md) | Production-focused setup | 3 min |
 | [Full Production Guide](docs/getting-started/README_PRODUCTION_FULL.md) | Complete deployment guide | 10 min |
@@ -33,15 +34,23 @@ docs/
 
 ### Start the Search Engine (60 seconds)
 
+**Linux/Mac:**
 ```bash
-# Linux/Mac
 ./scripts/production_start.sh start
 sleep 60
 curl http://localhost:8000/search -X POST -H "Content-Type: application/json" -d '{"query":"best laptop for programming"}'
+```
 
-# Windows PowerShell
+**Windows PowerShell:**
+```powershell
 .\scripts\production_start.ps1 start
 Start-Sleep -Seconds 60
+curl http://localhost:8000/search -Method POST -ContentType "application/json" -Body '{"query":"best laptop for programming"}'
+```
+
+**Verify it's working:**
+```bash
+curl http://localhost:8000/health
 ```
 
 ---
@@ -88,7 +97,9 @@ Start-Sleep -Seconds 60
 - **[COMPREHENSIVE_GUIDE.md](docs/reference/COMPREHENSIVE_GUIDE.md)** - Comprehensive guide
 - **[CONFIGURATION_CHANGES.md](docs/reference/CONFIGURATION_CHANGES.md)** - Configuration changes
 - **[VERSIONING.md](docs/reference/VERSIONING.md)** - Versioning policy
-- **[CHANGELOG.md](docs/reference/CHANGELOG.md)** - Changelog
+- **[CHANGELOG.md](docs/reference/CHANGELOG.md)** - Detailed changelog
+- **[VERSIONING_AND_RELEASES.md](docs/reference/VERSIONING_AND_RELEASES.md)** - Versioning and release guide
+- **[VERSIONING_FIX_SUMMARY.md](docs/reference/VERSIONING_FIX_SUMMARY.md)** - Latest versioning fixes
 - **[PARENT_DIRECTORY_GUIDE.md](docs/reference/PARENT_DIRECTORY_GUIDE.md)** - Parent directory guide
 
 ### Testing & Performance (`docs/testing/`)
@@ -104,21 +115,52 @@ Start-Sleep -Seconds 60
 
 **Linux/Mac:**
 ```bash
+# Using production script (recommended)
 ./scripts/production_start.sh start
+
+# Or using docker-compose directly
+docker-compose up -d
+
+# View logs
+docker-compose logs -f intent-engine-api
 ```
 
-**Windows:**
+**Windows PowerShell:**
 ```powershell
+# Using production script (recommended)
 .\scripts\production_start.ps1 start
+
+# Or using docker-compose directly
+docker-compose up -d
+
+# View logs
+docker-compose logs -f intent-engine-api
 ```
 
 ### Testing the API
 
 ```bash
-curl http://localhost:8000/search \
-  -X POST \
+# Health check
+curl http://localhost:8000/health
+
+# Extract intent from a query
+curl -X POST http://localhost:8000/extract-intent \
   -H "Content-Type: application/json" \
-  -d '{"query":"best laptop for programming"}'
+  -d '{
+    "product": "search",
+    "input": {"text": "best laptop for programming under 50000 rupees"},
+    "context": {"sessionId": "test-123", "userLocale": "en-US"}
+  }' | jq
+
+# Unified search with intent ranking
+curl -X POST http://localhost:8000/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "best python tutorials for beginners",
+    "extract_intent": true,
+    "rank_results": true,
+    "max_results": 10
+  }' | jq
 ```
 
 ### Viewing Logs
@@ -129,40 +171,165 @@ docker-compose logs -f
 
 # Specific service
 docker-compose logs -f intent-engine-api
+docker-compose logs -f searxng
+docker-compose logs -f postgres
+docker-compose logs -f redis
+
+# Last 100 lines
+docker-compose logs --tail=100 intent-engine-api
 ```
 
 ### Health Checks
 
 ```bash
-# API
+# API health
 curl http://localhost:8000/
 
-# Detailed health
+# Detailed health (checks DB, Redis, SearXNG)
 curl http://localhost:8000/health
 
-# SearXNG
+# SearXNG health
 curl http://localhost:8080/healthz
+
+# Go Crawler health
+curl http://localhost:8081/health
+
+# PostgreSQL health
+docker exec intent-engine-postgres pg_isready -U intent_user
+
+# Redis health
+docker exec intent-redis redis-cli ping
+```
+
+### Service Status
+
+```bash
+# Check all services
+docker-compose ps
+
+# Check specific service
+docker-compose ps intent-engine-api
+
+# View resource usage
+docker stats
+```
+
+### Database Operations
+
+```bash
+# Access PostgreSQL shell
+docker exec -it intent-engine-postgres psql -U intent_user -d intent_engine
+
+# Run migrations
+docker-compose exec intent-engine-api python scripts/init_db_standalone.py
+
+# Backup database
+docker exec intent-engine-postgres pg_dump -U intent_user intent_engine > backup.sql
+
+# Restore database
+docker exec -i intent-engine-postgres psql -U intent_user intent_engine < backup.sql
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+docker-compose exec intent-engine-api pytest tests/ -v
+
+# Run with coverage
+docker-compose exec intent-engine-api pytest --cov=. --cov-report=html tests/
+
+# Run specific test suite
+docker-compose exec intent-engine-api pytest tests/test_extraction.py -v
+
+# Run load tests
+cd load_testing
+locust -f locustfile.py
+```
+
+### Accessing Monitoring Dashboards
+
+```bash
+# Grafana (username: admin, password: grafana_secure_password_change_in_prod)
+open http://localhost:3000
+
+# Prometheus
+open http://localhost:9090
+
+# Jaeger (distributed tracing)
+open http://localhost:16686
+
+# API Documentation (Swagger)
+open http://localhost:8000/docs
+
+# API Documentation (ReDoc)
+open http://localhost:8000/redoc
+```
+
+### Stopping Services
+
+```bash
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (⚠️ deletes data)
+docker-compose down -v
+
+# Stop specific service
+docker-compose stop intent-engine-api
+
+# Restart specific service
+docker-compose restart intent-engine-api
 ```
 
 ---
 
 ## 🔗 External Resources
 
+### Project Links
 - **GitHub Repository**: https://github.com/itxLikhith/intent-engine
+- **Issues**: https://github.com/itxLikhith/intent-engine/issues
+- **PyPI Package**: https://pypi.org/project/intent-engine/
+
+### Technology Documentation
 - **FastAPI Documentation**: https://fastapi.tiangolo.com/
 - **SearXNG Documentation**: https://docs.searxng.org/
 - **Docker Documentation**: https://docs.docker.com/
 - **PostgreSQL Documentation**: https://www.postgresql.org/docs/
+- **Redis Documentation**: https://redis.io/docs/
+- **Pydantic Documentation**: https://docs.pydantic.dev/
+- **SQLAlchemy Documentation**: https://docs.sqlalchemy.org/
+
+### Monitoring & Observability
+- **Prometheus Documentation**: https://prometheus.io/docs/
+- **Grafana Documentation**: https://grafana.com/docs/
+- **Jaeger Documentation**: https://www.jaegertracing.io/docs/
+- **OpenTelemetry Documentation**: https://opentelemetry.io/docs/
 
 ---
 
 ## 📞 Support
 
-- **Issues**: https://github.com/itxLikhith/intent-engine/issues
-- **API Docs**: http://localhost:8000/docs (when running)
+### Getting Help
+- **GitHub Issues**: [Open an issue](https://github.com/itxLikhith/intent-engine/issues) for bug reports and feature requests
+- **API Documentation**: http://localhost:8000/docs (when running)
 - **Grafana Dashboards**: http://localhost:3000 (when running)
+- **Email**: likhith.anony45@gmail.com
+
+### Troubleshooting
+- Check the [FAQ](docs/reference/FAQ.md) for common issues
+- Review [logs](#viewing-logs) for error messages
+- Verify [service health](#health-checks)
+- Check [resource usage](#service-status)
+
+### Contributing
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines
+- Follow the [Conventional Commits](https://www.conventionalcommits.org/) standard
+- Run tests before submitting PRs: `pytest tests/ -v`
 
 ---
 
 **Maintained by:** Intent Engine Team  
-**License:** Intent Engine Community License (IECL) v1.0
+**License:** Intent Engine Community License (IECL) v1.0  
+**Version:** v0.3.0  
+**Last Updated:** March 15, 2026

@@ -128,13 +128,14 @@ exclude = ["venv*", ".venv*", "env*", "ENV*", "build*", "dist*", "*.egg-info"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-tag_format = "$version"
+tag_format = "v$version"
 version_scheme = "semver"
 version_provider = "pep621"
 update_changelog_on_bump = true
 major_version_zero = true
 changelog_file = "CHANGELOG.md"
 changelog_incremental = true
+changelog_start_version = "0.1.0"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

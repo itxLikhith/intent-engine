@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir torch==2.1.1+cpu -f https://download.pytorch.org/
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy project files (cache busted for seed discovery feature)
 COPY . .
 
 # Make migration script executable
