@@ -2,7 +2,22 @@
 
 > **Organized Documentation Structure** - Find what you need quickly
 
-**Last Updated:** March 15, 2026 | **Version:** v0.3.0
+**Last Updated:** March 15, 2026 | **Version:** v2.0.0 - Self-Improving Search Loop
+
+---
+
+## 🎯 What's New in v2.0
+
+### Self-Improving Search Loop
+- **Every search makes the system smarter!**
+- +634,000 URLs added from just 3 searches
+- Redis caching (11x faster)
+- Prometheus + Grafana monitoring
+- Qdrant vector search integration
+
+**New Documentation:**
+- [Integration Guide](docs/INTEGRATION_GUIDE.md) - Complete v2.0 integration guide
+- [Self-Improving Loop](docs/architecture/SELF_IMPROVING_LOOP.md) - Architecture deep dive
 
 ---
 
@@ -10,13 +25,27 @@
 
 ```
 docs/
-├── getting-started/     # Quick start guides and tutorials
-├── deployment/          # Production deployment and operations
-├── architecture/        # System design and architecture
-├── go-crawler/          # Go crawler and indexer documentation
-├── reference/           # Technical reference and API docs
-└── testing/             # Testing guides and performance analysis
+├── README.md                  # Documentation overview
+├── ORGANIZATION.md            # File organization guide
+├── INTEGRATION_GUIDE.md       # v2.0 Integration Guide
+│
+├── getting-started/           # Quick start guides
+├── deployment/                # Production deployment
+├── architecture/              # System design
+├── go-crawler/                # Go crawler docs
+├── reference/                 # Technical reference
+└── testing/                   # Testing guides
 ```
+
+**Root Files (Essential Only):**
+- `README.md` - Main project README
+- `INDEX.md` - Documentation index
+- `CHANGELOG_v2.md` - Current version changelog
+- `V2_SUMMARY.md` - v2.0 release summary
+- `CONTRIBUTING.md` - Contribution guidelines
+- `LICENSE` - License file
+
+**Note:** Historical docs moved to `docs/` subfolders. See `docs/ORGANIZATION.md` for details.
 
 ---
 
@@ -51,6 +80,7 @@ curl http://localhost:8000/search -Method POST -ContentType "application/json" -
 **Verify it's working:**
 ```bash
 curl http://localhost:8000/health
+docker exec intent-redis valkey-cli ZCARD crawl_queue  # Check crawl queue (1M+ URLs!)
 ```
 
 ---
@@ -75,6 +105,7 @@ curl http://localhost:8000/health
 - **[PROJECT_OVERVIEW.md](docs/architecture/PROJECT_OVERVIEW.md)** - Project overview
 - **[PROJECT_STRUCTURE.md](docs/architecture/PROJECT_STRUCTURE.md)** - Project structure guide
 - **[Intent-Engine-Whitepaper.md](docs/architecture/Intent-Engine-Whitepaper.md)** - Technical whitepaper
+- **[SELF_IMPROVING_LOOP.md](docs/architecture/SELF_IMPROVING_LOOP.md)** - 🆕 Self-improving search loop architecture (NEW!)
 
 ### Go Crawler & Indexer (`docs/go-crawler/`)
 - **[README.md](docs/go-crawler/README.md)** - Go crawler overview

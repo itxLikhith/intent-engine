@@ -114,13 +114,11 @@ services:
       - SETUID
 
   # Go Search API - provides search functionality for Go documentation
-  # Note: This service requires Go source code which is not in this repository
   go-search-api:
     build:
       context: ./go-crawler
       dockerfile: deployments/Dockerfile.api
     container_name: intent-go-search-api
-    profiles: ["go-crawler"]
     ports:
       - "8081:8080"
     environment:
@@ -136,10 +134,11 @@ services:
       - intent-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -151,13 +150,11 @@ services:
         condition: service_healthy
 
   # Go Crawler - crawls Go documentation websites
-  # Note: This service requires Go source code which is not in this repository
   go-crawler:
     build:
       context: ./go-crawler
       dockerfile: deployments/Dockerfile.crawler
     container_name: intent-go-crawler
-    profiles: ["go-crawler"]
     environment:
       - REDIS_ADDR=redis:6379
       - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
@@ -185,13 +182,11 @@ services:
         condition: service_healthy
 
   # Go Indexer - indexes crawled content into Bleve search index
-  # Note: This service requires Go source code which is not in this repository
   go-indexer:
     build:
       context: ./go-crawler
       dockerfile: deployments/Dockerfile.indexer
     container_name: intent-go-indexer
-    profiles: ["go-crawler"]
     environment:
       - REDIS_ADDR=redis:6379
       - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
@@ -213,6 +208,51 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # Unified Search API - unified search with intent-aware ranking and topic expansion
+  unified-search-api:
+    build:
+      context: ./go-crawler
+      dockerfile: deployments/Dockerfile.unified-search
+    container_name: intent-unified-search-api
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - BLEVE_PATH=/data/bleve
+      - BADGER_PATH=/data/badger
+      - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - SEARXNG_URL=http://searxng:8080
+      - QDRANT_ADDR=qdrant:6333
+      - CACHE_ENABLED=true
+      - CACHE_TTL_SECONDS=3600
+      - PARALLEL_SEARCH=true
+    volumes:
+      - go-unified-search-data:/data
+    networks:
+      - intent-network
+      - searxng
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8082/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      searxng:
+        condition: service_started
+      qdrant:
+        condition: service_started
 
   redis:
     image: docker.io/valkey/valkey:8-alpine
@@ -300,6 +340,57 @@ services:
       timeout: 5s
       retries: 5
 
+  # Qdrant Vector Database for semantic search
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: intent-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - intent-network
+    # Health check via HTTP (Qdrant minimal image has no wget/curl/python)
+    # Rely on container running state instead
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # Vector Indexer - indexes crawled pages into Qdrant
+  vector-indexer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intent-vector-indexer
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - POSTGRES_DSN=postgresql://intent_user:intent_secure_password_change_in_prod@postgres:5432/intent_engine
+    networks:
+      - intent-network
+    depends_on:
+      qdrant:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python start_vector_indexer.py
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys; sys.exit(0)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   prometheus:
     image: prom/prometheus:v2.48.0
     container_name: intent-prometheus
@@ -319,6 +410,9 @@ services:
       - '--web.enable-lifecycle'
     networks:
       - intent-network
+    depends_on:
+      - intent-engine-api
+      - unified-search-api
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
       interval: 30s
@@ -366,3 +460,5 @@ volumes:
   go-api-data:
   go-crawler-data:
   go-indexer-data:
+  go-unified-search-data:
+  qdrant_data:

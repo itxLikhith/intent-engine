@@ -426,7 +426,7 @@ benchmark_*.csv
 # -----------------------------------------------------------------------------
 # Go Language
 # -----------------------------------------------------------------------------
-# Binaries
+# Binaries (but allow source code)
 *.exe
 *.exe~
 *.dll
@@ -437,17 +437,11 @@ benchmark_*.csv
 bin/
 cmd/*/main
 
-# Go modules
-go.sum
-vendor/
-
-# Go build cache
-go-build/
-.cache/go-build/
-
-# Go coverage
-coverage.out
-coverage.html
+# Go crawler build artifacts (but keep source)
+go-crawler/crawler
+go-crawler/indexer
+go-crawler/search-api
+go-crawler/pagerank
 
 # -----------------------------------------------------------------------------
 # Rust (if used)

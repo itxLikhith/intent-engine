@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -68,17 +69,18 @@ func (s *Storage) SavePage(page *models.CrawledPage) error {
 	}
 	defer tx.Rollback()
 
-	// Insert or update page in PostgreSQL
+	// Insert or update page in PostgreSQL (using ON CONFLICT for upsert)
 	query := `
 		INSERT INTO crawled_pages (
-			id, url, final_url, title, content, meta_description, meta_keywords,
+			url, final_url, title, content, meta_description, meta_keywords,
 			status_code, content_type, content_length, load_time_ms,
-			crawl_depth, outbound_links, inbound_links, pagerank,
-			language, is_indexed, crawled_at, updated_at, next_crawl_at
+			crawl_depth, outbound_links, inbound_links,
+			language, is_indexed, crawled_at, updated_at, next_crawl_at,
+			html_content
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
 		)
-		ON CONFLICT (id) DO UPDATE SET
+		ON CONFLICT (url) DO UPDATE SET
 			final_url = EXCLUDED.final_url,
 			title = EXCLUDED.title,
 			content = EXCLUDED.content,
@@ -90,19 +92,26 @@ func (s *Storage) SavePage(page *models.CrawledPage) error {
 			load_time_ms = EXCLUDED.load_time_ms,
 			crawl_depth = EXCLUDED.crawl_depth,
 			outbound_links = EXCLUDED.outbound_links,
-			updated_at = EXCLUDED.updated_at
+			updated_at = EXCLUDED.updated_at,
+			html_content = EXCLUDED.html_content
+		RETURNING id
 	`
 
-	_, err = tx.Exec(query,
-		page.ID, page.URL, page.FinalURL, page.Title, page.Content,
+	var pageID int
+	err = tx.QueryRow(query,
+		page.URL, page.FinalURL, page.Title, page.Content,
 		page.MetaDescription, page.MetaKeywords, page.StatusCode,
 		page.ContentType, page.ContentLength, page.LoadTimeMs,
-		page.CrawlDepth, page.OutboundLinks, page.InboundLinks, page.PageRank,
+		page.CrawlDepth, page.OutboundLinks, page.InboundLinks,
 		page.Language, page.IsIndexed, page.CrawledAt, page.UpdatedAt, page.NextCrawlAt,
-	)
+		page.HTMLContent,
+	).Scan(&pageID)
 	if err != nil {
-		return fmt.Errorf("failed to insert page: %w", err)
+		return fmt.Errorf("failed to insert/update page: %w", err)
 	}
+
+	// Set the ID on the page object
+	page.ID = fmt.Sprintf("page_%d", pageID)
 
 	// Store raw HTML in BadgerDB (if available)
 	if page.HTMLContent != "" {
@@ -124,7 +133,7 @@ func (s *Storage) SavePage(page *models.CrawledPage) error {
 }
 
 // SaveLinks saves page links to PostgreSQL
-func (s *Storage) SaveLinks(links []*models.PageLink) error {
+func (s *Storage) SaveLinks(links []*models.PageLink, sourcePageIntID int) error {
 	if len(links) == 0 {
 		return nil
 	}
@@ -143,7 +152,7 @@ func (s *Storage) SaveLinks(links []*models.PageLink) error {
 
 	for _, link := range links {
 		_, err := tx.Exec(query,
-			link.SourcePageID, link.TargetURL, link.AnchorText,
+			sourcePageIntID, link.TargetURL, link.AnchorText,
 			link.LinkType, link.CreatedAt,
 		)
 		if err != nil {
@@ -158,8 +167,62 @@ func (s *Storage) SaveLinks(links []*models.PageLink) error {
 	return nil
 }
 
+// GetPageIDByURL retrieves the integer ID for a page by URL
+func (s *Storage) GetPageIDByURL(url string) (int, error) {
+	query := `SELECT id FROM crawled_pages WHERE url = $1`
+	var id int
+	err := s.postgres.QueryRow(query, url).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get page ID by URL: %w", err)
+	}
+	return id, nil
+}
+
 // GetPage retrieves a page by ID
 func (s *Storage) GetPage(id string) (*models.CrawledPage, error) {
+	// Try to parse as integer ID first
+	var page *models.CrawledPage
+	var err error
+
+	// Check if it's our generated ID format "page_123"
+	if strings.HasPrefix(id, "page_") {
+		intID := strings.TrimPrefix(id, "page_")
+		page, err = s.GetPageByIntID(intID)
+		if err == nil {
+			return page, nil
+		}
+	}
+
+	// Fall back to URL lookup
+	query := `
+		SELECT id, url, final_url, title, content, meta_description, meta_keywords,
+		       status_code, content_type, content_length, load_time_ms,
+		       crawl_depth, outbound_links, inbound_links, pagerank,
+		       language, is_indexed, crawled_at, updated_at, next_crawl_at
+		FROM crawled_pages
+		WHERE url = $1
+	`
+
+	page = &models.CrawledPage{}
+	err = s.postgres.QueryRow(query, id).Scan(
+		&page.ID, &page.URL, &page.FinalURL, &page.Title, &page.Content,
+		&page.MetaDescription, &page.MetaKeywords, &page.StatusCode,
+		&page.ContentType, &page.ContentLength, &page.LoadTimeMs,
+		&page.CrawlDepth, &page.OutboundLinks, &page.InboundLinks, &page.PageRank,
+		&page.Language, &page.IsIndexed, &page.CrawledAt, &page.UpdatedAt, &page.NextCrawlAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query page: %w", err)
+	}
+
+	// Convert integer ID to string format
+	page.ID = fmt.Sprintf("page_%d", page.ID)
+
+	return page, nil
+}
+
+// GetPageByIntID retrieves a page by integer ID
+func (s *Storage) GetPageByIntID(intID string) (*models.CrawledPage, error) {
 	query := `
 		SELECT id, url, final_url, title, content, meta_description, meta_keywords,
 		       status_code, content_type, content_length, load_time_ms,
@@ -170,7 +233,7 @@ func (s *Storage) GetPage(id string) (*models.CrawledPage, error) {
 	`
 
 	page := &models.CrawledPage{}
-	err := s.postgres.QueryRow(query, id).Scan(
+	err := s.postgres.QueryRow(query, intID).Scan(
 		&page.ID, &page.URL, &page.FinalURL, &page.Title, &page.Content,
 		&page.MetaDescription, &page.MetaKeywords, &page.StatusCode,
 		&page.ContentType, &page.ContentLength, &page.LoadTimeMs,
@@ -180,6 +243,9 @@ func (s *Storage) GetPage(id string) (*models.CrawledPage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query page: %w", err)
 	}
+
+	// Convert integer ID to string format
+	page.ID = fmt.Sprintf("page_%d", page.ID)
 
 	return page, nil
 }

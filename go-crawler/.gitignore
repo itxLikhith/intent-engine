@@ -1,52 +1,121 @@
-# Binaries
-bin/
+# =============================================================================
+# Go Crawler - .gitignore
+# =============================================================================
+# Allows all source code to be published while ignoring build artifacts
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Build Artifacts (IGNORE)
+# -----------------------------------------------------------------------------
+# Compiled binaries
+crawler
+indexer
+search-api
+pagerank
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-crawler
-indexer
-search-api
-pagerank
-
-# Test binary
 *.test
-
-# Output of the go coverage tool
 *.out
 
-# Dependency directories
+# Build directories
+bin/
+build/
+dist/
+
+# -----------------------------------------------------------------------------
+# Dependencies (IGNORE)
+# -----------------------------------------------------------------------------
+# Go modules (keep go.mod and go.sum, ignore vendor)
 vendor/
 
-# IDE
+# -----------------------------------------------------------------------------
+# Data & Index Files (IGNORE)
+# -----------------------------------------------------------------------------
+# Runtime data
+data/
+*.db
+*.bleve
+*.hnsw
+*.index
+
+# BadgerDB
+badger/
+*.vlog
+*.sst
+MANIFEST
+
+# -----------------------------------------------------------------------------
+# Configuration with Secrets (IGNORE)
+# -----------------------------------------------------------------------------
+# Local config files that may contain secrets
+config.yaml
+*.secret
+*.key
+*.pem
+
+# Keep example configs
+!config.example.yaml
+!*.example
+
+# -----------------------------------------------------------------------------
+# Logs (IGNORE)
+# -----------------------------------------------------------------------------
+*.log
+logs/
+
+# -----------------------------------------------------------------------------
+# IDE & Editor (IGNORE)
+# -----------------------------------------------------------------------------
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+*.bak
 
-# Data directories
-data/
-*.db
-*.bleve
-
-# Configuration with secrets
-config.yaml
-*.secret
-
-# Logs
-*.log
-logs/
-
-# OS files
+# -----------------------------------------------------------------------------
+# OS Files (IGNORE)
+# -----------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Docker
+# -----------------------------------------------------------------------------
+# Docker (IGNORE overrides only)
+# -----------------------------------------------------------------------------
 docker-compose.override.yml
 
-# Temporary files
+# -----------------------------------------------------------------------------
+# Temporary Files (IGNORE)
+# -----------------------------------------------------------------------------
 tmp/
 temp/
 *.tmp
+*.temp
+
+# -----------------------------------------------------------------------------
+# Go Crawler Specific - SOURCE CODE (ALLOWED)
+# -----------------------------------------------------------------------------
+# All Go source files are tracked
+!*.go
+!go.mod
+!go.sum
+!Makefile
+!*.yaml
+!*.yml
+!*.md
+!Dockerfile*
+!deployments/
+!cmd/
+!internal/
+!pkg/
+!integration/
+!migrations/
+!scripts/
+
+# =============================================================================
+# End of .gitignore
+# =============================================================================
