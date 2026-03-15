@@ -198,50 +198,54 @@ class UnifiedSearchService:
     async def _add_urls_to_crawl_queue(self, raw_results: list) -> int:
         """
         Add search result URLs to Go crawler queue for future crawling.
-        
+
         This creates a self-improving loop where search results become
         new crawl targets, expanding our indexed content over time.
-        
+
         Args:
             raw_results: List of raw search results from SearXNG/Go crawler
-            
+
         Returns:
             Number of URLs added to crawl queue
         """
         try:
             from searxng.seed_url_manager import get_seed_url_manager
-            
+
             seed_manager = get_seed_url_manager()
-            
+
             # Extract URLs from results
             urls = []
             for result in raw_results:
-                if hasattr(result, 'url') and result.url:
-                    urls.append({
-                        "url": result.url,
-                        "title": getattr(result, 'title', ''),
-                        "engine": getattr(result, 'engine', 'unknown'),
-                        "score": getattr(result, 'score', 0)
-                    })
-            
+                if hasattr(result, "url") and result.url:
+                    urls.append(
+                        {
+                            "url": result.url,
+                            "title": getattr(result, "title", ""),
+                            "engine": getattr(result, "engine", "unknown"),
+                            "score": getattr(result, "score", 0),
+                        }
+                    )
+
             # Filter to unique URLs
-            unique_urls = list({item['url']: item for item in urls}.values())
-            
+            unique_urls = list({item["url"]: item for item in urls}.values())
+
             # Prioritize high-scoring results
-            high_priority_urls = [item['url'] for item in unique_urls if item.get('score', 0) > 5.0][:10]
-            normal_priority_urls = [item['url'] for item in unique_urls if item.get('score', 0) <= 5.0][:20]
-            
+            high_priority_urls = [item["url"] for item in unique_urls if item.get("score", 0) > 5.0][:10]
+            normal_priority_urls = [item["url"] for item in unique_urls if item.get("score", 0) <= 5.0][:20]
+
             # Add to crawl queue
             added_high = seed_manager.add_urls_to_crawl_queue(high_priority_urls, priority=8, depth=1)
             added_normal = seed_manager.add_urls_to_crawl_queue(normal_priority_urls, priority=5, depth=2)
-            
+
             total_added = added_high + added_normal
-            
+
             if total_added > 0:
-                logger.info(f"Added {total_added} URLs from search results to crawl queue (high_priority={added_high}, normal={added_normal})")
-            
+                logger.info(
+                    f"Added {total_added} URLs from search results to crawl queue (high_priority={added_high}, normal={added_normal})"
+                )
+
             return total_added
-            
+
         except Exception as e:
             logger.warning(f"Failed to add URLs to crawl queue: {e}")
             return 0

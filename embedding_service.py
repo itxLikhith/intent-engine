@@ -4,12 +4,12 @@ Generates sentence embeddings for vector search using sentence-transformers
 """
 
 import logging
-from typing import List, Optional
-from functools import lru_cache
+
 import numpy as np
 
 try:
     from sentence_transformers import SentenceTransformer
+
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
@@ -21,23 +21,23 @@ logger = logging.getLogger(__name__)
 
 class EmbeddingService:
     """Service for generating text embeddings"""
-    
+
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         """
         Initialize embedding service
-        
+
         Args:
             model_name: Sentence transformer model to use
         """
         self.model_name = model_name
         self.model = None
         self.embedding_dim = 384  # Default for all-MiniLM-L6-v2
-        
+
         if SENTENCE_TRANSFORMERS_AVAILABLE:
             self._load_model()
         else:
             logger.warning("Using fallback random embeddings (install sentence-transformers for real embeddings)")
-    
+
     def _load_model(self):
         """Load the sentence transformer model"""
         try:
@@ -48,15 +48,15 @@ class EmbeddingService:
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             self.model = None
-    
-    def encode(self, texts: List[str], normalize: bool = True) -> np.ndarray:
+
+    def encode(self, texts: list[str], normalize: bool = True) -> np.ndarray:
         """
         Encode texts into embeddings
-        
+
         Args:
             texts: List of texts to encode
             normalize: Whether to normalize embeddings
-            
+
         Returns:
             Numpy array of embeddings
         """
@@ -67,13 +67,10 @@ class EmbeddingService:
             if normalize:
                 embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
             return embeddings
-        
+
         try:
             embeddings = self.model.encode(
-                texts,
-                convert_to_numpy=True,
-                normalize_embeddings=normalize,
-                show_progress_bar=False
+                texts, convert_to_numpy=True, normalize_embeddings=normalize, show_progress_bar=False
             )
             return embeddings.astype(np.float32)
         except Exception as e:
@@ -83,26 +80,26 @@ class EmbeddingService:
             if normalize:
                 embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
             return embeddings
-    
-    def encode_query(self, query: str) -> List[float]:
+
+    def encode_query(self, query: str) -> list[float]:
         """Encode a single query"""
         embeddings = self.encode([query])
         return embeddings[0].tolist()
-    
-    def encode_documents(self, documents: List[dict]) -> List[List[float]]:
+
+    def encode_documents(self, documents: list[dict]) -> list[list[float]]:
         """
         Encode multiple documents
-        
+
         Args:
             documents: List of dicts with 'text' key
-            
+
         Returns:
             List of embedding vectors
         """
-        texts = [doc.get('text', doc.get('content', '')) for doc in documents]
+        texts = [doc.get("text", doc.get("content", "")) for doc in documents]
         embeddings = self.encode(texts)
         return embeddings.tolist()
-    
+
     @property
     def is_ready(self) -> bool:
         """Check if service is ready"""
@@ -110,7 +107,7 @@ class EmbeddingService:
 
 
 # Global instance
-_embedding_service: Optional[EmbeddingService] = None
+_embedding_service: EmbeddingService | None = None
 
 
 def get_embedding_service(model_name: str = "all-MiniLM-L6-v2") -> EmbeddingService:
@@ -124,17 +121,18 @@ def get_embedding_service(model_name: str = "all-MiniLM-L6-v2") -> EmbeddingServ
 if __name__ == "__main__":
     # Test the service
     service = get_embedding_service()
-    
+
     test_texts = [
         "golang tutorial for beginners",
         "how to fix connection error in go",
-        "best practices for go web development"
+        "best practices for go web development",
     ]
-    
+
     embeddings = service.encode(test_texts)
     print(f"Generated {len(embeddings)} embeddings of shape {embeddings.shape}")
-    
+
     # Test similarity
     from sklearn.metrics.pairwise import cosine_similarity
+
     similarity = cosine_similarity([embeddings[0]], [embeddings[1]])
     print(f"Similarity between text 1 and 2: {similarity[0][0]:.4f}")
