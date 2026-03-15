@@ -8,7 +8,7 @@ and the Go-based crawler/search backend.
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import aiohttp
 
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SearchResult:
     """Represents a search result from Go Search API"""
+
     url: str
     title: str
     content: str
@@ -28,11 +29,12 @@ class SearchResult:
 @dataclass
 class SearchResponse:
     """Represents a search response from Go Search API"""
+
     query: str
-    results: List[SearchResult]
+    results: list[SearchResult]
     total_results: int
     processing_time_ms: float
-    engines_used: List[str]
+    engines_used: list[str]
     ranking_applied: bool
 
 
@@ -46,14 +48,12 @@ class GoSearchClient:
     ):
         self.base_url = base_url
         self.timeout = timeout
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session"""
         if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.timeout)
-            )
+            self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout))
         return self._session
 
     async def close(self):
@@ -61,7 +61,7 @@ class GoSearchClient:
         if self._session and not self._session.closed:
             await self._session.close()
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check Search API health"""
         session = await self._get_session()
         try:
@@ -72,7 +72,7 @@ class GoSearchClient:
             logger.error(f"Health check failed: {e}")
             return {"status": "unhealthy", "error": str(e)}
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """Get Search API statistics"""
         session = await self._get_session()
         try:
@@ -87,7 +87,7 @@ class GoSearchClient:
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> SearchResponse:
         """
         Search using Go Search API
@@ -101,12 +101,12 @@ class GoSearchClient:
             SearchResponse object
         """
         session = await self._get_session()
-        
+
         payload = {
             "query": query,
             "limit": limit,
         }
-        
+
         if filters:
             payload["filters"] = filters
 
@@ -147,27 +147,27 @@ class GoSearchClient:
 class UnifiedSearchIntegration:
     """
     Integrates Go Search API with Python Intent Engine
-    
+
     Usage:
         integration = UnifiedSearchIntegration()
         await integration.initialize()
-        
+
         # Search
         results = await integration.search("golang microservices")
-        
+
         # Cleanup
         await integration.close()
     """
 
     def __init__(self, go_search_url: str = "http://localhost:8081"):
         self.go_search_url = go_search_url
-        self.go_client: Optional[GoSearchClient] = None
+        self.go_client: GoSearchClient | None = None
         self._initialized = False
 
     async def initialize(self):
         """Initialize the integration"""
         self.go_client = GoSearchClient(base_url=self.go_search_url)
-        
+
         # Check if Go Search API is available
         health = await self.go_client.health_check()
         if health.get("status") == "healthy":
@@ -190,12 +190,12 @@ class UnifiedSearchIntegration:
     ) -> SearchResponse:
         """
         Search with optional Go backend
-        
+
         Args:
             query: Search query
             limit: Result limit
             use_go_backend: If True, use Go Search API
-            
+
         Returns:
             SearchResponse
         """
@@ -205,15 +205,15 @@ class UnifiedSearchIntegration:
             except Exception as e:
                 logger.error(f"Go Search API failed, fallback: {e}")
                 # Could fallback to SearXNG here
-        
+
         # Fallback to SearXNG or other search backend
         raise NotImplementedError("Fallback search not implemented")
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """Get Go Search API statistics"""
         if not self._initialized:
             return {"error": "Not initialized"}
-        
+
         return await self.go_client.get_stats()
 
 
@@ -225,49 +225,51 @@ def search_sync(
 ) -> SearchResponse:
     """
     Synchronous search using Go Search API
-    
+
     Usage:
         results = search_sync("golang microservices")
     """
+
     async def _search():
         client = GoSearchClient(base_url=go_search_url)
         try:
             return await client.search(query, limit)
         finally:
             await client.close()
-    
+
     return asyncio.run(_search())
 
 
-def health_check_sync(go_search_url: str = "http://localhost:8081") -> Dict[str, Any]:
+def health_check_sync(go_search_url: str = "http://localhost:8081") -> dict[str, Any]:
     """
     Synchronous health check
-    
+
     Usage:
         health = health_check_sync()
     """
+
     async def _health():
         client = GoSearchClient(base_url=go_search_url)
         try:
             return await client.health_check()
         finally:
             await client.close()
-    
+
     return asyncio.run(_health())
 
 
 if __name__ == "__main__":
     # Example usage
     print("Testing Go Search API integration...")
-    
+
     # Health check
     health = health_check_sync()
     print(f"Health: {health}")
-    
+
     # Search
     try:
         results = search_sync("golang programming", limit=5)
-        print(f"\nSearch Results for 'golang programming':")
+        print("\nSearch Results for 'golang programming':")
         print(f"Total: {results.total_results}")
         print(f"Processing Time: {results.processing_time_ms}ms")
         print(f"Engines: {results.engines_used}")
