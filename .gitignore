@@ -203,9 +203,10 @@ test-reports/
 *.gguf
 *.ggml
 
-# Model cache directories
+# Model cache directories (exclude Go crawler source code)
 model_cache/
 models/
+!go-crawler/pkg/models/
 */cache/
 .huggingface/
 .cache/
