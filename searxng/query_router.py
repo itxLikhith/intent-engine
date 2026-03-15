@@ -16,7 +16,7 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from core.schema import (
     EthicalDimension,
@@ -57,7 +57,7 @@ class SearchResult:
     title: str
     content: str
     score: float
-    engine: Optional[str] = None
+    engine: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -89,7 +89,7 @@ class UnifiedQueryRouter:
     4. Assign backend weights and execute
     """
 
-    def __init__(self, config: Optional[dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.default_timeout_ms = self.config.get("default_timeout_ms", 4000)
         self.default_max_results = self.config.get("max_results", 20)
@@ -99,9 +99,7 @@ class UnifiedQueryRouter:
         self._searxng_client = None
 
         # Backend-specific configurations
-        self.searxng_categories = self.config.get(
-            "searxng_categories", ["general", "news", "science", "tech"]
-        )
+        self.searxng_categories = self.config.get("searxng_categories", ["general", "news", "science", "tech"])
 
         logger.info("UnifiedQueryRouter initialized")
 
@@ -183,9 +181,7 @@ class UnifiedQueryRouter:
             )
 
         # Rule 5: Privacy-focused queries → prefer Go crawler (curated)
-        privacy_signals = [
-            s for s in ethical_signals if s.dimension == EthicalDimension.PRIVACY
-        ]
+        privacy_signals = [s for s in ethical_signals if s.dimension == EthicalDimension.PRIVACY]
         if privacy_signals:
             logger.debug("Routing privacy-focused query to Go Crawler")
             return QueryRoute(
@@ -226,9 +222,7 @@ class UnifiedQueryRouter:
             max_results_per_backend=self.default_max_results,
         )
 
-    async def execute_search(
-        self, route: QueryRoute, query: str
-    ) -> list[SearchResult]:
+    async def execute_search(self, route: QueryRoute, query: str) -> list[SearchResult]:
         """
         Execute search across configured backends.
 
@@ -255,21 +249,14 @@ class UnifiedQueryRouter:
             task = self._search_backend(backend, query, max_results)
             tasks.append((backend, task))
 
-        logger.info(
-            f"Executing search across {len(tasks)} backends: "
-            f"{[b.value for b, _ in tasks]}"
-        )
+        logger.info(f"Executing search across {len(tasks)} backends: {[b.value for b, _ in tasks]}")
 
         # Execute in parallel or sequentially
         if route.parallel:
-            backend_results = await asyncio.gather(
-                *[task for _, task in tasks], return_exceptions=True
-            )
+            backend_results = await asyncio.gather(*[task for _, task in tasks], return_exceptions=True)
 
             # Pair backends with results
-            for (backend, _), result in zip(
-                tasks, backend_results, strict=False
-            ):
+            for (backend, _), result in zip(tasks, backend_results, strict=False):
                 if isinstance(result, Exception):
                     logger.warning(f"Backend {backend.value} failed: {result}")
                     continue
@@ -278,15 +265,11 @@ class UnifiedQueryRouter:
             # Sequential execution with fallback
             for backend, task in tasks:
                 try:
-                    result = await asyncio.wait_for(
-                        task, timeout=route.timeout_ms / 1000
-                    )
+                    result = await asyncio.wait_for(task, timeout=route.timeout_ms / 1000)
                     results.extend(result)
-                    logger.debug(
-                        f"Backend {backend.value} returned {len(result)} results"
-                    )
+                    logger.debug(f"Backend {backend.value} returned {len(result)} results")
                     break  # Success, don't try fallback
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(f"Backend {backend.value} timed out")
                     continue
                 except Exception as e:
@@ -296,9 +279,7 @@ class UnifiedQueryRouter:
         logger.info(f"Search completed: {len(results)} total results")
         return results
 
-    async def _search_backend(
-        self, backend: SearchBackend, query: str, max_results: int
-    ) -> list[SearchResult]:
+    async def _search_backend(self, backend: SearchBackend, query: str, max_results: int) -> list[SearchResult]:
         """Search a specific backend"""
         if backend == SearchBackend.GO_CRAWLER:
             return await self._search_go_crawler(query, max_results)
@@ -309,17 +290,13 @@ class UnifiedQueryRouter:
         else:
             raise ValueError(f"Unknown backend: {backend}")
 
-    async def _search_go_crawler(
-        self, query: str, max_results: int
-    ) -> list[SearchResult]:
+    async def _search_go_crawler(self, query: str, max_results: int) -> list[SearchResult]:
         """Search Go crawler index"""
         from go_search_client import GoSearchClient
 
         try:
             # Create client and check health
-            client = GoSearchClient(
-                base_url=self._get_go_crawler_url(), timeout=5.0
-            )
+            client = GoSearchClient(base_url=self._get_go_crawler_url(), timeout=5.0)
             try:
                 # Health check (async)
                 health = await client.health_check()
@@ -359,9 +336,7 @@ class UnifiedQueryRouter:
             logger.error(f"Go crawler search failed: {e}")
             return []
 
-    async def _search_searxng(
-        self, query: str, max_results: int
-    ) -> list[SearchResult]:
+    async def _search_searxng(self, query: str, max_results: int) -> list[SearchResult]:
         """Search SearXNG"""
         from searxng.client import get_searxng_client
 
@@ -400,9 +375,7 @@ class UnifiedQueryRouter:
             logger.error(f"SearXNG search failed: {e}")
             return []
 
-    async def _search_custom_index(
-        self, query: str, max_results: int
-    ) -> list[SearchResult]:
+    async def _search_custom_index(self, query: str, max_results: int) -> list[SearchResult]:
         """Search custom intent-indexed content (Qdrant)"""
         try:
             from core.vector_store import get_vector_store
@@ -420,9 +393,7 @@ class UnifiedQueryRouter:
                 return []
 
             # Search vector store
-            results = vector_store.search_similar(
-                query_embedding=embedding.tolist(), limit=max_results
-            )
+            results = vector_store.search_similar(query_embedding=embedding.tolist(), limit=max_results)
 
             # Convert to SearchResult
             search_results = [
@@ -460,11 +431,11 @@ class UnifiedQueryRouter:
 
 
 # Singleton instance
-_router_instance: Optional[UnifiedQueryRouter] = None
+_router_instance: UnifiedQueryRouter | None = None
 _router_lock = asyncio.Lock()
 
 
-def get_query_router(config: Optional[dict[str, Any]] = None) -> UnifiedQueryRouter:
+def get_query_router(config: dict[str, Any] | None = None) -> UnifiedQueryRouter:
     """
     Get or create query router singleton.
 

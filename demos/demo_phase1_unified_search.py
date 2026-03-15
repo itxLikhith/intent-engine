@@ -17,9 +17,8 @@ Requirements:
 """
 
 import asyncio
-import json
 import time
-from typing import Optional
+
 
 # ANSI color codes for terminal output
 class Colors:
@@ -79,7 +78,7 @@ async def test_query_router():
         UniversalIntent,
         UseCase,
     )
-    from searxng.query_router import SearchBackend, get_query_router
+    from searxng.query_router import get_query_router
 
     router = get_query_router()
 
@@ -96,7 +95,7 @@ async def test_query_router():
     )
 
     route = router.route(intent_troubleshoot)
-    print_info(f"Query: 'python not working on windows'")
+    print_info("Query: 'python not working on windows'")
     print_info(f"Goal: {IntentGoal.TROUBLESHOOTING.value}")
     print_success(f"Routed to: {[b.value for b in route.backends]}")
     print_info(f"Parallel: {route.parallel}")
@@ -115,7 +114,7 @@ async def test_query_router():
     )
 
     route = router.route(intent_comparison)
-    print_info(f"Query: 'python vs java comparison'")
+    print_info("Query: 'python vs java comparison'")
     print_info(f"Goal: {IntentGoal.COMPARISON.value}")
     print_success(f"Routed to: {[b.value for b in route.backends]}")
     print_info(f"Weights: {route.weights}")
@@ -141,8 +140,8 @@ async def test_query_router():
     )
 
     route = router.route(intent_privacy)
-    print_info(f"Query: 'best privacy-focused email provider'")
-    print_info(f"Ethical Signal: privacy-first")
+    print_info("Query: 'best privacy-focused email provider'")
+    print_info("Ethical Signal: privacy-first")
     print_success(f"Routed to: {[b.value for b in route.backends]}")
     print_info(f"Parallel: {route.parallel}")
 
@@ -298,15 +297,15 @@ async def test_web_intent_extractor():
     <head><title>Python Tutorial for Beginners</title></head>
     <body>
         <h1>Learn Python Programming - Complete Tutorial</h1>
-        <p>This is a comprehensive guide for beginners who want to learn Python 
+        <p>This is a comprehensive guide for beginners who want to learn Python
         programming from scratch. We'll cover the basics step by step.</p>
-        
+
         <h2>Chapter 1: Getting Started</h2>
-        <p>Python is a powerful, easy-to-learn programming language. It's perfect 
+        <p>Python is a powerful, easy-to-learn programming language. It's perfect
         for beginners and experts alike.</p>
-        
+
         <h2>Chapter 2: Variables and Data Types</h2>
-        <p>In this tutorial, you'll learn about variables, strings, numbers, and 
+        <p>In this tutorial, you'll learn about variables, strings, numbers, and
         other fundamental concepts.</p>
     </body>
     </html>
@@ -333,25 +332,12 @@ async def test_web_intent_extractor():
 
 async def run_all_tests():
     """Run all Phase 1 integration tests"""
-    print(
-        f"\n{Colors.HEADER}{Colors.BOLD}"
-        "╔══════════════════════════════════════════════════════════╗"
-    )
-    print(
-        "║                                                          ║"
-    )
-    print(
-        "║     Intent Engine - Phase 1 Integration Demo             ║"
-    )
-    print(
-        "║     Unified Search with Query Router & Aggregator        ║"
-    )
-    print(
-        "║                                                          ║"
-    )
-    print(
-        f"╚══════════════════════════════════════════════════════════╗{Colors.ENDC}\n"
-    )
+    print(f"\n{Colors.HEADER}{Colors.BOLD}╔══════════════════════════════════════════════════════════╗")
+    print("║                                                          ║")
+    print("║     Intent Engine - Phase 1 Integration Demo             ║")
+    print("║     Unified Search with Query Router & Aggregator        ║")
+    print("║                                                          ║")
+    print(f"╚══════════════════════════════════════════════════════════╗{Colors.ENDC}\n")
 
     start_time = time.time()
 
@@ -365,9 +351,7 @@ async def run_all_tests():
 
     print_header("All Tests Complete")
     print_success(f"Total execution time: {total_time:.2f}s")
-    print_info(
-        "Next steps: Check the Grafana dashboard at http://localhost:3000"
-    )
+    print_info("Next steps: Check the Grafana dashboard at http://localhost:3000")
     print_info("View traces at http://localhost:16686")
 
 

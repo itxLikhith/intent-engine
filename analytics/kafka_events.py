@@ -20,8 +20,8 @@ Features:
 import json
 import logging
 import os
-from dataclasses import asdict
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class KafkaEventPublisher:
     - clicks.recorded: Click tracking events
     """
 
-    def __init__(self, config: Optional[dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.bootstrap_servers = self.config.get(
             "bootstrap_servers",
@@ -55,12 +55,9 @@ class KafkaEventPublisher:
         self._event_buffer = []
         self._buffer_size = self.config.get("buffer_size", 100)
 
-        logger.info(
-            f"KafkaEventPublisher initialized: "
-            f"servers={self.bootstrap_servers}, enabled={self._enabled}"
-        )
+        logger.info(f"KafkaEventPublisher initialized: servers={self.bootstrap_servers}, enabled={self._enabled}")
 
-    def _get_producer(self) -> Optional[Any]:
+    def _get_producer(self) -> Any | None:
         """Lazy Kafka producer initialization"""
         if self._producer is None:
             try:
@@ -78,9 +75,7 @@ class KafkaEventPublisher:
                 logger.info("Kafka producer initialized")
 
             except ImportError:
-                logger.warning(
-                    "kafka-python not installed. Install with: pip install kafka-python"
-                )
+                logger.warning("kafka-python not installed. Install with: pip install kafka-python")
                 self._enabled = False
                 return None
             except Exception as e:
@@ -182,7 +177,7 @@ class KafkaEventPublisher:
             return
 
         try:
-            future = producer.send(topic, value=event)
+            producer.send(topic, value=event)
             # Don't wait for confirmation (async)
             # In production, you might want to add a callback
         except Exception as e:
@@ -291,7 +286,7 @@ class KafkaEventSubscriber:
             pass
     """
 
-    def __init__(self, config: Optional[dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.bootstrap_servers = self.config.get(
             "bootstrap_servers",
@@ -301,14 +296,9 @@ class KafkaEventSubscriber:
         self._consumer = None
         self._running = False
 
-        logger.info(
-            f"KafkaEventSubscriber initialized: "
-            f"servers={self.bootstrap_servers}, group={self.group_id}"
-        )
+        logger.info(f"KafkaEventSubscriber initialized: servers={self.bootstrap_servers}, group={self.group_id}")
 
-    def subscribe(
-        self, topics: list[str], callback: Callable[[str, dict], None]
-    ):
+    def subscribe(self, topics: list[str], callback: Callable[[str, dict], None]):
         """
         Subscribe to topics and process messages.
 
@@ -360,11 +350,11 @@ class KafkaEventSubscriber:
 
 
 # Singleton instances
-_event_publisher: Optional[KafkaEventPublisher] = None
-_event_subscriber: Optional[KafkaEventSubscriber] = None
+_event_publisher: KafkaEventPublisher | None = None
+_event_subscriber: KafkaEventSubscriber | None = None
 
 
-def get_event_publisher(config: Optional[dict[str, Any]] = None) -> KafkaEventPublisher:
+def get_event_publisher(config: dict[str, Any] | None = None) -> KafkaEventPublisher:
     """Get event publisher singleton"""
     global _event_publisher
     if _event_publisher is None:
@@ -372,7 +362,7 @@ def get_event_publisher(config: Optional[dict[str, Any]] = None) -> KafkaEventPu
     return _event_publisher
 
 
-def get_event_subscriber(config: Optional[dict[str, Any]] = None) -> KafkaEventSubscriber:
+def get_event_subscriber(config: dict[str, Any] | None = None) -> KafkaEventSubscriber:
     """Get event subscriber singleton"""
     global _event_subscriber
     if _event_subscriber is None:

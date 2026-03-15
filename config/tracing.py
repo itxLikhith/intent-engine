@@ -12,7 +12,7 @@ Features:
 
 Usage:
     setup_tracing()
-    
+
     @traced("custom_operation")
     async def my_function():
         # Your code here
@@ -21,9 +21,10 @@ Usage:
 
 import logging
 import os
+from collections.abc import Callable
 from contextlib import contextmanager
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ _tracer = None
 _tracer_provider = None
 
 
-def setup_tracing(service_name: str = "intent-engine") -> Optional[Any]:
+def setup_tracing(service_name: str = "intent-engine") -> Any | None:
     """
     Setup distributed tracing with OpenTelemetry.
 
@@ -56,12 +57,8 @@ def setup_tracing(service_name: str = "intent-engine") -> Optional[Any]:
         return None
 
     # Get exporter configuration
-    exporter_type = os.getenv(
-        "TRACING_EXPORTER", "console"
-    ).lower()  # console, jaeger, otlp
-    jaeger_endpoint = os.getenv(
-        "JAEGER_ENDPOINT", "http://localhost:14268/api/traces"
-    )
+    exporter_type = os.getenv("TRACING_EXPORTER", "console").lower()  # console, jaeger, otlp
+    jaeger_endpoint = os.getenv("JAEGER_ENDPOINT", "http://localhost:14268/api/traces")
     otlp_endpoint = os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
 
     try:
@@ -135,17 +132,14 @@ def setup_tracing(service_name: str = "intent-engine") -> Optional[Any]:
         # Get tracer
         _tracer = trace.get_tracer(__name__)
 
-        logger.info(
-            f"Distributed tracing setup complete: service={service_name}, "
-            f"exporter={exporter_type}"
-        )
+        logger.info(f"Distributed tracing setup complete: service={service_name}, exporter={exporter_type}")
 
         return provider
 
-    except ImportError as e:
+    except ImportError:
         logger.warning(
-            f"OpenTelemetry not installed. Install with: "
-            f"pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-jaeger"
+            "OpenTelemetry not installed. Install with: "
+            "pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-jaeger"
         )
         return None
     except Exception as e:
@@ -153,12 +147,12 @@ def setup_tracing(service_name: str = "intent-engine") -> Optional[Any]:
         return None
 
 
-def get_tracer() -> Optional[Any]:
+def get_tracer() -> Any | None:
     """Get the current tracer instance"""
     return _tracer
 
 
-def traced(span_name: Optional[str] = None):
+def traced(span_name: str | None = None):
     """
     Decorator to trace a function or method.
 
@@ -228,7 +222,7 @@ def traced(span_name: Optional[str] = None):
 
 
 @contextmanager
-def trace_context(span_name: str, attributes: Optional[dict[str, Any]] = None):
+def trace_context(span_name: str, attributes: dict[str, Any] | None = None):
     """
     Context manager for tracing a code block.
 
@@ -261,7 +255,7 @@ def trace_context(span_name: str, attributes: Optional[dict[str, Any]] = None):
             raise
 
 
-def trace_async_context(span_name: str, attributes: Optional[dict[str, Any]] = None):
+def trace_async_context(span_name: str, attributes: dict[str, Any] | None = None):
     """
     Async context manager for tracing.
 
@@ -344,8 +338,7 @@ def setup_fastapi_tracing(app):
 
     except ImportError:
         logger.warning(
-            "FastAPI instrumentation not available. "
-            "Install with: pip install opentelemetry-instrumentation-fastapi"
+            "FastAPI instrumentation not available. Install with: pip install opentelemetry-instrumentation-fastapi"
         )
 
 
@@ -360,8 +353,7 @@ def setup_httpx_tracing():
 
     except ImportError:
         logger.warning(
-            "HTTPX instrumentation not available. "
-            "Install with: pip install opentelemetry-instrumentation-httpx"
+            "HTTPX instrumentation not available. Install with: pip install opentelemetry-instrumentation-httpx"
         )
 
 
@@ -392,8 +384,7 @@ def setup_redis_tracing():
 
     except ImportError:
         logger.warning(
-            "Redis instrumentation not available. "
-            "Install with: pip install opentelemetry-instrumentation-redis"
+            "Redis instrumentation not available. Install with: pip install opentelemetry-instrumentation-redis"
         )
 
 

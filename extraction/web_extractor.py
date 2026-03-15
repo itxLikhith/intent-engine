@@ -15,7 +15,6 @@ Features:
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 from core.schema import (
     Complexity,
@@ -39,8 +38,8 @@ class WebIntent:
     skill_level: str = "intermediate"  # beginner, intermediate, advanced
     topics: list[str] = field(default_factory=list)
     confidence: float = 0.5
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for storage"""
@@ -300,7 +299,7 @@ class WebIntentExtractor:
             "her",
         }
 
-    async def extract_from_url(self, url: str) -> Optional[WebIntent]:
+    async def extract_from_url(self, url: str) -> WebIntent | None:
         """
         Extract intent from a web page.
 
@@ -473,9 +472,7 @@ class WebIntentExtractor:
         # Return top 5 topics
         return [topic for topic, _ in sorted_topics[:5]]
 
-    def _calculate_confidence(
-        self, goal: IntentGoal, use_cases: list[UseCase], topics: list[str]
-    ) -> float:
+    def _calculate_confidence(self, goal: IntentGoal, use_cases: list[UseCase], topics: list[str]) -> float:
         """Calculate extraction confidence score"""
         base_confidence = 0.5
 
@@ -501,14 +498,14 @@ class WebIntentExtractor:
         text = re.sub(r"\s+", " ", text)
         return text.strip()
 
-    def _extract_title(self, content: str) -> Optional[str]:
+    def _extract_title(self, content: str) -> str | None:
         """Extract page title from HTML"""
         match = re.search(r"<title[^>]*>(.*?)</title>", content, re.IGNORECASE)
         if match:
             return match.group(1).strip()
         return None
 
-    async def _fetch_content(self, url: str) -> Optional[str]:
+    async def _fetch_content(self, url: str) -> str | None:
         """
         Fetch web page content.
 
@@ -536,7 +533,7 @@ class WebIntentExtractor:
 
 
 # Singleton instance
-_extractor_instance: Optional[WebIntentExtractor] = None
+_extractor_instance: WebIntentExtractor | None = None
 
 
 def get_web_intent_extractor() -> WebIntentExtractor:

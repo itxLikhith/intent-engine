@@ -15,7 +15,7 @@ import hashlib
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from core.embedding_service import get_embedding_service
 
@@ -31,8 +31,8 @@ class IntentVector:
     embedding: list[float] = field(default_factory=list)
     intent_tags: dict[str, Any] = field(default_factory=dict)
     score: float = 0.5
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage"""
@@ -74,11 +74,9 @@ class QdrantVectorStore:
     - Batch operations
     """
 
-    def __init__(self, config: Optional[dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
-        self.collection_name = self.config.get(
-            "collection", "intent_index"
-        )
+        self.collection_name = self.config.get("collection", "intent_index")
         self.qdrant_url = self.config.get("url", os.getenv("QDRANT_URL", "http://localhost:6333"))
         self.embedding_dim = self.config.get("embedding_dim", 384)  # sentence-transformers
 
@@ -86,10 +84,7 @@ class QdrantVectorStore:
         self._embedding_service = None
         self._initialized = False
 
-        logger.info(
-            f"QdrantVectorStore initialized: collection={self.collection_name}, "
-            f"url={self.qdrant_url}"
-        )
+        logger.info(f"QdrantVectorStore initialized: collection={self.collection_name}, url={self.qdrant_url}")
 
     def _ensure_initialized(self):
         """Lazy initialization of Qdrant client"""
@@ -106,18 +101,16 @@ class QdrantVectorStore:
             self._ensure_collection()
 
             self._initialized = True
-            logger.info(f"Qdrant client initialized successfully")
+            logger.info("Qdrant client initialized successfully")
 
         except ImportError:
-            logger.warning(
-                "qdrant-client not installed. Install with: pip install qdrant-client"
-            )
+            logger.warning("qdrant-client not installed. Install with: pip install qdrant-client")
             self._client = None
         except Exception as e:
             logger.warning(f"Failed to initialize Qdrant client: {e}")
             self._client = None
 
-    def _get_client(self) -> Optional[Any]:
+    def _get_client(self) -> Any | None:
         """Get Qdrant client"""
         self._ensure_initialized()
         return self._client
@@ -273,7 +266,7 @@ class QdrantVectorStore:
         self,
         query_embedding: list[float],
         limit: int = 10,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[IntentVector]:
         """
         Search for similar intent vectors.
@@ -287,7 +280,6 @@ class QdrantVectorStore:
             List of IntentVector sorted by similarity
         """
         from qdrant_client.http.models import (
-            Condition,
             FieldCondition,
             Filter,
             MatchValue,
@@ -347,9 +339,9 @@ class QdrantVectorStore:
 
     def search_by_intent(
         self,
-        goal: Optional[str] = None,
-        use_case: Optional[str] = None,
-        skill_level: Optional[str] = None,
+        goal: str | None = None,
+        use_case: str | None = None,
+        skill_level: str | None = None,
         limit: int = 10,
     ) -> list[IntentVector]:
         """
@@ -425,7 +417,7 @@ class QdrantVectorStore:
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[IntentVector]:
         """
         Search by text query (generates embedding automatically).
@@ -506,10 +498,10 @@ class QdrantVectorStore:
 
 
 # Singleton instance
-_vector_store: Optional[QdrantVectorStore] = None
+_vector_store: QdrantVectorStore | None = None
 
 
-def get_vector_store(config: Optional[dict[str, Any]] = None) -> QdrantVectorStore:
+def get_vector_store(config: dict[str, Any] | None = None) -> QdrantVectorStore:
     """
     Get or create vector store singleton.
 

@@ -14,7 +14,7 @@ Features:
 import hashlib
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 
 from searxng.query_router import SearchResult
@@ -101,7 +101,7 @@ class ResultAggregator:
 
         for result in results:
             url_key = self._normalize_url(result.url)
-            url_hash = self._hash_url(url_key)
+            self._hash_url(url_key)
 
             if url_key not in url_groups:
                 url_groups[url_key] = []
@@ -170,9 +170,7 @@ class ResultAggregator:
                 "pk_kwd",
             }
 
-            filtered_params = {
-                k: v for k, v in query_params.items() if k.lower() not in tracking_params
-            }
+            filtered_params = {k: v for k, v in query_params.items() if k.lower() not in tracking_params}
 
             # Rebuild URL
             normalized = parsed._replace(query=urlencode(filtered_params, doseq=True))
@@ -226,14 +224,14 @@ class ResultAggregator:
             raise ValueError("Cannot merge empty results")
 
         # Use best result as base (highest score)
-        best_result = max(results, key=lambda r: r.score if r.score else 0.0)
+        max(results, key=lambda r: r.score if r.score else 0.0)
 
         # Find longest title and content (most informative)
         longest_title_result = max(results, key=lambda r: len(r.title))
         longest_content_result = max(results, key=lambda r: len(r.content))
 
         # Combine sources (which backends returned this URL)
-        sources = list(set(str(r.source.value) for r in results))
+        sources = list({str(r.source.value) for r in results})
 
         # Calculate scores
         valid_scores = [r.score for r in results if r.score is not None]
@@ -306,10 +304,7 @@ class ResultAggregator:
                 similarity = self._jaccard_similarity(content_words, seen_set)
                 if similarity >= similarity_threshold:
                     is_duplicate = True
-                    logger.debug(
-                        f"Filtered duplicate result (similarity={similarity:.2f}): "
-                        f"{result.url}"
-                    )
+                    logger.debug(f"Filtered duplicate result (similarity={similarity:.2f}): {result.url}")
                     break
 
             if not is_duplicate:
@@ -333,9 +328,7 @@ class ResultAggregator:
 
         return intersection / union if union > 0 else 0.0
 
-    def normalize_scores(
-        self, results: list[AggregatedResult], method: str = "minmax"
-    ) -> list[AggregatedResult]:
+    def normalize_scores(self, results: list[AggregatedResult], method: str = "minmax") -> list[AggregatedResult]:
         """
         Normalize scores across results.
 
@@ -357,9 +350,7 @@ class ResultAggregator:
             # Scale to 0-1 range
             for result in results:
                 if max_score - min_score > 0:
-                    result.best_score = (result.best_score - min_score) / (
-                        max_score - min_score
-                    )
+                    result.best_score = (result.best_score - min_score) / (max_score - min_score)
                 else:
                     result.best_score = 1.0 if result.best_score > 0 else 0.0
 
@@ -390,7 +381,7 @@ class ResultAggregator:
 
 
 # Singleton instance
-_aggregator_instance: Optional[ResultAggregator] = None
+_aggregator_instance: ResultAggregator | None = None
 
 
 def get_result_aggregator(dedup_threshold: float = 0.95) -> ResultAggregator:

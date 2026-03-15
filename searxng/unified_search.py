@@ -33,6 +33,8 @@ from ranking.url_ranker import URLRankingRequest, rank_urls
 from searxng.client import SearXNGResult, get_searxng_client
 from searxng.query_router import (
     SearchResult as RouterSearchResult,
+)
+from searxng.query_router import (
     get_query_router,
 )
 from searxng.result_aggregator import AggregatedResult, get_result_aggregator
@@ -43,7 +45,7 @@ logger = logging.getLogger(__name__)
 class UnifiedSearchService:
     """
     Service for unified privacy search with intent ranking.
-    
+
     Enhanced with Query Router for federated search across multiple backends.
 
     Features:
@@ -91,6 +93,7 @@ class UnifiedSearchService:
         # Record query for topic learning (async, non-blocking)
         try:
             from searxng.topic_expander import get_topic_expander
+
             expander = get_topic_expander()
             asyncio.create_task(expander.add_search_query(request.query))
         except Exception as e:
@@ -102,15 +105,12 @@ class UnifiedSearchService:
 
         if request.extract_intent:
             try:
-                intent_result = await asyncio.to_thread(
-                    self._extract_intent_with_error_handling, request.query
-                )
+                intent_result = await asyncio.to_thread(self._extract_intent_with_error_handling, request.query)
                 if intent_result and hasattr(intent_result, "intent"):
                     universal_intent = intent_result.intent
                     extracted_intent = self._convert_to_extracted_intent(universal_intent)
                     logger.info(
-                        f"Intent extracted: goal={extracted_intent.goal}, "
-                        f"use_cases={extracted_intent.use_cases}"
+                        f"Intent extracted: goal={extracted_intent.goal}, use_cases={extracted_intent.use_cases}"
                     )
             except Exception as e:
                 logger.warning(f"Intent extraction failed: {e}")
@@ -118,10 +118,7 @@ class UnifiedSearchService:
         # Step 2: Route query based on intent (NEW - Query Router)
         if universal_intent:
             query_route = self.query_router.route(universal_intent)
-            logger.info(
-                f"Query routed to: {[b.value for b in query_route.backends]}, "
-                f"parallel={query_route.parallel}"
-            )
+            logger.info(f"Query routed to: {[b.value for b in query_route.backends]}, parallel={query_route.parallel}")
         else:
             # Default route without intent
             from searxng.query_router import QueryRoute, SearchBackend
@@ -135,9 +132,7 @@ class UnifiedSearchService:
 
         # Step 3: Execute federated search (NEW - Query Router)
         try:
-            raw_results = await self.query_router.execute_search(
-                route=query_route, query=request.query
-            )
+            raw_results = await self.query_router.execute_search(route=query_route, query=request.query)
             logger.info(f"Federated search returned {len(raw_results)} raw results")
         except Exception as e:
             logger.error(f"Federated search failed: {e}")
@@ -150,9 +145,7 @@ class UnifiedSearchService:
         logger.info(f"Aggregated to {len(aggregated_results)} unique results")
 
         # Convert aggregated results to ranked results
-        ranked_results = self._convert_aggregated_to_ranked(
-            aggregated_results, universal_intent, request
-        )
+        ranked_results = self._convert_aggregated_to_ranked(aggregated_results, universal_intent, request)
 
         # Step 5: Apply privacy filters (if requested)
         if request.min_privacy_score or request.exclude_big_tech:
@@ -169,7 +162,7 @@ class UnifiedSearchService:
 
         # Build response with enhanced metrics
         backend_distribution = self._count_backend_distribution(raw_results)
-        engines_used = list(set(r.engine for r in raw_results if r.engine))
+        engines_used = list({r.engine for r in raw_results if r.engine})
 
         response = UnifiedSearchResponse(
             query=request.query,
@@ -193,9 +186,7 @@ class UnifiedSearchService:
             "parallel_execution": query_route.parallel,
         }
 
-        logger.info(
-            f"Unified search (v2) complete: {len(response.results)} results in {processing_time_ms:.2f}ms"
-        )
+        logger.info(f"Unified search (v2) complete: {len(response.results)} results in {processing_time_ms:.2f}ms")
         return response
 
     def _extract_intent(self, query: str) -> Any:
@@ -444,9 +435,7 @@ class UnifiedSearchService:
 
     # NEW: Helper methods for Query Router integration
 
-    async def _search_searxng_as_router_results(
-        self, request: UnifiedSearchRequest
-    ) -> list[RouterSearchResult]:
+    async def _search_searxng_as_router_results(self, request: UnifiedSearchRequest) -> list[RouterSearchResult]:
         """Search SearXNG and return as RouterSearchResult format (fallback)"""
         from searxng.query_router import SearchBackend
 
@@ -577,9 +566,7 @@ class UnifiedSearchService:
 
         return reasons[:3]
 
-    def _count_backend_distribution(
-        self, results: list[RouterSearchResult]
-    ) -> dict[str, int]:
+    def _count_backend_distribution(self, results: list[RouterSearchResult]) -> dict[str, int]:
         """Count results per backend"""
         distribution: dict[str, int] = {}
         for result in results:

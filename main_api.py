@@ -515,7 +515,7 @@ async def startup_event():
     # Start scheduled seed URL discovery (runs daily at 3 AM)
     try:
         from searxng.scheduled_seed_discovery import get_seed_discovery
-        
+
         seed_discovery = get_seed_discovery()
         seed_discovery.start()
         logger.info("Seed URL discovery scheduler started (daily at 3 AM)")
@@ -722,6 +722,7 @@ async def unified_search_endpoint(request: UnifiedSearchRequest):
 # Seed URL Discovery Endpoints
 # ============================================================================
 
+
 @app.get("/seed-discovery/status")
 async def seed_discovery_status():
     """
@@ -730,10 +731,10 @@ async def seed_discovery_status():
     try:
         from searxng.scheduled_seed_discovery import get_seed_discovery
         from searxng.topic_expander import get_topic_expander
-        
+
         discovery = get_seed_discovery()
         stats = discovery.get_stats()
-        
+
         # Get topic expander stats
         try:
             expander = get_topic_expander()
@@ -741,19 +742,16 @@ async def seed_discovery_status():
             stats["topic_expander"] = topic_stats
         except Exception as e:
             stats["topic_expander"] = {"error": str(e)}
-        
+
         # Get current queue stats
         from searxng.seed_injector import SeedURLInjector
+
         injector = SeedURLInjector()
         await injector.connect()
         queue_stats = await injector.get_queue_stats()
         await injector.close()
-        
-        return {
-            **stats,
-            "queue_stats": queue_stats,
-            "status": "active"
-        }
+
+        return {**stats, "queue_stats": queue_stats, "status": "active"}
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
@@ -765,14 +763,10 @@ async def trigger_seed_discovery():
     """
     try:
         from searxng.scheduled_seed_discovery import run_immediate_discovery
-        
+
         results = await run_immediate_discovery()
-        
-        return {
-            "status": "success",
-            "message": "Seed discovery completed",
-            "results": results
-        }
+
+        return {"status": "success", "message": "Seed discovery completed", "results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -784,19 +778,19 @@ async def list_discovery_topics():
     """
     try:
         from searxng.topic_expander import get_topic_expander
-        
+
         expander = get_topic_expander()
         await expander.connect()
-        
+
         # Get expanded topics
         topics = await expander.get_expanded_topics(limit_per_category=20)
         stats = await expander.get_stats()
-        
+
         return {
             "topics": topics,
             "stats": stats,
             "total_categories": len(topics),
-            "total_topics": sum(len(t) for t in topics.values())
+            "total_topics": sum(len(t) for t in topics.values()),
         }
     except Exception as e:
         return {"error": str(e)}
@@ -809,19 +803,19 @@ async def expand_topics():
     """
     try:
         from searxng.topic_expander import get_topic_expander
-        
+
         expander = get_topic_expander()
         await expander.connect()
-        
+
         # Trigger reliable expansion
         await expander._reliable_expansion()
         new_topics = await expander.get_expanded_topics(limit_per_category=20)
-        
+
         return {
             "status": "success",
             "message": "Topic expansion completed with reliability checks",
             "topics": new_topics,
-            "stats": await expander.get_stats()
+            "stats": await expander.get_stats(),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -834,22 +828,22 @@ async def reset_topics():
     """
     try:
         from searxng.topic_expander import get_topic_expander
-        
+
         expander = get_topic_expander()
         await expander.connect()
-        
+
         # Reset to defaults
         expander.default_topics = dict(expander.default_topics)  # Copy defaults
         await expander._persist_topics()
-        
+
         # Clear query history
         await expander.redis_client.delete(expander.query_history_key)
         await expander.redis_client.delete(f"{expander.suggestions_key}:keywords")
-        
+
         return {
             "status": "success",
             "message": "Topics reset to defaults",
-            "categories": list(expander.default_topics.keys())
+            "categories": list(expander.default_topics.keys()),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
