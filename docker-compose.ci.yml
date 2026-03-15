@@ -1,0 +1,23 @@
+# Docker Compose override for CI
+# Excludes optional Go services that have flaky healthchecks
+# Use: docker compose -f docker-compose.yml -f docker-compose.ci.yml up
+
+services:
+  # Disable Go services in CI (they have flaky healthchecks)
+  go-search-api:
+    profiles: ["go-services"]
+  
+  go-crawler:
+    profiles: ["go-services"]
+  
+  go-indexer:
+    profiles: ["go-services"]
+  
+  unified-search-api:
+    profiles: ["go-services"]
+  
+  vector-indexer:
+    profiles: ["go-services"]
+  
+  qdrant:
+    profiles: ["go-services"]

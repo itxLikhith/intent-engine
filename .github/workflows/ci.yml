@@ -251,10 +251,10 @@ jobs:
 
       # FIX: logic relies on --wait. If this passes, services are healthy.
       # If Worker healthcheck fails, this step will fail with logs automatically.
-      # Note: Excluding go-crawler profile as Go source code is not in repository
+      # Note: Using CI override to exclude flaky Go services
       - name: Start services
         run: |
-          docker compose -f docker-compose.yml up -d --wait --wait-timeout 300
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait --wait-timeout 300
           echo "All services (API, Worker, DB) are healthy."
           docker compose ps
 
